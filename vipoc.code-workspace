@@ -1,0 +1,32 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"windows.h": "c",
+			"stdarg.h": "c",
+			"application.h": "c",
+			"vipoc.h": "c",
+			"defines.h": "c",
+			"core.h": "c",
+			"platform.h": "c",
+			"entry.h": "c",
+			"log.h": "c",
+			"std.h": "c",
+			"renderer.h": "c",
+			"glext.h": "c",
+			"load_gl_black_magic.h": "c",
+			"khrplatform.h": "c",
+			"gl.h": "c",
+			"winsock.h": "c",
+			"dde.h": "c",
+			"cderr.h": "c",
+			"memory.h": "c",
+			"winapifamily.h": "c",
+			"vp_memory.h": "c"
+		}
+	}
+}
