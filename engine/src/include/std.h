@@ -1,16 +1,10 @@
 #pragma once
-#ifndef VIPOC_WIN32
-#error Currently only supports windows
-#endif
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
 #include "include/defines.h"
 
 
 #define vstd_printf(str, ...) _vstd_Printf(sizeof(str) - 1, str, __VA_ARGS__)
 #define vstd_sprintf(buff, str, ...) _vstd_sPrintf(sizeof(str) - 1, buff, str, __VA_ARGS__)
-typedef wchar_t wchar;
 
 typedef struct vstdRect 
 {

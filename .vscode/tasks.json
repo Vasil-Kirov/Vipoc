@@ -6,6 +6,9 @@
             "windows": {
                 "command": "${workspaceFolder}/engine/build.bat debug"
             },
+            "linux":{
+                "command": "${workspaceFolder}/engine/build.sh debug"
+            },
             "options": {
                 "cwd": "${workspaceFolder}/engine"
             },
@@ -18,6 +21,9 @@
             "windows": {
                 "command": "${workspaceFolder}/game/build.bat debug"
             },
+            "linux":{
+                "command": "${workspaceFolder}/game/build.sh debug"
+            },
             "options": {
                 "cwd": "${workspaceFolder}/game"
             },
@@ -29,6 +35,9 @@
             "label": "Build All",
             "windows": {
                 "command": "${workspaceFolder}/build-all.bat debug"
+            },
+            "linux":{
+                "command": "${workspaceFolder}/build-all.sh"
             },
             "options": {
                 "cwd": "${workspaceFolder}"

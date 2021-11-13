@@ -13,10 +13,7 @@ typedef struct win32_state
 } win32_state;
 
 
-global_var platform_state pstate;
 internal win32_state *Win32State;
-
-
 
 
 
@@ -56,7 +53,7 @@ platform_get_absolute_path(char *output)
 
 
 bool32
-platform_init(vp_config game)
+platform_init(vp_config game, platform_state *pstate)
 {   
 	int x = game.x;
 	int y = game.y; 

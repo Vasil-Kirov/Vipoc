@@ -11,7 +11,7 @@ typedef struct platform_state
 
 
 bool32
-platform_init(vp_config game);
+platform_init(vp_config game, platform_state *pstate);
 
 
 bool32

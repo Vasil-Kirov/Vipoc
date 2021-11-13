@@ -11,6 +11,16 @@
             "cwd": "${workspaceFolder}/bin/",
             "environment": [],
             "console": "newExternalWindow",
+        },
+        {
+            "name": "(Linux) Launch",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/game",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/bin/",
+            "environment": []
         }
     ],
     "compounds": []

@@ -26,7 +26,16 @@
 			"cderr.h": "c",
 			"memory.h": "c",
 			"winapifamily.h": "c",
-			"vp_memory.h": "c"
+			"vp_memory.h": "c",
+			"fcntl.h": "c",
+			"cerrno": "c",
+			"*.tcc": "c",
+			"cstdlib": "c",
+			"memory": "c",
+			"new": "c",
+			"features.h": "c",
+			"string.h": "c",
+			"malloc.h": "c"
 		}
 	}
 }

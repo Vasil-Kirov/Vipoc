@@ -1,25 +1,42 @@
 {
-    "configurations":[
-        {
-            "name": "Win32",
-            "includePath":[
-                "${default}",
-                //"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.15063.0\\**",
-                "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.19041.0\\um\\",
-                //"C:\\MinGW\\include",
-                "${workspaceFolder}/engine/src/**"
-            ],
-            "defines":[
-                "VIPOC_DEBUG",
-                "VIPOC_EXPORT",
-                "VIPOC_WIN32"
-            ],
-            "windowsSdkVersion": "10.0.19041.0",
-            "compilerPath": "C:\\Program Files\\LLVM\\bin\\clang.exe",
-            "cStandard": "c17",
-            "cppStandard": "c++17",
-            "intelliSenseMode": "clang-x64"
-        }
-    ],
-    "version": 4
+	"configurations":[
+		{
+			"name": "Linux",
+			"includePath":[
+				"${default}",
+				"${workspaceFolder}/engine/src/**",
+				"/usr/include",
+				"/usr/local/include"
+			],
+			"defines":[
+				"VIPOC_DEBUG",
+				"VIPOC_EXPORT",
+				"VIPOC_LINUX"
+			],
+			"compilerPath": "/usr/bin/clang",
+			"cStandard": "c17",
+			"cppStandard": "c++17",
+			"intelliSenseMode": "clang-x64"
+			
+		},
+		{
+			"name": "Win32",
+			"includePath":[
+				"${default}",
+				"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.19041.0\\um\\",
+				"${workspaceFolder}/engine/src/**"
+			],
+			"defines":[
+				"VIPOC_DEBUG",
+				"VIPOC_EXPORT",
+				"VIPOC_WIN32"
+			],
+			"windowsSdkVersion": "10.0.19041.0",
+			"compilerPath": "C:\\Program Files\\LLVM\\bin\\clang.exe",
+			"cStandard": "c17",
+			"cppStandard": "c++17",
+			"intelliSenseMode": "clang-x64"
+		}
+	],
+	"version": 4
 }

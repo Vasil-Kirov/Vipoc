@@ -9,11 +9,20 @@
 #define assert(expression)
 #endif
 
+#ifdef VIPOC_WIN32
+	#ifdef VIPOC_EXPORT
+		#define VP_API __declspec(dllexport)
+	#else
+		#define VP_API __declspec(dllimport)
+	#endif
+#endif
 
-#ifdef VIPOC_EXPORT
-#define VP_API __declspec(dllexport)
-#else
-#define VP_API __declspec(dllimport)
+#ifdef VIPOC_LINUX
+	#ifdef VIPOC_EXPORT
+		#define VP_API __attribute__((visibility("default")))
+	#else
+		#define VP_API
+	#endif
 #endif
 
 
