@@ -1,8 +1,11 @@
 #include <entry.h>
 #define true 1
 #define false 0
+#define TRUE true
+#define FALSE false
 
 
+static int SwitchKey = true; 
 
 /* Struct section */
 struct res
@@ -11,32 +14,6 @@ struct res
 	int h;
 };
 
-
-
-
-/* Functions  */
-
-#if 0
-// DOES NOT WORK !!!
-internal void
-GetExeDirectory(char *Buffer)
-{
-	if (!GetModuleFileNameA(NULL, Buffer, MAX_PATH))
-	{
-		Error("Failed to get directory location, file path might be too long");
-	}
-	int size = vstd_strlen(Buffer);
-	for(int i = size-1; i >= 0; --i)
-	{
-		if(Buffer[i] == '\\')
-		{
-			Buffer[i+1] = '\0';
-			break;
-		}
-	}
-	
-}
-#endif
 
 bool32
 OnResize(vp_game *game, int w, int h)
@@ -54,6 +31,15 @@ Render(vp_game *game, float delta_time)
 bool32
 Update(vp_game *game, float delta_time)
 {
+	if(vp_is_keydown(VP_KEY_UP) && SwitchKey)
+	{
+		SwitchKey = false;
+		VP_INFO("Detected up arrow!");
+	}
+	if(!vp_is_keydown(VP_KEY_UP))
+	{
+		SwitchKey = true;
+	}
 	return TRUE;
 }
 

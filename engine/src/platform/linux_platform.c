@@ -1,3 +1,6 @@
+#ifdef VIPOC_LINUX
+
+
 #include <X11/Xlib.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -128,3 +131,6 @@ LinuxLoadOpenGL(Display *display, int screen)
 					   glCtx );
 	return true;
 }
+
+
+#endif

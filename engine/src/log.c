@@ -1,5 +1,14 @@
 #include "log.h"
 #include "platform/platform.h"
+#include <stdarg.h>
+#include <string.h>
+
+void* __cdecl memset(
+    void*  _Dst,
+    int    _Val,
+    size_t _Size
+    );
+
 
 
 void

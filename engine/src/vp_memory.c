@@ -16,12 +16,19 @@ vp_arena *memory_init(uint64 size)
 
 vp_memory vp_arena_allocate(uint64 size)
 {
+	// TODO: Check for remaining memory -1 for the null terminator
+	
+	// Initialize for some reason?
 	vp_memory ret;
 	ret.ptr = vp_nullptr;
 	ret.size = 0;
 	if(size == 0) return ret;
 	memory_arena.end += size;
+
+	// Null-terminate
 	*((int8 *)(memory_arena.end+1)) = 0;
+
+	// Set return values
 	ret.ptr = memory_arena.end - size;
 	ret.size = size;
 

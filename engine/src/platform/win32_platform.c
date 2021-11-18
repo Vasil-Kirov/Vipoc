@@ -1,9 +1,15 @@
 #ifdef VIPOC_WIN32
 
+#define WIN32_LEAN_AND_MEAN
+// might be able to remove Windows.h
+#include <Windows.h>
+#include <hidsdi.h>
 
 #include "platform/platform.h"
 
 #include "renderer/renderer.h"
+
+#include "input.h"
 
 
 typedef struct win32_state
@@ -14,12 +20,83 @@ typedef struct win32_state
 
 
 internal win32_state *Win32State;
-
+internal vp_memory raw_input_memory;
 
 
 LRESULT CALLBACK WindowProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
 void Win32LoadOpenGL(HWND Window);
+void Win32LoadRawInput(HWND Window);
 
+
+bool32
+platform_init(vp_config game, platform_state *pstate)
+{   
+	int x = game.x;
+	int y = game.y; 
+	int w = game.w; 
+	int h = game.h;
+	pstate->state = platform_allocate_memory_chunk(sizeof(win32_state));
+	Win32State = (win32_state *)pstate->state; 
+
+
+	Win32State->Instance = GetModuleHandleA(0);
+
+
+	WNDCLASSA wnd = {};
+	wnd.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+	wnd.lpfnWndProc = WindowProc;
+	wnd.hInstance = Win32State->Instance;
+	wnd.hCursor = LoadCursor(wnd.hInstance, IDC_ARROW);
+	wnd.lpszClassName = "VipocProgramWindowClass";
+	if(RegisterClassA(&wnd))
+	{
+		Win32State->Window = CreateWindowExA(0, wnd.lpszClassName, game.name, WS_OVERLAPPEDWINDOW | WS_VISIBLE, x, y, w, h, 0, 0, Win32State->Instance, 0);
+		if(Win32State->Window)
+		{
+			raw_input_memory = vp_arena_allocate(MB(1));
+			Win32LoadRawInput(Win32State->Window);
+			Win32LoadOpenGL(Win32State->Window);
+			glViewport(0, 0, game.w, game.h);
+			
+			return TRUE;
+		} 
+	}
+	return FALSE;
+}
+
+
+void Win32LoadRawInput(HWND Window)
+{
+	RAWINPUTDEVICE rids[5];
+
+	rids[0].usUsage = 0x02; // Mouse
+	rids[0].usUsagePage = 0x01;
+	rids[0].dwFlags = RIDEV_INPUTSINK; 
+	rids[0].hwndTarget = Window;
+
+	rids[1].usUsage = 0x06; // Keyboard
+	rids[1].usUsagePage = 0x01;
+	rids[1].dwFlags = RIDEV_INPUTSINK; 
+	rids[1].hwndTarget = Window;
+	
+	rids[2].usUsage = 0x04; // Controller
+	rids[2].usUsagePage = 0x01;
+	rids[2].dwFlags = RIDEV_INPUTSINK; 
+	rids[2].hwndTarget = Window;
+
+	rids[3].usUsage = 0x05; // Controller
+	rids[3].usUsagePage = 0x01;
+	rids[3].dwFlags = RIDEV_INPUTSINK; 
+	rids[3].hwndTarget = Window;
+
+	rids[4].usUsage = 0x01; // Mouse
+	rids[4].usUsagePage = 0x01;
+	rids[4].dwFlags = RIDEV_INPUTSINK; 
+	rids[4].hwndTarget = Window;
+
+
+	if (RegisterRawInputDevices(rids, 5, sizeof(RAWINPUTDEVICE)) == FALSE) Error("RegisterRawInputDevice failed!\n");
+}
 
 void
 platform_get_absolute_path(char *output)
@@ -52,40 +129,6 @@ platform_get_absolute_path(char *output)
 }
 
 
-bool32
-platform_init(vp_config game, platform_state *pstate)
-{   
-	int x = game.x;
-	int y = game.y; 
-	int w = game.w; 
-	int h = game.h;
-	pstate.state = platform_allocate_memory_chunk(sizeof(win32_state));
-	Win32State = (win32_state *)pstate.state; 
-
-
-	Win32State->Instance = GetModuleHandleA(0);
-
-
-	WNDCLASSA wnd = {};
-	wnd.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-	wnd.lpfnWndProc = WindowProc;
-	wnd.hInstance = Win32State->Instance;
-	wnd.hCursor = LoadCursor(wnd.hInstance, IDC_ARROW);
-	wnd.lpszClassName = "VipocProgramWindowClass";
-	if(RegisterClassA(&wnd))
-	{
-		Win32State->Window = CreateWindowExA(0, wnd.lpszClassName, game.name, WS_OVERLAPPEDWINDOW | WS_VISIBLE, x, y, w, h, 0, 0, Win32State->Instance, 0);
-		if(Win32State->Window)
-		{
-			Win32LoadOpenGL(Win32State->Window);
-			glViewport(0, 0, game.w, game.h);
-			
-			return TRUE;
-		} 
-	}
-	return FALSE;
-}
-
 void
 platform_file_to_buffer(char *output, char *path)
 {
@@ -112,6 +155,9 @@ platform_allocate_memory_chunk(uint64 size)
 
 }
 
+
+void HandleRawInput(RAWINPUT *raw_input);
+
 bool32
 platform_handle_message()
 {
@@ -122,14 +168,104 @@ platform_handle_message()
 		{
 			return 0;
 		}
+		if(Message.message == WM_INPUT)
+		{
+			UINT DataSize;
+			if (GetRawInputData((HRAWINPUT)Message.lParam, RID_INPUT, NULL, &DataSize, sizeof(RAWINPUTHEADER)) == -1)
+			{
+				Error("Failed getting raw input amount\n");
+			}
+			
+			if (GetRawInputData((HRAWINPUT)Message.lParam, RID_INPUT, (PRAWINPUT)raw_input_memory.ptr, &DataSize, sizeof(RAWINPUTHEADER)) == -1)
+			{
+				Error("Failed getting raw input\n");
+			}
+			HandleRawInput(raw_input_memory.ptr);
+			
+		}
+		
 		TranslateMessage(&Message);
 		DispatchMessageA(&Message);
+		
 	}
 	return 1;
 
 }
 
 typedef BOOL wgl_swap_interval_ext(int interval);
+
+
+void
+HandleRawInput(RAWINPUT *raw_input)
+{
+	switch(raw_input->header.dwType)
+	{
+		case RIM_TYPEKEYBOARD:
+		{
+			unsigned short flags = raw_input->data.keyboard.Flags;
+			bool32 is_down = ((flags & RI_KEY_BREAK) == 0);
+
+			input_keyboard_key(raw_input->data.keyboard.VKey, is_down);
+		} break;
+		case RIM_TYPEMOUSE:
+		{
+			unsigned short flag = raw_input->data.mouse.usButtonFlags;
+			switch(flag)
+			{
+				case RI_MOUSE_LEFT_BUTTON_DOWN:
+				{
+					input_mouse_button(VP_MOUSE_BUTTON_LEFT, true);
+				} break;
+				case RI_MOUSE_RIGHT_BUTTON_DOWN:
+				{
+					input_mouse_button(VP_MOUSE_BUTTON_RIGHT, true);
+				} break;
+				
+				case RI_MOUSE_MIDDLE_BUTTON_DOWN:
+				{
+					input_mouse_button(VP_MOUSE_BUTTON_MIDDLE, true);
+				} break;
+				case RI_MOUSE_BUTTON_4_DOWN:
+				{
+					input_mouse_button(VP_MOUSE_BUTTON_XBUTTON1, true);
+				} break;
+				case RI_MOUSE_BUTTON_5_DOWN:
+				{
+					input_mouse_button(VP_MOUSE_BUTTON_XBUTTON2, true);
+				} break;
+				case RI_MOUSE_LEFT_BUTTON_UP:
+				{
+					input_mouse_button(VP_MOUSE_BUTTON_LEFT, false);
+				} break;
+				case RI_MOUSE_RIGHT_BUTTON_UP:
+				{
+					input_mouse_button(VP_MOUSE_BUTTON_RIGHT, false);
+				} break;
+				case RI_MOUSE_MIDDLE_BUTTON_UP:
+				{
+					input_mouse_button(VP_MOUSE_BUTTON_MIDDLE, false);
+				} break;
+				case RI_MOUSE_BUTTON_4_UP:
+				{
+					input_mouse_button(VP_MOUSE_BUTTON_XBUTTON1, false);
+				} break;
+				case RI_MOUSE_BUTTON_5_UP:
+				{
+					input_mouse_button(VP_MOUSE_BUTTON_XBUTTON2, false);
+				} break;
+				default:
+				{
+					// TODO (IMPORTANT): Handle scrolling 
+				} break;
+			}
+		} break;
+		case RIM_TYPEHID:
+		{
+			
+		} break;
+
+	}
+};
 
 void
 Win32LoadOpenGL(HWND Window)
@@ -230,6 +366,8 @@ vp_render_pixels(render_buffer *Buffer)
 {
 	// NOTE(Vasko): If I start rendering with opengl these should be the window width and 
 	//              height
+
+	// NOTE(Vasko): I don't know what the top comment means
 	glViewport(0, 0, Buffer->Width, Buffer->Height);
 	
 	

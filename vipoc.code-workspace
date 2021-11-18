@@ -35,7 +35,11 @@
 			"new": "c",
 			"features.h": "c",
 			"string.h": "c",
-			"malloc.h": "c"
+			"malloc.h": "c",
+			"system_error": "cpp",
+			"stdio.h": "c",
+			"hidsdi.h": "c",
+			"input.h": "c"
 		}
 	}
 }

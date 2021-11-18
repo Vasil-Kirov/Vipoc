@@ -41,3 +41,26 @@ void vstd_strcat(char *dst, const char *src)
 	}
 	*dst = '\0';
 }
+
+void _vstd_IntToStr(int num, char* arr_to_fill)
+{
+    int CopyToDivide = num;
+    int num_size = -1;           // -1 cuz we want the size - 1 to get the last index of the array.
+    while (CopyToDivide != 0)
+    {
+        CopyToDivide /= 10;
+        num_size++;
+    }
+    if (num < 0)
+    {
+        arr_to_fill[0] = '-';
+        num_size++;
+    }
+    arr_to_fill[num_size + 1] = '\0';
+    for (int i = num_size; num != 0; --i)
+    {
+        int tmp = (int)(num % 10);
+        num /= 10;
+        arr_to_fill[i] = (char)tmp + '0';
+    }
+}

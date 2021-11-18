@@ -1,6 +1,11 @@
 #include "application.h"
 
 
+// renderer.h loads vp_memory.h, platform.h and defines.h 
+#include "renderer/renderer.h"
+#include "log.h"
+
+
 
 typedef struct app_state
 {
@@ -33,7 +38,7 @@ void application_create(vp_game *game)
 	app.is_suspended = false;
 	app.width = app.game->config.w;
 	app.height = app.game->config.h;
-	if(!platform_init(app.game->config))
+	if(!platform_init(app.game->config, &(app.pstate) ))
 	{
 		// TODO: Fatal Error
 	}

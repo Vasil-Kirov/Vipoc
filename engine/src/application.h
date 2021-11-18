@@ -1,8 +1,7 @@
 #pragma once
 
-// renderer.h loads vp_memory.h, platform.h and defines.h 
-#include "renderer/renderer.h"
-#include "log.h"
+#include "include/Core.h"
+
 
 
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "include/defines.h"
 #include "application.h"
+#include "input.h"
 #include "log.h"
 
 
