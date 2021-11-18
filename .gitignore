@@ -1,6 +1,9 @@
 ## Text file
 *.txt
 
+## Shortcuts
+*.lnk
+
 
 
 ## Core latex/pdflatex auxiliary files:
