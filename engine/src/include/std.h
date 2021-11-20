@@ -15,26 +15,42 @@ typedef struct vstdRect
 } vstdRect;
 
 
-void vstd_vsnsprintf(char *buff, size_t n, const char *str, va_list args);
+void
+vstd_vsnsprintf(char *buff, size_t n, const char *str, va_list args);
 
 
-int strcount(char *str, char c, char exclude_next);
+int
+strcount(char *str, char c, char exclude_next);
 
 
-VP_API int vstd_strlen(char *str);
+char *
+vstd_strchr(char *str, char chr);
 
 
-VP_API void vstd_strcat(char *dst, const char *src);
+char *
+vstd_strstr(char *str1, char *str2);
 
 
-VP_API void _vstd_IntToStr(int num, char* arr_to_fill);
+VP_API int
+vstd_strlen(char *str);
+
+
+VP_API void
+vstd_strcat(char *dst, const char *src);
+
+
+VP_API void
+_vstd_IntToStr(int num, char* arr_to_fill);
 
 //@Note: make it so it works with long and chars
-VP_API void _vstd_Printf(int FormatSize, const char* str, ...);
+VP_API void
+_vstd_Printf(int FormatSize, const char* str, ...);
 
 
-VP_API void _vstd_sPrintf(int FormatSize, char *buff, const char* str, ...);
+VP_API void
+_vstd_sPrintf(int FormatSize, char *buff, const char* str, ...);
 
 
-VP_API void Error(const char *error_msg);
+VP_API void
+Error(const char *error_msg);
 

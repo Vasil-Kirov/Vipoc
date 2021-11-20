@@ -13,7 +13,14 @@ typedef struct gl_state
 	GLuint ebo;
 } gl_state;
 
+#define VP_MAX_TEXTURES 2048
+
 internal gl_state renderer_state;
+internal vp_texture to_render_buffer[VP_MAX_TEXTURES];
+internal int last_tex_index;
+
+void
+load_bmp_file(char *path, vp_texture *texture);
 
 void RendererInit()
 {
@@ -103,7 +110,28 @@ void RendererInit()
 }
 
 
+vp_texture
+renderer_load_texture(char *path)
+{
+	vp_texture result = {}; 
+	if(strstr(path, ".bmp") != vp_nullptr)
+	{
+		load_bmp_file(path, &result);
+	}
+	return result;
+}
 
+void
+renderer_pushback(vp_texture texture)
+{
+	to_render_buffer[last_tex_index++] = texture;
+}
+
+void
+renderer_buffer_reset()
+{
+	memset(to_render_buffer, 0, sizeof(vp_texture) * (last_tex_index - 1));
+}
 
 void GenGLBuffs()
 {
@@ -180,4 +208,11 @@ bool32 render_update()
 
 	platform_swap_buffers();
 	return TRUE;
+}
+
+
+void
+load_bmp_file(char *path, vp_texture *texture)
+{
+
 }

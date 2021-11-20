@@ -23,7 +23,7 @@ SET assembly=game
 SET Defines=-DVIPOC_IMPORT -DVIPOC_WIN32 -D_CRT_SECURE_NO_WARNINGS
 SET CompilerFlags=%CompilerFlags% -ffast-math
 SET Includes=-Isrc -I../engine/src
-Set Libraries=-L../bin/ -lvipoc.lib -luser32
+Set Libraries=-L../bin/ -lVipoc.lib -luser32
 
 
 

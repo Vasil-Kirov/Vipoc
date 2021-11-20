@@ -22,9 +22,6 @@ typedef struct vp_game
     // Game update function
     bool32 (*vp_update)(struct vp_game *game, float delta_time);
 
-    // Game render function
-    bool32 (*vp_render)(struct vp_game *game, float delta_time);
-
     // Game on_resize function
     bool32 (*vp_on_resize)(struct vp_game *game, int w, int h);
 

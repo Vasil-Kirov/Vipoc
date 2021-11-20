@@ -1,7 +1,5 @@
 #pragma once
-
-#include "include/Core.h"
-#include "log.h"
+#include "include/defines.h"
 
 
 typedef struct platform_state
@@ -9,6 +7,7 @@ typedef struct platform_state
     void *state;
 } platform_state;
 
+typedef struct vp_config vp_config;
 
 bool32
 platform_init(vp_config game, platform_state *pstate);
@@ -45,3 +44,10 @@ platform_allocate_memory_chunk(uint64 size);
 void
 platform_get_absolute_path(char *output);
 
+
+void
+platform_exit(bool32 is_error);
+
+
+int
+platform_get_width();

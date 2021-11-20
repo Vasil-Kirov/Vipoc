@@ -3,11 +3,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-void* __cdecl memset(
-    void*  _Dst,
-    int    _Val,
-    size_t _Size
-    );
 
 
 
@@ -40,6 +35,8 @@ void vp_log(log_level level, const char *str, char *color, ...)
     vstd_strcat(to_print, "\n");
 
     platform_output_string(to_print, level);
+    
+    if(level == LOG_LEVEL_FATAL) platform_exit(1);
     
 }
 

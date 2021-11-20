@@ -7,7 +7,9 @@
 #include "log.h"
 
 
-// NOTE: no padding
+typedef float meters;
+
+// NOTE(Vasko): no padding (is it needed?)
 #pragma pack(push, 1)
 typedef struct vec3
 {
@@ -17,6 +19,23 @@ typedef struct vec3
 } vec3;
 #pragma pack(pop)
 
+
+typedef struct vp_texture
+{
+	meters x;
+	meters y;
+	char *pixels;
+} vp_texture;
+
+
+VP_API vp_texture
+renderer_load_texture(char *path);
+
+VP_API void
+renderer_pushback(vp_texture texutre);
+
+void
+renderer_buffer_reset();
 
 void RendererInit();
 

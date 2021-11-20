@@ -39,7 +39,10 @@
 			"system_error": "cpp",
 			"stdio.h": "c",
 			"hidsdi.h": "c",
-			"input.h": "c"
+			"input.h": "c",
+			"stdint.h": "c",
+			"immintrin.h": "c",
+			"avxintrin.h": "c"
 		}
 	}
 }

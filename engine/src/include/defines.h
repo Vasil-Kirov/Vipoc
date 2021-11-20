@@ -3,6 +3,23 @@
 #include <stdint.h>
 
 
+
+
+
+void* __cdecl memset(
+    void*  _Dst,
+    int    _Val,
+    size_t _Size
+    );
+
+_NODISCARD _Check_return_
+int __cdecl memcmp(
+    _In_reads_bytes_(_Size) void const* _Buf1,
+    _In_reads_bytes_(_Size) void const* _Buf2,
+    _In_                    size_t      _Size
+    );
+
+
 #ifdef VIPOC_DEBUG
 #define assert(expression) if(!expression) {*(int *)0 = 0;}
 #else

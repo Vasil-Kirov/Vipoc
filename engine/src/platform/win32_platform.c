@@ -6,16 +6,18 @@
 #include <hidsdi.h>
 
 #include "platform/platform.h"
-
+#include "log.h"
 #include "renderer/renderer.h"
-
 #include "input.h"
+#include "include/Core.h"
 
 
 typedef struct win32_state
 {
 	HINSTANCE Instance;
 	HWND Window;
+	int w;
+	int h;
 } win32_state;
 
 
@@ -37,7 +39,8 @@ platform_init(vp_config game, platform_state *pstate)
 	int h = game.h;
 	pstate->state = platform_allocate_memory_chunk(sizeof(win32_state));
 	Win32State = (win32_state *)pstate->state; 
-
+	Win32State->w = game.w;
+	Win32State->h = game.h;
 
 	Win32State->Instance = GetModuleHandleA(0);
 
@@ -190,6 +193,19 @@ platform_handle_message()
 	}
 	return 1;
 
+}
+
+
+int
+platform_get_width()
+{
+	return Win32State->w;
+}
+
+void
+platform_exit(bool32 is_error)
+{
+	ExitProcess(is_error);
 }
 
 typedef BOOL wgl_swap_interval_ext(int interval);

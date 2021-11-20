@@ -22,9 +22,9 @@ IF [%1] == [] (
 )
 
 
-	SET assembly=vipoc
+	SET assembly=Vipoc
 	SET Defines=-DVIPOC_EXPORT -DVIPOC_WIN32 -D_CRT_SECURE_NO_WARNINGS
-	SET CompilerFlags=%CompilerFlags% -ffast-math
+	SET CompilerFlags=%CompilerFlags% -ffast-math -mavx -march=core-avx2
 	SET Includes=-Isrc
 	Set Libraries=-luser32 -lGdi32 -lOpenGL32
 

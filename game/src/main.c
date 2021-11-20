@@ -22,19 +22,13 @@ OnResize(vp_game *game, int w, int h)
 }
 
 bool32
-Render(vp_game *game, float delta_time)
-{
-	return TRUE;
-}
-
-
-bool32
 Update(vp_game *game, float delta_time)
 {
 	if(vp_is_keydown(VP_KEY_UP) && SwitchKey)
 	{
 		SwitchKey = false;
-		VP_INFO("Detected up arrow!");
+		VP_ERROR("FATAL KEY HAS BEEN PRESSED!");
+		VP_FATAL("Up is down!");
 	}
 	if(!vp_is_keydown(VP_KEY_UP))
 	{
@@ -53,11 +47,6 @@ vp_start(vp_game *game)
 	game->config.h = 600;
 	game->vp_update=Update;
 	game->vp_on_resize=OnResize;
-	game->vp_render=Render;
-	VP_FATAL("FATAL!");
-	VP_ERROR("ERROR!");
-	VP_WARN("WARN!");
-	VP_INFO("INFO!");
 }
 
 /*

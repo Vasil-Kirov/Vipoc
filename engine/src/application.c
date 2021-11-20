@@ -59,10 +59,6 @@ void application_run(vp_game *game)
 		{
 			app.is_running = false;
 		}
-		if(!render_update())
-		{
-			VP_ERROR("A failure has occurred with internal rendering!");
-		}
 
 		if(!game->vp_update(game, 0.0f))
 		{
@@ -71,13 +67,12 @@ void application_run(vp_game *game)
 			app.is_running = false;
 			break;
 		}
-		if(!game->vp_render(game, 0.0f))
+		if(!render_update())
 		{
-			// TODO: Error
-			VP_FATAL("vp_render has failed!");
-			app.is_running = false;
-			break;
+			VP_ERROR("A failure has occurred with internal rendering!");
 		}
+		renderer_buffer_reset();
+
 	}
 }
 
