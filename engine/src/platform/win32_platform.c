@@ -271,7 +271,7 @@ HandleRawInput(RAWINPUT *raw_input)
 				} break;
 				default:
 				{
-					// TODO (IMPORTANT): Handle scrolling 
+					// TODO: (IMPORTANT): Handle scrolling 
 				} break;
 			}
 		} break;

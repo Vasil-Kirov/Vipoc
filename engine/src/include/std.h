@@ -31,7 +31,7 @@ char *
 vstd_strstr(char *str1, char *str2);
 
 
-VP_API int
+VP_API size_t
 vstd_strlen(char *str);
 
 

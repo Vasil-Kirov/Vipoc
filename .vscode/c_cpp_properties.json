@@ -33,7 +33,8 @@
 				"VIPOC_EXPORT",
 				"VIPOC_WIN32",
 				"__AVX__",
-				"__AVX2__"
+				"__AVX2__",
+				"__SSE4_2__"
 			],
 			"windowsSdkVersion": "10.0.19041.0",
 			"compilerPath": "C:\\Program Files\\LLVM\\bin\\clang.exe",

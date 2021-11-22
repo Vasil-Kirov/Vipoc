@@ -32,12 +32,13 @@ void application_create(vp_game *game)
 	initialized = TRUE;
 	
 	// very random amount of memory
-	memory_arena = memory_init(MB(4));
+	memory_arena = memory_init(MB(10));
 	app.game = game;
 	app.is_running = true;
 	app.is_suspended = false;
 	app.width = app.game->config.w;
 	app.height = app.game->config.h;
+	int garb_size = vstd_strlen("a very simple string that should be handled in 2 loops and not any more or less espcially less please for the love of god work I didn't even write this how is it broken??");
 	if(!platform_init(app.game->config, &(app.pstate) ))
 	{
 		// TODO: Fatal Error

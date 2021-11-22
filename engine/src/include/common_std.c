@@ -60,20 +60,21 @@ void _vstd_IntToStr(int num, char* arr_to_fill)
 }
 
 
+// TODO: test 
 char*
 vstd_strchr(char* str, char chr)
 {
-    __m256i set_chr = _mm256_set1_epi8(chr);
-    __m256i null_term = _mm256_set1_epi8('\0');
-    __m256i result = _mm256_set1_epi32(0);
+	__m128i set_chr = _mm_set1_epi8(chr);
+    __m128i null_term = _mm_set1_epi8('\0');
+    __m128i result = _mm_set1_epi32(0);
 
     int mask = 0;
-    __m256i* restr = (__m256i*)str;
+    __m128i* restr = (__m128i *)str;
     for (;;)
     {
-        __m256i to_cmp = _mm256_lddqu_si256(restr);
-        result = _mm256_cmpeq_epi8(to_cmp, set_chr);
-        mask = _mm256_movemask_epi8(result);
+        __m128i to_cmp = _mm_lddqu_si128((const __m128i *)restr);
+        result = _mm_cmpeq_epi8(to_cmp, set_chr);
+        mask = _mm_movemask_epi8(result);
         if (mask != 0)
         {
             char* to_ret = (char *)restr;
@@ -84,8 +85,8 @@ vstd_strchr(char* str, char chr)
         }
         else
         {
-            result = _mm256_cmpeq_epi8(to_cmp, null_term);
-            mask = _mm256_movemask_epi8(result);
+            result = _mm_cmpeq_epi8(to_cmp, null_term);
+            mask = _mm_movemask_epi8(result);
             if (mask != 0) return vp_nullptr;
         }
         restr++;
@@ -95,12 +96,31 @@ vstd_strchr(char* str, char chr)
 	return vp_nullptr;
 }
 
-int vstd_strlen(char *str)
+size_t
+vstd_strlen(char *str)
 {
-    char *null_pos = vstd_strchr(str, '\0');
-    return null_pos - str;
-}
 
+    size_t result = 0;
+
+    const __m128i zeros = _mm_setzero_si128();
+    __m128i* mem = (__m128i*)str;
+
+    for (/**/; /**/; mem++, result += 16) {
+
+        const __m128i data = _mm_loadu_si128(mem);
+        const __m128i cmp  = _mm_cmpeq_epi8(data, zeros);
+
+        if (!_mm_testc_si128(zeros, cmp)) {
+
+            int mask = _mm_movemask_epi8(cmp);
+
+            return result + __builtin_ctz(mask);
+        }
+    }
+
+    assert(false);
+    return 0;
+}
 
 char *
 vstd_strstr(char *str1, char *str2)

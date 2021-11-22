@@ -24,7 +24,9 @@ typedef struct vp_texture
 {
 	meters x;
 	meters y;
-	char *pixels;
+	int width;
+	int height;
+	unsigned char *pixels;
 } vp_texture;
 
 
@@ -37,6 +39,8 @@ renderer_pushback(vp_texture texutre);
 void
 renderer_buffer_reset();
 
-void RendererInit();
+void
+RendererInit();
 
-bool32 render_update();
+bool32
+render_update();

@@ -130,89 +130,114 @@ renderer_pushback(vp_texture texture)
 void
 renderer_buffer_reset()
 {
+	if(last_tex_index == 0) return;
 	memset(to_render_buffer, 0, sizeof(vp_texture) * (last_tex_index - 1));
 }
 
-void GenGLBuffs()
-{
-	vec3 cube[] = 
-	{
-		// [0] Front Bottom Left 	
-		{0-0.35f, 0-0.35f, 0},
-		// [1] Front Top left 
-		{0-0.35f, 1-0.35f, 0}, 
-		// [2] Front Top Right
-		{1-0.35f, 1-0.35f, 0},
-		// [3] Front Bottom Right
-		{1-0.35f, 0-0.35f, 0},
-		// [4] Top Left
-		{0-0.35f, 1-0.35f, 1},
-		// [5] Top Right 
-		{1-0.35f, 1-0.35f, 1},
-		// [6] Right side Bottom right
-		{1-0.35f, 0-0.35f, 1},
-		// [7] Bottom Top Left
-		{0-0.35f, 0-0.35f, 1}
-	};
-	GLuint indices[] = 
-	{
-		0, 1, 2,
-		0, 2, 3,
-		3, 2, 5,
-		3, 5, 6,
-		1, 4, 5,
-		1, 5, 2,
-		7, 4, 5,
-		7, 5, 6,
-		0, 1, 4,
-		0, 4, 7,
-		0, 7, 6,
-		0, 6, 3
-	};
-	
-	
+void
+GenGLBuffs()
+{	
 	glGenVertexArrays(1, &(renderer_state.vao));
 	glGenBuffers(1, &(renderer_state.vbo));
 	glGenBuffers(1, &(renderer_state.ebo));
+}
 
+void
+process_texture(vp_texture texture, vec3 *verts, int *vert_index, unsigned int *texture_array, int *texture_index);
+
+bool32 render_update()
+{
+	vp_memory vert_memory = vp_allocate_temp(KB(60));
+	vec3 *verts = vert_memory.ptr;
+	int vert_index = 0;
+	unsigned int textures[last_tex_index];
+	int texture_index;
+	glGenTextures(last_tex_index, textures);
+
+	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	
+	for(int index = 0; index < last_tex_index; ++index)
+	{
+		process_texture(to_render_buffer[index], verts, &vert_index, textures, &texture_index);
+	}
 
 	glBindVertexArray(renderer_state.vao);
 
 	glBindBuffer(GL_ARRAY_BUFFER, renderer_state.vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cube), cube, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vert_index * sizeof(vec3), verts, GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer_state.ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-		
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void *)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void *)0);
 	glEnableVertexAttribArray(0);
 	
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void *)(sizeof(vec3)));
+	glEnableVertexAttribArray(1);
+
 	
 	glBindBuffer(GL_ARRAY_BUFFER, 0); 
 
-    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-    glBindVertexArray(0); 
-}
-
-bool32 render_update()
-{
-	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
 
 	glUseProgram(renderer_state.shader_program);
-	glBindVertexArray(renderer_state.vao);
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(renderer_state.vao);
+	// Since vert_index counts from 0 on every texture we adjust for that by adding the number of textures to it
+	glDrawElements(GL_TRIANGLES, vert_index+last_tex_index, GL_UNSIGNED_INT, 0);
 
 	platform_swap_buffers();
 	return TRUE;
 }
 
+void
+process_texture(vp_texture texture, vec3 *verts, int *vert_index, unsigned int *texture_array, int *texture_index)
+{
+	glBindTexture(GL_TEXTURE_2D, texture_array[*texture_index]);
+	*texture_index += 1;
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.width, texture.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture.pixels);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	
+	// TODO: edit this when camera is added, change it to center origin
+	int width_in_meters = pixels_to_meters(texture.width);
+	int height_in_meters = pixels_to_meters(texture.height);
+
+	GLfloat tex_gl_left_x = texture.x / 15;
+	GLfloat tex_gl_right_x = tex_gl_left_x + (width_in_meters / 15);
+	
+	GLfloat tex_gl_top_y = texture.y / 8.4375;
+	GLfloat tex_gl_bottom_y = tex_gl_top_y - (height_in_meters);
+
+	// Top Right
+	int tmp = *vert_index;
+	verts[tmp++] = (struct vec3){tex_gl_right_x, tex_gl_top_y, 0.0f};
+	verts[tmp++] = (struct vec3){1.0f, 1.0f, 0.0f}; 
+	*vert_index += 2;
+
+	// Bottom Right
+	verts[tmp++] = (struct vec3){tex_gl_right_x, tex_gl_bottom_y, 0.0f};
+	verts[tmp++] = (struct vec3){1.0f, 0.0f, 0.0f}; 
+	*vert_index += 2;
+
+	// Bottom Left
+	verts[tmp++] = (struct vec3){tex_gl_left_x, tex_gl_bottom_y, 0.0f};
+	verts[tmp++] = (struct vec3){0.0f, 0.0f, 0.0f}; 
+	*vert_index += 2;
+
+	// Top Left
+	verts[tmp++] = (struct vec3){tex_gl_left_x, tex_gl_top_y, 0.0f};
+	verts[tmp++] = (struct vec3){0.0f, 1.0f, 0.0f}; 
+	*vert_index += 2;
+
+}
 
 void
 load_bmp_file(char *path, vp_texture *texture)
 {
-
+	// Should be fine ?
+	vp_allocate_temp(MB(10));
+	platform_file_to_buffer(0, path);
 }
