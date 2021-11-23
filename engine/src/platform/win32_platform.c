@@ -24,8 +24,8 @@ typedef struct win32_state
 internal win32_state *Win32State;
 internal vp_memory raw_input_memory;
 
-
-LRESULT CALLBACK WindowProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK
+WindowProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
 void Win32LoadOpenGL(HWND Window);
 void Win32LoadRawInput(HWND Window);
 
@@ -43,7 +43,6 @@ platform_init(vp_config game, platform_state *pstate)
 	Win32State->h = game.h;
 
 	Win32State->Instance = GetModuleHandleA(0);
-
 
 	WNDCLASSA wnd = {};
 	wnd.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
@@ -133,11 +132,12 @@ platform_get_absolute_path(char *output)
 
 
 void
-platform_file_to_buffer(char *output, char *path)
+platform_read_entire_file(char *path, entire_file *e_file)
 {
 	HANDLE File = CreateFileA(path, GENERIC_READ, 0, vp_nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, vp_nullptr);
 	if(File == INVALID_HANDLE_VALUE) return;
-	ReadFile(File, output, GetFileSize(File, vp_nullptr), vp_nullptr, vp_nullptr);
+	e_file->size = GetFileSize(File, vp_nullptr);
+	ReadFile(File, e_file->contents, e_file->size, vp_nullptr, vp_nullptr);
 	CloseHandle(File);
 }
 
@@ -158,8 +158,25 @@ platform_allocate_memory_chunk(uint64 size)
 
 }
 
+int64
+platform_get_frequency()
+{
+	LARGE_INTEGER result;
+	QueryPerformanceFrequency(&result);
+	return result.QuadPart;
+}
 
-void HandleRawInput(RAWINPUT *raw_input);
+int64
+platform_get_perf_counter()
+{
+	LARGE_INTEGER result;
+	QueryPerformanceCounter(&result);
+	return result.QuadPart;
+}
+
+
+void
+HandleRawInput(RAWINPUT *raw_input);
 
 bool32
 platform_handle_message()
@@ -208,7 +225,6 @@ platform_exit(bool32 is_error)
 	ExitProcess(is_error);
 }
 
-typedef BOOL wgl_swap_interval_ext(int interval);
 
 
 void
@@ -320,11 +336,17 @@ Win32LoadOpenGL(HWND Window)
 		VP_INFO("GL_VERSION %s\n", glGetString(GL_VERSION));
 		GLuint BlitTextureHandle = 1;
 		glGenTextures(1, &BlitTextureHandle);
-		wgl_swap_interval_ext *wglSwapInterval =
-		(wgl_swap_interval_ext *)wglGetProcAddress("wglSwapIntervalEXT");
-		if(wglSwapInterval)
+		typedef BOOL(WINAPI * PFNWGLSWAPINTERVALEXTPROC)(int interval);
+		PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = NULL;
+		wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
+
+		if(wglSwapIntervalEXT)
 		{
-			wglSwapInterval(1);
+			wglSwapIntervalEXT(1);
+		}
+		else
+		{
+			VP_ERROR("FAILED TO ENABLE OPENGL!");
 		}
 	}
 	else
@@ -468,7 +490,8 @@ LRESULT CALLBACK WindowProc(
 			int Width = ClientRect.right - ClientRect.left;
 			int Height = ClientRect.bottom - ClientRect.top;
 			glViewport(0, 0, Width, Height);
-			#if 0
+
+#if 0
 			if(RenderBuffer.Memory != 0) VirtualFree(RenderBuffer.Memory, 0, MEM_RELEASE);
 			RenderBuffer.Memory = (unsigned char *)VirtualAlloc(NULL, 
 																RenderBuffer.Width * RenderBuffer.Height * RenderBuffer.BytesPerPixel, 
@@ -483,10 +506,6 @@ LRESULT CALLBACK WindowProc(
 				int Width = Paint.rcPaint.right - Paint.rcPaint.left;
 				int Height = Paint.rcPaint.bottom - Paint.rcPaint.top;
 				glViewport(0, 0, Width, Height);
-				if(!render_update())
-				{
-					VP_ERROR("A failure has occured in the internal renderer");
-				}
 				EndPaint(Win32State->Window, &Paint);
 			}
 			

@@ -1,6 +1,7 @@
 #include "application.h"
 
 
+#include "platform/platform.h"
 // renderer.h loads vp_memory.h, platform.h and defines.h 
 #include "renderer/renderer.h"
 #include "log.h"
@@ -38,7 +39,6 @@ void application_create(vp_game *game)
 	app.is_suspended = false;
 	app.width = app.game->config.w;
 	app.height = app.game->config.h;
-	int garb_size = vstd_strlen("a very simple string that should be handled in 2 loops and not any more or less espcially less please for the love of god work I didn't even write this how is it broken??");
 	if(!platform_init(app.game->config, &(app.pstate) ))
 	{
 		// TODO: Fatal Error
@@ -54,8 +54,11 @@ void application_create(vp_game *game)
 
 void application_run(vp_game *game)
 {
+	int64 frequency = platform_get_frequency();
+	int64 start_counter = platform_get_perf_counter();
 	while(app.is_running)
 	{
+		
 		if(!platform_handle_message())
 		{
 			app.is_running = false;
@@ -73,7 +76,14 @@ void application_run(vp_game *game)
 			VP_ERROR("A failure has occurred with internal rendering!");
 		}
 		renderer_buffer_reset();
+		vp_free_temp_memory();
+		int64 end_counter = platform_get_perf_counter();
+		int64 elapsed = end_counter - start_counter;
+		int32 FPS = frequency / elapsed;
 
+		VP_WARN("FPS: %d", FPS);
+
+		start_counter = end_counter;
 	}
 }
 

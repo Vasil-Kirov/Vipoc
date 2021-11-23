@@ -30,7 +30,7 @@ platform_allocate_console();
 
 
 void
-platform_file_to_buffer(char *output, char *path);
+platform_read_entire_file(char *path, entire_file *e_file);
 
 
 uint64
@@ -51,3 +51,11 @@ platform_exit(bool32 is_error);
 
 int
 platform_get_width();
+
+
+int64
+platform_get_perf_counter();
+
+
+int64
+platform_get_frequency();

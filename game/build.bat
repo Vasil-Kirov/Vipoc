@@ -8,10 +8,10 @@ FOR /R %%f in (*.c) do (
 )
 
 IF [%1] == [] (
-    SET CompilerFlags=-g -Wvarargs -Wall -DVIPOC_DEBUG
+    SET CompilerFlags=-debug -Wvarargs -Wall -DVIPOC_DEBUG
 ) ELSE IF [%1] == [release] (
     ECHO -------- RELEASE --------
-    SET CompilerFlags=-O3 -Warargs -Wall -Werror
+    SET CompilerFlags=-O3 -Wvarargs -Wall -Werror
 ) ELSE IF [%1] == [debug] (
     SET CompilerFlags=-g -Wvarargs -Wall -DVIPOC_DEBUG
 ) ELSE (
@@ -29,4 +29,4 @@ Set Libraries=-L../bin/ -lVipoc.lib -luser32
 
 
 ECHO "Building %assembly%..."
-clang %Files% %CompilerFlags% -o ../bin/%assembly%.exe %defines% %Includes% %Libraries%
+clang %Files% %CompilerFlags% -o ../bin/%assembly%.exe %defines% %Includes% %Libraries% -Xlinker -MAP 

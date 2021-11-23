@@ -21,7 +21,7 @@ int __cdecl memcmp(
 
 
 #ifdef VIPOC_DEBUG
-#define assert(expression) if(!expression) {*(int *)0 = 0;}
+#define assert(expression) if(!expression) {*(volatile int *)0 = 0;}
 #else
 #define assert(expression)
 #endif
@@ -91,6 +91,13 @@ typedef struct render_buffer
 	int32 Height;
 	int32 BytesPerPixel;
 } render_buffer;
+
+
+typedef struct entire_file
+{
+	int size;
+	void *contents;
+} entire_file;
 
 #define true 1
 #define false 0

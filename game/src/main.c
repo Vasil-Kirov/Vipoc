@@ -1,11 +1,6 @@
-#include <entry.h>
-#define true 1
-#define false 0
-#define TRUE true
-#define FALSE false
+#include <Vipoc.h>
+#include <math.h>
 
-
-static int SwitchKey = true; 
 
 /* Struct section */
 struct res
@@ -14,6 +9,24 @@ struct res
 	int h;
 };
 
+
+typedef struct vec2
+{
+	float x;
+	float y;
+} vec2;
+
+void scale_vector(vec2 *vector, float scaler)
+{
+	vector->x *= scaler;
+	vector->y *= scaler;
+}
+
+void add_vec_to_tex(vp_texture *tex, vec2 vector)
+{
+	tex->x += vector.x;
+	tex->y += vector.y;
+}
 
 bool32
 OnResize(vp_game *game, int w, int h)
@@ -24,16 +37,40 @@ OnResize(vp_game *game, int w, int h)
 bool32
 Update(vp_game *game, float delta_time)
 {
-	if(vp_is_keydown(VP_KEY_UP) && SwitchKey)
+	static bool32 isFirst = true;
+	static vp_texture player = (vp_texture){50, 50};
+	if(isFirst)
 	{
-		SwitchKey = false;
-		VP_ERROR("FATAL KEY HAS BEEN PRESSED!");
-		VP_FATAL("Up is down!");
+		isFirst = false;
+		player = vp_load_texture("E:\\Project\\Vipoc\\image.bmp");
 	}
-	if(!vp_is_keydown(VP_KEY_UP))
+
+	float speed = 1.0f;
+	vec2 to_move = {};
+	if(vp_is_keydown(VP_KEY_RIGHT))
 	{
-		SwitchKey = true;
+		to_move.x += speed;
 	}
+	if (vp_is_keydown(VP_KEY_LEFT))
+	{
+		to_move.x -= speed;
+	}
+	if (vp_is_keydown(VP_KEY_UP))
+	{
+		to_move.y += speed;
+	}
+	if (vp_is_keydown(VP_KEY_DOWN))
+	{
+		to_move.y -= speed;
+	}
+	if(to_move.x && to_move.y)
+	{
+		scale_vector(&to_move, 0.70710678118f);
+	}
+	add_vec_to_tex(&player, to_move);
+	
+	vp_render_pushback(player);
+
 	return TRUE;
 }
 
@@ -43,60 +80,8 @@ vp_start(vp_game *game)
 	game->config.name = "vipoc_game";
 	game->config.x = 0;
 	game->config.y = 0;
-	game->config.w = 800;
-	game->config.h = 600;
+	game->config.w = 1600;
+	game->config.h = 900;
 	game->vp_update=Update;
 	game->vp_on_resize=OnResize;
 }
-
-/*
-int main()
-{
-	render_buffer RenderBuffer;
-	
-	LARGE_INTEGER PerfFreq;
-	QueryPerformanceFrequency(&PerfFreq); 
-	int64 PerfCountFreq = PerfFreq.QuadPart;
-	
-		
-	wchar ExePath[MAX_PATH];
-	GetExeDirectory(ExePath);
-
-	LARGE_INTEGER LastCounter;
-	QueryPerformanceCounter(&LastCounter);
-		
-	bool32 Running = true;
-		
-	int XOffset = 0;
-	int YOffset = 0;
-	while(Running)
-	{
-		
-		
-		GameUpdateAndRender(&RenderBuffer, XOffset, YOffset);
-		++XOffset;
-		++YOffset;
-		
-		LARGE_INTEGER EndCounter;
-		QueryPerformanceCounter(&EndCounter);
-		
-		int64 CounterElapsed = EndCounter.QuadPart - LastCounter.QuadPart;
-		
-		// NOTE(Vasko): DEBUG FPS
-		int32 FPS = (int32)(PerfCountFreq / CounterElapsed);
-		char FPS_DEBUG[1024];
-		vstd_sprintf(FPS_DEBUG, "FPS: %d\n", FPS);
-		OutputDebugStringA(FPS_DEBUG);
-		
-		// NOTE(Vasko): DEBUG MS
-		int64 MSPerFrame = (1000*CounterElapsed) / PerfCountFreq ;
-		char MS_DEBUG[1024];
-		vstd_sprintf(MS_DEBUG, "%dms since last frame\n", MSPerFrame);
-		OutputDebugStringA(MS_DEBUG);
-		
-		QueryPerformanceCounter(&EndCounter);
-		LastCounter = EndCounter; 
-		
-	}
-}
-*/

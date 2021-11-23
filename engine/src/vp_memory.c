@@ -20,7 +20,7 @@ vp_arena *memory_init(uint64 size)
 	temp_memory.start = platform_allocate_memory_chunk(size*4);
 	
 	// Asset memory 0ed on call
-	asset_memory.start = platform_allocate_memory_chunk(size*10);
+	asset_memory.start = platform_allocate_memory_chunk(size*50);
 
 	memory_arena.end = memory_arena.start;
 	temp_memory.end = temp_memory.start;
@@ -80,7 +80,6 @@ vp_free_asset_memory()
 void
 vp_free_temp_memory()
 {
-	memset(temp_memory.start, 0, temp_memory.end - temp_memory.start);
 	temp_memory.end = temp_memory.start;
 }
 

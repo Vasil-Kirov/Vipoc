@@ -105,13 +105,14 @@ vstd_strlen(char *str)
     const __m128i zeros = _mm_setzero_si128();
     __m128i* mem = (__m128i*)str;
 
-    for (/**/; /**/; mem++, result += 16) {
+    for (/**/; /**/; mem++, result += 16) 
+	{
 
         const __m128i data = _mm_loadu_si128(mem);
         const __m128i cmp  = _mm_cmpeq_epi8(data, zeros);
 
-        if (!_mm_testc_si128(zeros, cmp)) {
-
+        if (!_mm_testc_si128(zeros, cmp)) 
+		{
             int mask = _mm_movemask_epi8(cmp);
 
             return result + __builtin_ctz(mask);
@@ -125,6 +126,7 @@ vstd_strlen(char *str)
 char *
 vstd_strstr(char *str1, char *str2)
 {
+	return vp_nullptr;
 	// TODO: Finish this, look at the Test++ vs project for the (not-working) implementation
 }
 
