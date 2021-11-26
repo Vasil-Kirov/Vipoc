@@ -4,16 +4,12 @@
 #include "input.h"
 #include "log.h"
 #include "renderer/renderer.h"
+#include "platform/platform.h"
+
+
+VP_API void
+vp_init(vp_game game);
 
 
 
-extern void vp_start(vp_game *game);
-
-int main()
-{
-    logger_init();
-    vp_game game;
-    vp_start(&game);
-    application_create(&game);
-}
 

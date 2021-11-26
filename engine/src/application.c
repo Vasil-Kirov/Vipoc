@@ -46,44 +46,21 @@ void application_create(vp_game *game)
 	RendererInit();
 
 	app.game->vp_on_resize(app.game, app.width, app.height);
-
-
-	application_run(app.game);
 }
 
-
-void application_run(vp_game *game)
+bool32 vp_handle_messages()
 {
-	int64 frequency = platform_get_frequency();
-	int64 start_counter = platform_get_perf_counter();
-	while(app.is_running)
+	if(!platform_handle_message()) return FALSE;
+	return TRUE;
+}
+
+void vp_present()
+{
+	if(!render_update())
 	{
-		
-		if(!platform_handle_message())
-		{
-			app.is_running = false;
-		}
-
-		if(!game->vp_update(game, 0.0f))
-		{
-			// TODO: Error
-			VP_FATAL("vp_update has failed!");
-			app.is_running = false;
-			break;
-		}
-		if(!render_update())
-		{
-			VP_ERROR("A failure has occurred with internal rendering!");
-		}
-		renderer_buffer_reset();
-		vp_free_temp_memory();
-		int64 end_counter = platform_get_perf_counter();
-		int64 elapsed = end_counter - start_counter;
-		int32 FPS = frequency / elapsed;
-
-		VP_WARN("FPS: %d", FPS);
-
-		start_counter = end_counter;
+		VP_ERROR("A failure has occurred with internal rendering!");
 	}
+//	renderer_buffer_reset();
+	vp_free_temp_memory();
 }
 

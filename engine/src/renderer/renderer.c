@@ -12,14 +12,14 @@ typedef struct gl_state
 	GLuint vao;
 	GLuint vbo;
 	GLuint ebo;
+	GLuint texture;
+	vec3 *frame_verts;
+	GLuint last_frame_index;
 } gl_state;
 
 #define VP_MAX_TEXTURES 2048
 
 internal gl_state renderer_state;
-internal vp_texture to_render_buffer[VP_MAX_TEXTURES];
-internal int last_tex_index;
-internal unsigned int textures[VP_MAX_TEXTURES];
 
 vp_texture
 load_bmp_file(char *path);
@@ -28,6 +28,9 @@ void RendererInit()
 {
 	LoadGLExtensions();
 
+	vp_memory frame_vert_memory = vp_arena_allocate(KB(60));
+	renderer_state.frame_verts = (vec3 *)frame_vert_memory.ptr;
+	
 	// TODO: Change this to temp memory
 	vp_memory vertex_shader_source;
 	vertex_shader_source = vp_arena_allocate(MB(1));
@@ -121,30 +124,59 @@ void RendererInit()
 }
 
 
-vp_texture
-vp_load_texture(char *path)
+void
+vp_load_texture(char *path, int width, int height)
 {
-	vp_texture result = {}; 
+	vp_texture result = {};
 	if(strstr(path, ".bmp") != vp_nullptr)
 	{
 		result = load_bmp_file(path);
 	}
-	return result;
+	glGenTextures(1, &renderer_state.texture);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, renderer_state.texture);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, result.pixels);
+
 }
 
 void
-vp_render_pushback(vp_texture texture)
+vp_render_pushback(vec4 position, vec4 tex_location)
 {
-	glGenTextures(1, &textures[last_tex_index]);
-	to_render_buffer[last_tex_index++] = texture;
+	// Left Triangle
+
+	// Bottom left
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){position.x1, position.y1, 0.0f};
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){tex_location.x1, tex_location.y1, 0.0f};
+
+	// Top Left
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){position.x1, position.y2, 0.0f};
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){tex_location.x1, tex_location.y2, 0.0f};
+	
+	// Top Right
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){position.x2, position.y2, 0.0f};
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){tex_location.x2, tex_location.y2, 0.0f};
+
+	// Right triangle
+
+	// Bottom Left
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){position.x1, position.y1, 0.0f};
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){tex_location.x1, tex_location.y1, 0.0f};
+	
+	// Top Right
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){position.x2, position.y2, 0.0f};
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){tex_location.x2, tex_location.y2, 0.0f};
+	
+	// Bottom Right
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){position.x2, position.y1, 0.0f};
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){tex_location.x2, tex_location.y1, 0.0f};
+
 }
 
-void
-renderer_buffer_reset()
-{
-	if(last_tex_index == 0) return;
-	memset(to_render_buffer, 0, sizeof(vp_texture) * (last_tex_index - 1));
-}
 
 void
 GenGLBuffs()
@@ -153,36 +185,19 @@ GenGLBuffs()
 	glGenBuffers(1, &(renderer_state.vbo));
 }
 
-void
-process_texture(vp_texture texture, vec3 *verts, int *vert_index, unsigned int *texture_array, int *texture_index);
 
 bool32 render_update()
 {
-	vp_memory vert_memory = vp_allocate_temp(KB(60));
-	vec3 *verts = vert_memory.ptr;
-	int vert_index = 0;
-	
-	int texture_index = last_tex_index-1;
-	
-
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
-
-	
-	
-	for(int index = 0; index < last_tex_index; ++index)
-	{
-		process_texture(to_render_buffer[index], verts, &vert_index, textures, &texture_index);
-	}
+	if(renderer_state.last_frame_index == 0) return TRUE;
 
 	glBindVertexArray(renderer_state.vao);
-	if (glGetError() != 0)
-	{
-		VP_ERROR("GL ERROR: %d", glGetError());
-	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, renderer_state.vbo);
-	glBufferData(GL_ARRAY_BUFFER, vert_index * sizeof(vec3), verts, GL_STATIC_DRAW);
+
+	// NOTE: might be last_frame_index -1? Probably not, since it counts from 0
+	glBufferData(GL_ARRAY_BUFFER, renderer_state.last_frame_index * sizeof(vec3), renderer_state.frame_verts, GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void *)0);
 	glEnableVertexAttribArray(0);
@@ -191,8 +206,6 @@ bool32 render_update()
 	glEnableVertexAttribArray(1);
 
 	 
-
-
 	glUseProgram(renderer_state.shader_program);
 
 	glBindVertexArray(renderer_state.vao);
@@ -201,10 +214,8 @@ bool32 render_update()
 		VP_ERROR("GL ERROR: %d", glGetError());
 	}
 
-	// Since vert_index counts from 0 on every texture we adjust for that by adding the number of textures to it
-	//glDrawElements(GL_TRIANGLES, (vert_index+last_tex_index)*3, GL_UNSIGNED_INT, 0);
-	glDrawArrays(GL_TRIANGLES, 0, (vert_index + last_tex_index) * 3);
-	last_tex_index = 0;
+	glDrawArrays(GL_TRIANGLES, 0, renderer_state.last_frame_index * 3);
+	renderer_state.last_frame_index = 0;
 
 	platform_swap_buffers();
 	return TRUE;
@@ -216,61 +227,6 @@ pixels_to_meters(int pixels)
 	float pixels_per_meter = platform_get_width() / 100;
 	return(pixels / pixels_per_meter);
 	// 16:9 = 100 meters width; 56.25 meters height
-}
-void
-process_texture(vp_texture texture, vec3 *verts, int *vert_index, unsigned int *texture_array, int *texture_index)
-{
-	glBindTexture(GL_TEXTURE_2D, texture_array[*texture_index]);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	*texture_index += 1;
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.width, texture.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture.pixels);
-	if(glGetError() != GL_NO_ERROR) assert(false);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	
-	// TODO: edit this when camera is added, change it to center origin
-	float width_in_meters = pixels_to_meters(texture.width);
-	float height_in_meters = pixels_to_meters(texture.height);
-
-	GLfloat tex_gl_left_x = texture.x / 100;
-	GLfloat tex_gl_right_x = tex_gl_left_x + (width_in_meters / 100);
-	
-	GLfloat tex_gl_top_y = texture.y / 56.25;
-	GLfloat tex_gl_bottom_y = tex_gl_top_y - (height_in_meters / 56.25);
-
-	// Top Left
-	int tmp = *vert_index;
-	verts[tmp++] = (struct vec3){tex_gl_left_x, tex_gl_top_y, 0.0f};
-	verts[tmp++] = (struct vec3){0.0f, 1.0f, 0.0f}; 
-	*vert_index += 2;
-
-	// Top Right
-	verts[tmp++] = (struct vec3){tex_gl_right_x, tex_gl_top_y, 0.0f};
-	verts[tmp++] = (struct vec3){1.0f, 1.0f, 0.0f}; 
-	*vert_index += 2;
-
-	// Bottom Left
-	verts[tmp++] = (struct vec3){tex_gl_left_x, tex_gl_bottom_y, 0.0f};
-	verts[tmp++] = (struct vec3){0.0f, 0.0f, 0.0f}; 
-	*vert_index += 2;
-
-	// Bottom Left
-	verts[tmp++] = (struct vec3){tex_gl_left_x, tex_gl_bottom_y, 0.0f};
-	verts[tmp++] = (struct vec3){0.0f, 0.0f, 0.0f}; 
-	*vert_index += 2;
-
-	// Top Right
-	verts[tmp++] = (struct vec3){tex_gl_right_x, tex_gl_top_y, 0.0f};
-	verts[tmp++] = (struct vec3){1.0f, 1.0f, 0.0f};
-	*vert_index += 2;
-
-	// Bottom Right
-	verts[tmp++] = (struct vec3){tex_gl_right_x, tex_gl_bottom_y, 0.0f};
-	verts[tmp++] = (struct vec3){1.0f, 0.0f, 0.0f};
-	*vert_index += 2;
 }
 
 
@@ -292,7 +248,8 @@ load_bmp_file(char *path)
 		//													BYTES PER PIXEL NOT BITS
 		int pixels_size = header->Width * header->Height * header->BitsPerPixel ;
 		vp_memory asset_memory = vp_allocate_asset(pixels_size);
-		memcpy(asset_memory.ptr, file.contents + header->BitmapOffset, pixels_size);
+		char *pixels_ptr = file.contents + header->BitmapOffset;
+		memcpy(asset_memory.ptr, pixels_ptr, pixels_size);
 		result.pixels = asset_memory.ptr;
 		result.height = header->Height;
 		result.width = header->Width;

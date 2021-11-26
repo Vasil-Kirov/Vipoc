@@ -44,12 +44,24 @@ typedef struct vp_texture
 	unsigned char *pixels;
 } vp_texture;
 
-
-VP_API vp_texture
-vp_load_texture(char *path);
+typedef struct vec4
+{
+	float x1;
+	float y1;
+	float x2;
+	float y2;
+} vec4;
 
 VP_API void
-vp_render_pushback(vp_texture texutre);
+vp_load_texture(char *path, int width, int height);
+
+
+// Position = world position, Tex_Location = location in atlas
+// values must be between -1 and 1
+// function shouldn't be called before vp_load_texture
+VP_API void
+vp_render_pushback(vec4 position, vec4 tex_location);
+
 
 void
 renderer_buffer_reset();

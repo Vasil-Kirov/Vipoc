@@ -186,7 +186,7 @@ platform_handle_message()
 	{
 		if(Message.message == WM_QUIT)
 		{
-			return 0;
+			return false;
 		}
 		if(Message.message == WM_INPUT)
 		{
@@ -208,7 +208,7 @@ platform_handle_message()
 		DispatchMessageA(&Message);
 		
 	}
-	return 1;
+	return true;
 
 }
 

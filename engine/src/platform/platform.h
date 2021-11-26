@@ -29,7 +29,7 @@ void
 platform_allocate_console();
 
 
-void
+VP_API void
 platform_read_entire_file(char *path, entire_file *e_file);
 
 
@@ -37,7 +37,7 @@ uint64
 platform_get_size_of_file(char *path);
 
 
-void *
+VP_API void *
 platform_allocate_memory_chunk(uint64 size);
 
 

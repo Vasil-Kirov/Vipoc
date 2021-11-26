@@ -1,87 +1,136 @@
 #include <Vipoc.h>
-#include <math.h>
+#include "basic.h"
+#define Allocate(Size, Storage) Storage.End; Storage.End += Size
+
+static vp_game Game;
 
 
-/* Struct section */
-struct res
+unsigned char *ToNextLine(unsigned char *At)
 {
-	int w;
-	int h;
-};
+	while(*At!='\n') At++;
+	At++;
 
-
-typedef struct vec2
+	return At;
+}
+void ParseVATFile(atlas_member *Textures, entire_file File)
 {
-	float x;
-	float y;
-} vec2;
-
-void scale_vector(vec2 *vector, float scaler)
-{
-	vector->x *= scaler;
-	vector->y *= scaler;
+	unsigned char *At = (unsigned char *)File.contents;
+	while(true)
+	{
+		if(*At == '!') break;
+		else if(*At !='#') At = ToNextLine(At);
+		else
+		{
+			atlas_member new_member = {};
+			At++; // #
+			int insert_index = atoi((const char *)At++);
+			while(*At!='#' && *At != '!')
+			{
+				if(*At== 'x')
+				{
+					At++;
+					new_member.x = atoi((const char *)At);
+				}
+				else if(*At == 'y')
+				{
+					At++;
+					new_member.y = atoi((const char *)At);
+				}
+				else if (*At == 'w')
+				{
+					At++;
+					new_member.w = atoi((const char *)At);
+				}
+				else if (*At == 'h')
+				{
+					At++;
+					new_member.h = atoi((const char *)At);
+				}
+				At = ToNextLine(At);
+			}
+			Textures[insert_index] = new_member;
+		}
+	}
 }
 
-void add_vec_to_tex(vp_texture *tex, vec2 vector)
+bool32 OnResize(vp_game *internal_game, int Width, int Height)
 {
-	tex->x += vector.x;
-	tex->y += vector.y;
-}
-
-bool32
-OnResize(vp_game *game, int w, int h)
-{
+	if(Width == 0 || Height == 0) return TRUE;
+	Game.config.w = Width;
+	Game.config.h = Height;
 	return TRUE;
 }
 
-bool32
-Update(vp_game *game, float delta_time)
+vec4 GetAtlasPos(atlas_member member, int AtlasWidth, int AtlasHeight)
 {
-	static bool32 isFirst = true;
-	static vp_texture player = (vp_texture){50, 50};
-	if(isFirst)
-	{
-		isFirst = false;
-		player = vp_load_texture("E:\\Project\\Vipoc\\image.bmp");
-	}
-
-	float speed = 1.0f;
-	vec2 to_move = {};
-	if(vp_is_keydown(VP_KEY_RIGHT))
-	{
-		to_move.x += speed;
-	}
-	if (vp_is_keydown(VP_KEY_LEFT))
-	{
-		to_move.x -= speed;
-	}
-	if (vp_is_keydown(VP_KEY_UP))
-	{
-		to_move.y += speed;
-	}
-	if (vp_is_keydown(VP_KEY_DOWN))
-	{
-		to_move.y -= speed;
-	}
-	if(to_move.x && to_move.y)
-	{
-		scale_vector(&to_move, 0.70710678118f);
-	}
-	add_vec_to_tex(&player, to_move);
-	
-	vp_render_pushback(player);
-
-	return TRUE;
+	vec4 AtlasPos = {};
+	AtlasPos.x1 = member.x / member.w;
+	AtlasPos.y1 = member.y / member.h;
+	AtlasPos.x2 = AtlasPos.x1 + (member.w / (float)AtlasWidth);
+	AtlasPos.y2 = AtlasPos.y1 + (member.h / (float)AtlasHeight);
+	return AtlasPos;
+}
+vec4 CalculatePos(float x, float y, atlas_member member)
+{
+	vec4 Pos;
+	Pos.x1 = x/Game.config.w;
+	Pos.y1 = y/Game.config.h;
+	Pos.x2 = Pos.x1 + (member.w / Game.config.w);
+	Pos.y2 = Pos.y1 + (member.h / Game.config.h);
+	return Pos;
 }
 
-void
-vp_start(vp_game *game)
+int main()
 {
-	game->config.name = "vipoc_game";
-	game->config.x = 0;
-	game->config.y = 0;
-	game->config.w = 1600;
-	game->config.h = 900;
-	game->vp_update=Update;
-	game->vp_on_resize=OnResize;
+	Game.config.w = 1600;
+	Game.config.h = 900;
+	Game.config.x = 200;
+	Game.config.y = 200;
+	Game.config.name = "test game";
+	Game.vp_on_resize = OnResize;
+	vp_init(Game);
+
+
+	// TODO: add relative path
+	// TODO: read vat file for width and height
+
+	allocator PermanentStorage = {};
+	PermanentStorage.Start = platform_allocate_memory_chunk(MB(10));
+	allocator TempStorage = {};
+	TempStorage.Start = platform_allocate_memory_chunk(MB(125));
+
+	PermanentStorage.End = PermanentStorage.Start;
+	TempStorage.End = TempStorage.Start;
+
+	int AtlasWidth = 600;
+	int AtlasHeight = 200;
+
+	vp_load_texture("E:/Project/Vipoc/assets/test.bmp", AtlasWidth, AtlasHeight);
+	entire_file AtlasInfoFile;
+	AtlasInfoFile.contents = Allocate(KB(10), PermanentStorage);
+	platform_read_entire_file("E:/Project/Vipoc/assets/test_atlas.vat", &AtlasInfoFile);
+	atlas_member Textures[1024];
+	ParseVATFile(Textures, AtlasInfoFile);
+
+	bool32 Running = true;
+
+	float tex_x = 200;
+	float tex_y = 200;
+	while(Running)
+	{
+		if(vp_is_keydown(VP_KEY_UP)) tex_y += 2.0f;
+		if(vp_is_keydown(VP_KEY_LEFT)) tex_x -= 2.0f;
+		if (vp_is_keydown(VP_KEY_DOWN)) tex_y -= 2.0f;
+		if (vp_is_keydown(VP_KEY_RIGHT)) tex_x += 2.0f;
+		Running = vp_handle_messages();
+
+		vec4 Pos = CalculatePos(tex_x, tex_y, Textures[1]);
+		
+		vec4 AtlasPos = GetAtlasPos(Textures[1], AtlasWidth, AtlasHeight);
+		
+		vp_render_pushback(Pos, AtlasPos);
+
+		vp_present();
+	}
+	return 0;
 }
