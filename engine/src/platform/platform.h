@@ -53,9 +53,12 @@ int
 platform_get_width();
 
 
-int64
+int
+platform_get_height();
+
+VP_API int64
 platform_get_perf_counter();
 
 
-int64
+VP_API int64
 platform_get_frequency();

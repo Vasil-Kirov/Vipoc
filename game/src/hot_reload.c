@@ -47,8 +47,8 @@ CalculateRenderTarget(atlas_member Member, float X, float Y, int AtlasWidth, int
 __declspec(dllexport) GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 {
 	int RenderLastIndex = 0;
-	Targets[RenderLastIndex++] = CalculateRenderTarget(Members[1], PlayerX, PlayerY, AtlasSize.w, AtlasSize.h, 2, Game, XOffset, YOffset);
-	Targets[RenderLastIndex++] = CalculateRenderTarget(Members[2], 100, 200, AtlasSize.w, AtlasSize.h, 1, Game, XOffset, YOffset);
+	Targets[RenderLastIndex++] = CalculateRenderTarget(Members[0], PlayerX, PlayerY, AtlasSize.w, AtlasSize.h, 2, Game, XOffset, YOffset);
+	Targets[RenderLastIndex++] = CalculateRenderTarget(Members[1], 100, 200, AtlasSize.w, AtlasSize.h, 1, Game, XOffset, YOffset);
 	return RenderLastIndex;
 }
 
@@ -56,6 +56,6 @@ BOOL WINAPI DllMain(
 	HINSTANCE hinstDLL, // handle to DLL module
 	DWORD fdwReason,	// reason for calling function
 	LPVOID lpReserved)	// reserved
-	{
-		return TRUE;
-	}
+{
+	return TRUE;
+}

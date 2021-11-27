@@ -1,0 +1,5 @@
+@ECHO OFF
+
+PUSHD BIN
+START game.exe
+POPD

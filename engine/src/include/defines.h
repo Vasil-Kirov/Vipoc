@@ -12,6 +12,8 @@ void* __cdecl memset(
     size_t _Size
     );
 
+_Check_return_ int __cdecl atoi(_In_z_ char const *_String);
+
 _NODISCARD _Check_return_
 int __cdecl memcmp(
     _In_reads_bytes_(_Size) void const* _Buf1,

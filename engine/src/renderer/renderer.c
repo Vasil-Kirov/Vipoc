@@ -1,6 +1,7 @@
 #include "renderer/renderer.h"
 #include "platform/platform.h"
 
+#define swapf(a, b) {float tmp = a; a = b; b = tmp;}
 
 // temp function
 void GenGLBuffs();
@@ -13,8 +14,13 @@ typedef struct gl_state
 	GLuint vbo;
 	GLuint ebo;
 	GLuint texture;
+	GLuint text_atlas;
+	GLuint text_atlas_width;
+	GLuint text_atlas_height;
 	vec3 *frame_verts;
 	GLuint last_frame_index;
+	vec3 *text_verts;
+	GLuint last_text_index;
 } gl_state;
 
 #define VP_MAX_TEXTURES 2048
@@ -22,6 +28,7 @@ typedef struct gl_state
 internal gl_state renderer_state;
 global_var vp_render_target to_render[1024];
 global_var int last_tex_index;
+global_var ascii_char ascii_char_map[256];
 
 vp_texture
 load_bmp_file(char *path);
@@ -32,7 +39,10 @@ void RendererInit()
 
 	vp_memory frame_vert_memory = vp_arena_allocate(KB(60));
 	renderer_state.frame_verts = (vec3 *)frame_vert_memory.ptr;
-	
+
+	vp_memory text_vert_memory = vp_arena_allocate(KB(60));
+	renderer_state.text_verts = (vec3 *)text_vert_memory.ptr;
+
 	// TODO: Change this to temp memory
 	vp_memory vertex_shader_source;
 	vertex_shader_source = vp_arena_allocate(MB(1));
@@ -129,6 +139,172 @@ void RendererInit()
 
 
 void
+vp_load_text_atlas(char *path, int width, int height)
+{
+	renderer_state.text_atlas_width = width;
+	renderer_state.text_atlas_height = height;
+	vp_texture result = {};
+	if (strstr(path, ".bmp") != vp_nullptr)
+	{
+		result = load_bmp_file(path);
+	}
+	glGenTextures(1, &renderer_state.text_atlas);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, renderer_state.text_atlas);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, result.pixels);
+}
+
+float normalize_coordinate(float x, float maxx, float minx)
+{
+	float Result;
+	Result = (2.0f * ((x - minx) / (maxx - minx))) - 1.0f;
+	return Result;
+}
+float normalize_tex_coordinate(float x, float maxx, float minx)
+{
+	float Result;
+	Result = ((x - minx) / (maxx - minx));
+	return Result;
+}
+
+void
+vp_draw_text(char *text, float x, float y)
+{
+	int space_from_last_char = 0;
+	int vert_from_last_char = 0;
+	for(int index = 0; text[index] != '\0'; ++index)
+	{
+		int char_width = ascii_char_map[(int)text[index]].rect.x2 - ascii_char_map[(int)text[index]].rect.x1;
+		int char_height = ascii_char_map[(int)text[index]].rect.y2 - ascii_char_map[(int)text[index]].rect.y1;
+		vp_render_target target = {};
+		target.world_position.x1 = x + space_from_last_char;
+		target.world_position.x2 = target.world_position.x1 + char_width;
+		target.world_position.y1 = y - vert_from_last_char;
+		target.world_position.y2 = target.world_position.y1 + char_height;
+		target.texture_position = ascii_char_map[(int)text[index]].rect;
+
+		target.world_position.x2 *= 1.025f;
+		target.world_position.y2 *= 1.025f;
+
+		/* Normalize Coordinates */
+		target.world_position.x1 = normalize_coordinate(target.world_position.x1, platform_get_width(), 0);
+		target.world_position.x2 = normalize_coordinate(target.world_position.x2, platform_get_width(), 0);
+		target.world_position.y1 = normalize_coordinate(target.world_position.y1, platform_get_height(), 0);
+		target.world_position.y2 = normalize_coordinate(target.world_position.y2, platform_get_height(), 0);
+
+		target.texture_position.x1 = normalize_tex_coordinate(target.texture_position.x1, renderer_state.text_atlas_width, 0);
+		target.texture_position.x2 = normalize_tex_coordinate(target.texture_position.x2, renderer_state.text_atlas_width, 0);
+		target.texture_position.y1 = normalize_tex_coordinate(target.texture_position.y1, renderer_state.text_atlas_height, 0);
+		target.texture_position.y2 = normalize_tex_coordinate(target.texture_position.y2, renderer_state.text_atlas_height, 0);
+
+		// Left Triangle
+
+		// Bottom left
+		renderer_state.text_verts[renderer_state.last_text_index++] = (vec3){target.world_position.x1, target.world_position.y1, 0.0f};
+		renderer_state.text_verts[renderer_state.last_text_index++] = (vec3){target.texture_position.x1, target.texture_position.y1, 0.0f};
+
+		// Top Left
+		renderer_state.text_verts[renderer_state.last_text_index++] = (vec3){target.world_position.x1, target.world_position.y2, 0.0f};
+		renderer_state.text_verts[renderer_state.last_text_index++] = (vec3){target.texture_position.x1, target.texture_position.y2, 0.0f};
+
+		// Top Right
+		renderer_state.text_verts[renderer_state.last_text_index++] = (vec3){target.world_position.x2, target.world_position.y2, 0.0f};
+		renderer_state.text_verts[renderer_state.last_text_index++] = (vec3){target.texture_position.x2, target.texture_position.y2, 0.0f};
+
+		// Right triangle
+
+		// Bottom Left
+		renderer_state.text_verts[renderer_state.last_text_index++] = (vec3){target.world_position.x1, target.world_position.y1, 0.0f};
+		renderer_state.text_verts[renderer_state.last_text_index++] = (vec3){target.texture_position.x1, target.texture_position.y1, 0.0f};
+
+		// Top Right
+		renderer_state.text_verts[renderer_state.last_text_index++] = (vec3){target.world_position.x2, target.world_position.y2, 0.0f};
+		renderer_state.text_verts[renderer_state.last_text_index++] = (vec3){target.texture_position.x2, target.texture_position.y2, 0.0f};
+
+		// Bottom Right
+		renderer_state.text_verts[renderer_state.last_text_index++] = (vec3){target.world_position.x2, target.world_position.y1, 0.0f};
+		renderer_state.text_verts[renderer_state.last_text_index++] = (vec3){target.texture_position.x2, target.texture_position.y1, 0.0f};
+
+		space_from_last_char += 30; //ascii_char_map[(int)text[index]].offset_x * 15;
+		if(text[index] == '\n') vert_from_last_char += 10;
+	}
+}
+
+unsigned char *
+to_next_line(unsigned char *at)
+{
+	while (*at != '\n')
+		at++;
+	at++;
+
+	return at;
+}
+
+
+// DONT CALL BEFORE LOADING THE ATLAS
+void
+vp_parse_font_xml(entire_file file)
+{
+	vec4 result = {};
+	unsigned char *at = (unsigned char *)file.contents;
+	while(true)
+	{
+		/* Check if end was reached */
+		if (!strcmp((const char *)at, "</Font>\n")) break;
+
+		/* Get Offset */
+		at = (unsigned char *)strstr((const char *)at, "offset=\"");
+		at += sizeof("offset=\"")-1;
+		int offset_x = atoi((const char *)at);
+		while (*at != ' ')
+			++at;
+		++at;
+		int offset_y = atoi((const char *)at);
+
+		/* Get Char Size & Position */
+		at = (unsigned char *)strstr((const char *)at, "rect=\"");
+		at += sizeof("rect=\"")-1;
+		
+		result.x1 = atoi((const char *)at);
+		while(*at != ' ') 
+			++at;
+		++at;
+
+		result.y1 = atoi((const char *)at);
+		while (*at != ' ')
+			++at;
+		++at;
+		
+		result.x2 = atoi((const char *)at);
+		while (*at != ' ')
+			++at;
+		++at;
+		
+		result.y2 = atoi((const char *)at);
+		at = (unsigned char *)strstr((const char *)at, "code=\"");
+		at += sizeof("code=\"")-1;
+		
+		result.x2 += result.x1;
+		result.y2 += result.y1;
+
+		result.y1 = renderer_state.text_atlas_height - result.y1;
+		result.y2 = renderer_state.text_atlas_height - result.y2;
+		swapf(result.y1, result.y2);
+
+		ascii_char_map[*at].rect = result;
+		ascii_char_map[*at].offset_x = offset_x;
+		ascii_char_map[*at].offset_y = offset_y;
+
+		at = to_next_line(at);
+	}
+}
+
+void
 vp_load_texture(char *path, int width, int height)
 {
 	vp_texture result = {};
@@ -215,7 +391,11 @@ render_update()
 {
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
-	if(last_tex_index == 0) return TRUE;
+
+	GLint uniform_location = glGetUniformLocation(renderer_state.shader_program, "texture1");
+	glUniform1i(uniform_location, 0);
+	/* Draw Textures */
+	if (last_tex_index == 0) return TRUE;
 	SortRenderEntries(to_render, last_tex_index);
 	for(int Index = 0; Index < last_tex_index; ++Index)
 	{
@@ -226,7 +406,6 @@ render_update()
 
 	glBindBuffer(GL_ARRAY_BUFFER, renderer_state.vbo);
 
-	// NOTE: might be last_frame_index -1? Probably not, since it counts from 0
 	glBufferData(GL_ARRAY_BUFFER, renderer_state.last_frame_index * sizeof(vec3), renderer_state.frame_verts, GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void *)0);
@@ -244,9 +423,38 @@ render_update()
 		VP_ERROR("GL ERROR: %d", glGetError());
 	}
 
+	
 	glDrawArrays(GL_TRIANGLES, 0, renderer_state.last_frame_index * 3);
 	renderer_state.last_frame_index = 0;
 	last_tex_index = 0;
+
+
+	/* Draw Text */ 
+	if(renderer_state.last_text_index != 0)
+	{
+		glUniform1i(uniform_location, 1);
+		glBindVertexArray(renderer_state.vao);
+
+		glBindBuffer(GL_ARRAY_BUFFER, renderer_state.vbo);
+
+		glBufferData(GL_ARRAY_BUFFER, renderer_state.last_text_index * sizeof(vec3), renderer_state.text_verts, GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void *)0);
+		glEnableVertexAttribArray(0);
+
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void *)(sizeof(vec3)));
+		glEnableVertexAttribArray(1);
+
+		glUseProgram(renderer_state.shader_program);
+
+		glBindVertexArray(renderer_state.vao);
+		if (glGetError() != 0)
+		{
+			VP_ERROR("GL ERROR: %d", glGetError());
+		}
+		glDrawArrays(GL_TRIANGLES, 0, renderer_state.last_text_index * 3);
+		renderer_state.last_text_index = 0;
+	} 
 
 	platform_swap_buffers();
 	return TRUE;

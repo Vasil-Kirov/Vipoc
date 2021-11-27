@@ -219,8 +219,12 @@ platform_get_width()
 	return Win32State->w;
 }
 
-void
-platform_exit(bool32 is_error)
+int platform_get_height()
+{
+	return Win32State->h;
+}
+
+void platform_exit(bool32 is_error)
 {
 	ExitProcess(is_error);
 }
@@ -399,9 +403,12 @@ platform_output_string(char *str, uint8 color)
 }
 
 
+
 void
 vp_render_pixels(render_buffer *Buffer)
 {
+	// started rendering with OpenGL. Look at renderer/renderer.c
+	#if 0
 	// NOTE(Vasko): If I start rendering with opengl these should be the window width and 
 	//              height
 
@@ -467,6 +474,7 @@ vp_render_pixels(render_buffer *Buffer)
 	
 	glEnd();
 	platform_swap_buffers();
+	#endif
 }
 
 

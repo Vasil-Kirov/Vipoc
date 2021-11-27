@@ -59,11 +59,23 @@ typedef struct vp_texture
 	unsigned char *pixels;
 } vp_texture;
 
-
+typedef struct ascii_char
+{
+	vec4 rect;
+	int offset_x;
+	int offset_y;
+} ascii_char;
 
 VP_API void
-vp_load_texture(char *path, int width, int height);
+vp_parse_font_xml(entire_file file);
 
+VP_API void
+vp_load_text_atlas(char *path, int width, int height);
+
+VP_API void
+vp_draw_text(char *text, float x, float y);
+
+VP_API void vp_load_texture(char *path, int width, int height);
 
 // Position = world position, Tex_Location = location in atlas
 // values must be between -1 and 1

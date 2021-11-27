@@ -1,6 +1,7 @@
 #include "basic.h"
 #include <Vipoc.h>
 #define Allocate(Size, Storage) Storage.End; Storage.End += Size
+#define Free(Storage) memset(Storage.Start, 0, Storage.End - Storage.Start); Storage.End = Storage.Start
 
 static vp_game Config;
 
@@ -38,6 +39,7 @@ ToNextLine(unsigned char *At)
 
 	return At;
 }
+
 
 void
 ParseVATFile(atlas_member *Textures, entire_file File)
@@ -120,15 +122,15 @@ int main()
 {
 	Config.config.w = 1280;
 	Config.config.h = 720;
-	Config.config.x = 50;
-	Config.config.y = 50;
+	Config.config.x = 0;
+	Config.config.y = 0;
 	Config.config.name = "test game";
 	Config.vp_on_resize = OnResize;
 	vp_init(Config);
 
+	char PathToFolder[MAX_PATH] = {};
+	platform_get_absolute_path(PathToFolder);
 
-	// TODO: add relative path
-	// TODO: read vat file for width and height
 
 	allocator PermanentStorage = {};
 	PermanentStorage.Start = platform_allocate_memory_chunk(MB(10));
@@ -139,22 +141,48 @@ int main()
 	TempStorage.End = TempStorage.Start;
 
 	rectangle AtlasSize = {};
-	entire_file AtlasInfoFile;
-	AtlasInfoFile.contents = Allocate(KB(10), PermanentStorage);
-	platform_read_entire_file("E:/Project/Vipoc/assets/test_atlas.vat", &AtlasInfoFile);
-	AtlasSize = GetAtlasRect(AtlasInfoFile);
+	entire_file AtlasInfoFile = {};
+	AtlasInfoFile.contents = Allocate(MB(1), TempStorage);
+	{
+		char AtlasInfoFileLocation[MAX_PATH] = {};
+		vstd_strcat(AtlasInfoFileLocation, PathToFolder);
+		vstd_strcat(AtlasInfoFileLocation, "assets/test_atlas.vat");
+		platform_read_entire_file(AtlasInfoFileLocation, &AtlasInfoFile);
+		AtlasSize = GetAtlasRect(AtlasInfoFile);
 
-	vp_load_texture("E:/Project/Vipoc/assets/test.bmp", AtlasSize.w, AtlasSize.h);
+		char AtlasFileLocation[MAX_PATH] = {};
+		vstd_strcat(AtlasFileLocation, PathToFolder);
+		vstd_strcat(AtlasFileLocation, "assets/test.bmp");
+
+		vp_load_texture(AtlasFileLocation, AtlasSize.w, AtlasSize.h);
+	}
+	entire_file FontInfoFile = {};
+	{
+		FontInfoFile.contents = Allocate(MB(1), TempStorage);
+
+		char FontInfoFileLocation[MAX_PATH] = {};
+		vstd_strcat(FontInfoFileLocation, PathToFolder);
+		vstd_strcat(FontInfoFileLocation, "assets/consolas.xml");
+		platform_read_entire_file(FontInfoFileLocation, &FontInfoFile);
+
+		char FontFileLocation[MAX_PATH] = {};
+		vstd_strcat(FontFileLocation, PathToFolder);
+		vstd_strcat(FontFileLocation, "assets/consolas.bmp");
+
+		vp_load_text_atlas(FontFileLocation, 128, 128);
+		vp_parse_font_xml(FontInfoFile);
+	}
 
 
+
+	
 	atlas_member Textures[1024];
 	ParseVATFile(Textures, AtlasInfoFile);
 
 	bool32 Running = true;
 
 
-	char PathToFolder[MAX_PATH] = {};
-	platform_get_absolute_path(PathToFolder);
+
 
 	float PlayerX = 400;
 	float PlayerY = 400;
@@ -165,12 +193,19 @@ int main()
 	int XOffset = 0;
 	int YOffset = 0;
 	float PlayerSpeed = 4.0f;
+
+	Free(TempStorage);
+
+	int64 PerfFrequency = platform_get_frequency();
+	int64 StartCounter = platform_get_perf_counter();
 	while(Running)
 	{
+		
 		if(LastReloadCounter++ >= 60)
 		{
 			if(Game.DLL != vp_nullptr) FreeLibrary(Game.DLL);
 			Game = LoadDLL(PathToFolder);
+			LastReloadCounter = 0;
 		}
 		if (vp_is_keydown(VP_KEY_W))
 			PlayerY += PlayerSpeed;
@@ -201,7 +236,19 @@ int main()
 			vp_render_pushback(Targets[Index]);
 		}
 
+
+
+		int64 EndCounter = platform_get_perf_counter();
+		int64 Elapsed = EndCounter - StartCounter;
+		int32 MSPerFrame = (int32)(( (1000*Elapsed) / PerfFrequency ));
+		int32 FPS = PerfFrequency / Elapsed;
+		
+		char ToDraw[2048] = {};
+		vstd_sprintf(ToDraw, "%dms FPS: %d", MSPerFrame, FPS);
+		vp_draw_text(ToDraw, 10, Config.config.h - 50);
+
 		vp_present();
+		StartCounter = EndCounter;
 	}
 	return 0;
 }
