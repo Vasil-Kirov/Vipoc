@@ -164,6 +164,7 @@ int main()
 	Game = LoadDLL(PathToFolder);
 	int XOffset = 0;
 	int YOffset = 0;
+	float PlayerSpeed = 4.0f;
 	while(Running)
 	{
 		if(LastReloadCounter++ >= 60)
@@ -171,6 +172,14 @@ int main()
 			if(Game.DLL != vp_nullptr) FreeLibrary(Game.DLL);
 			Game = LoadDLL(PathToFolder);
 		}
+		if (vp_is_keydown(VP_KEY_W))
+			PlayerY += PlayerSpeed;
+		if (vp_is_keydown(VP_KEY_S))
+			PlayerY -= PlayerSpeed;
+		if (vp_is_keydown(VP_KEY_A))
+			PlayerX -= PlayerSpeed;
+		if (vp_is_keydown(VP_KEY_D))
+			PlayerX += PlayerSpeed;
 		if (vp_is_keydown(VP_KEY_UP))
 			YOffset += 2.0f;
 		if (vp_is_keydown(VP_KEY_LEFT))

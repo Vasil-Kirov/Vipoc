@@ -16,8 +16,8 @@ float NormalizeTexCoordinate(float X, float MaxX, float MinX)
 vec4 CalculateAtlasPos(atlas_member Member, int AtlasWidth, int AtlasHeight)
 {
 	vec4 AtlasPos = {};
-	AtlasPos.x1 = NormalizeTexCoordinate(Member.x, Member.w, 0);
-	AtlasPos.y1 = NormalizeTexCoordinate(Member.y, Member.h, 0);
+	AtlasPos.x1 = NormalizeTexCoordinate(Member.x, AtlasWidth, 0);
+	AtlasPos.y1 = NormalizeTexCoordinate(Member.y, AtlasHeight, 0);
 	AtlasPos.x2 = NormalizeTexCoordinate(Member.x + Member.w, AtlasWidth, 0);
 	AtlasPos.y2 = NormalizeTexCoordinate(Member.y + Member.h, AtlasHeight, 0);
 	return AtlasPos;
@@ -38,7 +38,7 @@ CalculateRenderTarget(atlas_member Member, float X, float Y, int AtlasWidth, int
 {
 	vp_render_target Result = {};
 	Result.layer_id = LayerID;
-	Result.world_position = CalculateWorldPos(Member, X+XOffset, Y+YOffset, Game);
+	Result.world_position = CalculateWorldPos(Member, X-XOffset, Y-YOffset, Game);
 	Result.texture_position = CalculateAtlasPos(Member, AtlasWidth, AtlasHeight);
 	return Result;
 }
