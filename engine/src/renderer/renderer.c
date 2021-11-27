@@ -138,11 +138,11 @@ void RendererInit()
 }
 
 
+
 void
-vp_load_text_atlas(char *path, int width, int height)
+vp_load_text_atlas(char *path)
 {
-	renderer_state.text_atlas_width = width;
-	renderer_state.text_atlas_height = height;
+
 	vp_texture result = {};
 	if (strstr(path, ".bmp") != vp_nullptr)
 	{
@@ -156,7 +156,7 @@ vp_load_text_atlas(char *path, int width, int height)
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, result.pixels);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, result.width, result.height, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, result.pixels);
 }
 
 float normalize_coordinate(float x, float maxx, float minx)
@@ -188,8 +188,6 @@ vp_draw_text(char *text, float x, float y)
 		target.world_position.y2 = target.world_position.y1 + char_height;
 		target.texture_position = ascii_char_map[(int)text[index]].rect;
 
-		target.world_position.x2 *= 1.025f;
-		target.world_position.y2 *= 1.025f;
 
 		/* Normalize Coordinates */
 		target.world_position.x1 = normalize_coordinate(target.world_position.x1, platform_get_width(), 0);
@@ -230,8 +228,12 @@ vp_draw_text(char *text, float x, float y)
 		renderer_state.text_verts[renderer_state.last_text_index++] = (vec3){target.world_position.x2, target.world_position.y1, 0.0f};
 		renderer_state.text_verts[renderer_state.last_text_index++] = (vec3){target.texture_position.x2, target.texture_position.y1, 0.0f};
 
-		space_from_last_char += 30; //ascii_char_map[(int)text[index]].offset_x * 15;
-		if(text[index] == '\n') vert_from_last_char += 10;
+		space_from_last_char += ascii_char_map[(int)text[index]].advance_x;
+		if(text[index] == '\n')
+		{
+			vert_from_last_char += 30;
+			space_from_last_char = 0;
+		} 
 	}
 }
 
@@ -245,6 +247,50 @@ to_next_line(unsigned char *at)
 	return at;
 }
 
+
+#define ToAndPast(at, str) at = strstr(at, str); at+=sizeof(str)-1
+
+void
+vp_parse_font_fnt(entire_file file)
+{
+	if(file.contents == vp_nullptr)
+	{
+		VP_ERROR("Passing invalid file to vp_parse_font_fnt!");
+		return;
+	}
+	const char *at = (const char *)file.contents;
+	ToAndPast(at, "scaleW=");
+	renderer_state.text_atlas_width = atoi(at);
+	ToAndPast(at, "scaleH=");
+	renderer_state.text_atlas_height = atoi(at);
+
+	while(true)
+	{
+		vec4 result = {};
+		ToAndPast(at, "char id=");
+		char id = atoi(at);
+		ToAndPast(at, "x=");
+		result.x1 = atoi(at);
+		ToAndPast(at, "y=");
+		result.y1 = atoi(at);
+		ToAndPast(at, "width=");
+		result.x2 = result.x1 + atoi(at);
+		ToAndPast(at, "height=");
+		result.y2 = result.y1 + atoi(at);
+		ToAndPast(at, "xadvance=");
+		int advance_x = atoi(at);
+
+		result.y1 = renderer_state.text_atlas_height - result.y1;
+		result.y2 = renderer_state.text_atlas_height - result.y2;
+		swapf(result.y1, result.y2);
+
+		ascii_char_map[(int)id].rect = result;
+		ascii_char_map[(int)id].advance_x = advance_x;
+		
+		// NOTE: Might be better to have some more concrete way to define the end of a file
+		if(id == 126) break;
+	}
+}
 
 // DONT CALL BEFORE LOADING THE ATLAS
 void
@@ -260,7 +306,7 @@ vp_parse_font_xml(entire_file file)
 		/* Get Offset */
 		at = (unsigned char *)strstr((const char *)at, "offset=\"");
 		at += sizeof("offset=\"")-1;
-		int offset_x = atoi((const char *)at);
+		int advance_x = atoi((const char *)at);
 		while (*at != ' ')
 			++at;
 		++at;
@@ -297,7 +343,7 @@ vp_parse_font_xml(entire_file file)
 		swapf(result.y1, result.y2);
 
 		ascii_char_map[*at].rect = result;
-		ascii_char_map[*at].offset_x = offset_x;
+		ascii_char_map[*at].advance_x = advance_x;
 		ascii_char_map[*at].offset_y = offset_y;
 
 		at = to_next_line(at);
@@ -396,6 +442,8 @@ render_update()
 	glUniform1i(uniform_location, 0);
 	/* Draw Textures */
 	if (last_tex_index == 0) return TRUE;
+
+	// TODO: Change this to a good sorting algorithm
 	SortRenderEntries(to_render, last_tex_index);
 	for(int Index = 0; Index < last_tex_index; ++Index)
 	{

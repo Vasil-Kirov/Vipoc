@@ -122,12 +122,11 @@ int main()
 {
 	Config.config.w = 1280;
 	Config.config.h = 720;
-	Config.config.x = 0;
-	Config.config.y = 0;
+	Config.config.x = VP_USE_DEFAULT;
+	Config.config.y = VP_USE_DEFAULT;
 	Config.config.name = "test game";
 	Config.vp_on_resize = OnResize;
 	vp_init(Config);
-
 	char PathToFolder[MAX_PATH] = {};
 	platform_get_absolute_path(PathToFolder);
 
@@ -162,15 +161,16 @@ int main()
 
 		char FontInfoFileLocation[MAX_PATH] = {};
 		vstd_strcat(FontInfoFileLocation, PathToFolder);
-		vstd_strcat(FontInfoFileLocation, "assets/consolas.xml");
+		vstd_strcat(FontInfoFileLocation, "assets/consolas.fnt");
 		platform_read_entire_file(FontInfoFileLocation, &FontInfoFile);
 
 		char FontFileLocation[MAX_PATH] = {};
 		vstd_strcat(FontFileLocation, PathToFolder);
 		vstd_strcat(FontFileLocation, "assets/consolas.bmp");
 
-		vp_load_text_atlas(FontFileLocation, 128, 128);
-		vp_parse_font_xml(FontInfoFile);
+		vp_parse_font_fnt(FontInfoFile);
+		vp_load_text_atlas(FontFileLocation);
+		
 	}
 
 
@@ -187,6 +187,9 @@ int main()
 	float PlayerX = 400;
 	float PlayerY = 400;
 	int LastReloadCounter = 0;
+	int FPSReloadCounter = 15;
+	int32 FPS = 0;
+	int32 MSPerFrame = 0;
 	reloader Game = {};
 	vp_render_target Targets[1024];
 	Game = LoadDLL(PathToFolder);
@@ -201,7 +204,7 @@ int main()
 	while(Running)
 	{
 		
-		if(LastReloadCounter++ >= 60)
+		if(LastReloadCounter++ >= 600000)
 		{
 			if(Game.DLL != vp_nullptr) FreeLibrary(Game.DLL);
 			Game = LoadDLL(PathToFolder);
@@ -240,12 +243,17 @@ int main()
 
 		int64 EndCounter = platform_get_perf_counter();
 		int64 Elapsed = EndCounter - StartCounter;
-		int32 MSPerFrame = (int32)(( (1000*Elapsed) / PerfFrequency ));
-		int32 FPS = PerfFrequency / Elapsed;
+		
+		if(FPSReloadCounter++ >= 3)
+		{
+			MSPerFrame = (int32)(((1000 * Elapsed) / PerfFrequency));
+			FPS = PerfFrequency / Elapsed;
+			FPSReloadCounter = 0;
+		}
 		
 		char ToDraw[2048] = {};
-		vstd_sprintf(ToDraw, "%dms FPS: %d", MSPerFrame, FPS);
-		vp_draw_text(ToDraw, 10, Config.config.h - 50);
+		vstd_sprintf(ToDraw, "%dms FPS: %d\nnew line", MSPerFrame, FPS);
+		vp_draw_text(ToDraw, 5, Config.config.h - 35);
 
 		vp_present();
 		StartCounter = EndCounter;

@@ -21,6 +21,7 @@ int __cdecl memcmp(
     _In_                    size_t      _Size
     );
 
+#define VP_USE_DEFAULT 2147483648U
 
 #ifdef VIPOC_DEBUG
 #define assert(expression) if(!expression) {*(volatile int *)0 = 0;}
