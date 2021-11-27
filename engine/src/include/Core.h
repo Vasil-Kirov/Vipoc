@@ -20,6 +20,5 @@ typedef struct vp_game
 
 } vp_game;
 
-VP_API void GameUpdateAndRender(render_buffer *Buffer, int XOffset, int YOffset);
 
 

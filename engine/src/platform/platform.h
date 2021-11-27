@@ -41,7 +41,7 @@ VP_API void *
 platform_allocate_memory_chunk(uint64 size);
 
 
-void
+VP_API void
 platform_get_absolute_path(char *output);
 
 

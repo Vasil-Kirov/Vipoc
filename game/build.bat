@@ -2,10 +2,6 @@
 
 SetLocal EnableDelayedExpansion
 
-SET Files=
-FOR /R %%f in (*.c) do (
-    SET Files=!Files! %%f
-)
 
 IF [%1] == [] (
     SET CompilerFlags=-debug -Wvarargs -Wall -DVIPOC_DEBUG
@@ -27,6 +23,8 @@ Set Libraries=-L../bin/ -lVipoc.lib -luser32
 
 
 
+ECHO "Building hot reload DLL"
+clang src/hot_reload.c -shared %CompilerFlags% -o../bin/hot_reload.dll %Includes% %Defines%
 
 ECHO "Building %assembly%..."
-clang %Files% %CompilerFlags% -o ../bin/%assembly%.exe %defines% %Includes% %Libraries% -Xlinker -MAP 
+clang src/main.c %CompilerFlags% -o ../bin/%assembly%.exe %defines% %Includes% %Libraries% -Xlinker -MAP 

@@ -1,8 +1,8 @@
-#include <Vipoc.h>
 #include "basic.h"
+#include <Vipoc.h>
 #define Allocate(Size, Storage) Storage.End; Storage.End += Size
 
-static vp_game Game;
+static vp_game Config;
 
 
 rectangle
@@ -84,67 +84,47 @@ ParseVATFile(atlas_member *Textures, entire_file File)
 bool32 OnResize(vp_game *internal_game, int Width, int Height)
 {
 	if(Width == 0 || Height == 0) return TRUE;
-	Game.config.w = Width;
-	Game.config.h = Height;
+	Config.config.w = Width;
+	Config.config.h = Height;
 	return TRUE;
 }
 
-float
-NormalizeCoordinate(float X, float MaxX, float MinX)
+reloader
+LoadDLL(char *PathToFolder)
 {
-	float Result;
-	Result = (2.0f * ( (X - MinX) / (MaxX - MinX) )) - 1.0f;
-	return Result;
-}
-float
-NormalizeTexCoordinate(float X, float MaxX, float MinX)
-{
-	float Result;
-	Result = ((X - MinX) / (MaxX - MinX));
+	reloader Result = {};
+	char DLLPath[MAX_PATH] = {};
+	strcpy(DLLPath, PathToFolder);
+	vstd_strcat(DLLPath, "bin\\hot_reload.dll");
+	
+	char TempDLLPath[MAX_PATH] = {};
+	strcpy(TempDLLPath, PathToFolder);
+	vstd_strcat(TempDLLPath, "bin\\hot_reload_temp.dll");
+	
+	if(CopyFile(DLLPath, TempDLLPath, FALSE) == FALSE) VP_ERROR("Failed to copy DLL!");
+	Result.DLL = LoadLibraryA(TempDLLPath);
+	if(Result.DLL == vp_nullptr)
+	{
+		VP_ERROR("Failed to load DLL");
+		return (reloader){};
+	}
+	// TODO: Default UpdateAndRender function if this one fails
+	Result.UpdateAndRender = (game_update_and_render *)GetProcAddress(Result.DLL, "GameUpdateAndRender");
+	if(Result.UpdateAndRender == vp_nullptr) VP_ERROR("Failed to get GameUpdateAndRender function!");
 	return Result;
 }
 
-vec4
-CalculateAtlasPos(atlas_member Member, int AtlasWidth, int AtlasHeight)
-{
-	vec4 AtlasPos = {};
-	AtlasPos.x1 = NormalizeTexCoordinate(Member.x, Member.w, 0);
-	AtlasPos.y1 = NormalizeTexCoordinate(Member.y, Member.h, 0);
-	AtlasPos.x2 = NormalizeTexCoordinate(Member.x + Member.w, AtlasWidth, 0);
-	AtlasPos.y2 = NormalizeTexCoordinate(Member.y + Member.h, AtlasHeight, 0);
-	return AtlasPos;
-}
-
-vec4 CalculateWorldPos(atlas_member Member, float X, float Y)
-{
-	vec4 Pos;
-	Pos.x1 = NormalizeCoordinate(X, Game.config.w, 0);
-	Pos.y1 = NormalizeCoordinate(Y, Game.config.h, 0);
-	Pos.x2 = NormalizeCoordinate(X + Member.w, Game.config.w, 0);
-	Pos.y2 = NormalizeCoordinate(Y + Member.h, Game.config.h, 0);
-	return Pos;
-}
-
-vp_render_target
-CalculateRenderTarget(atlas_member Member, float X, float Y, int AtlasWidth, int AtlasHeight, int LayerID)
-{
-	vp_render_target Result = {};
-	Result.layer_id = LayerID;
-	Result.world_position = CalculateWorldPos(Member, X, Y);
-	Result.texture_position = CalculateAtlasPos(Member, AtlasWidth, AtlasHeight);
-	return Result;
-}
 
 
 int main()
 {
-	Game.config.w = 1280;
-	Game.config.h = 720;
-	Game.config.x = 50;
-	Game.config.y = 50;
-	Game.config.name = "test game";
-	Game.vp_on_resize = OnResize;
-	vp_init(Game);
+	Config.config.w = 1280;
+	Config.config.h = 720;
+	Config.config.x = 50;
+	Config.config.y = 50;
+	Config.config.name = "test game";
+	Config.vp_on_resize = OnResize;
+	vp_init(Config);
 
 
 	// TODO: add relative path
@@ -172,22 +152,45 @@ int main()
 
 	bool32 Running = true;
 
-	float tex_x = 200;
-	float tex_y = 200;
+
+	char PathToFolder[MAX_PATH] = {};
+	platform_get_absolute_path(PathToFolder);
+
+	float PlayerX = 400;
+	float PlayerY = 400;
+	int LastReloadCounter = 0;
+	reloader Game = {};
+	vp_render_target Targets[1024];
+	Game = LoadDLL(PathToFolder);
+	int XOffset = 0;
+	int YOffset = 0;
 	while(Running)
 	{
-		if(vp_is_keydown(VP_KEY_UP)) tex_y += 2.0f;
-		if(vp_is_keydown(VP_KEY_LEFT)) tex_x -= 2.0f;
-		if (vp_is_keydown(VP_KEY_DOWN)) tex_y -= 2.0f;
-		if (vp_is_keydown(VP_KEY_RIGHT)) tex_x += 2.0f;
+		if(LastReloadCounter++ >= 60)
+		{
+			if(Game.DLL != vp_nullptr) FreeLibrary(Game.DLL);
+			Game = LoadDLL(PathToFolder);
+		}
+		if (vp_is_keydown(VP_KEY_UP))
+			YOffset += 2.0f;
+		if (vp_is_keydown(VP_KEY_LEFT))
+			XOffset -= 2.0f;
+		if (vp_is_keydown(VP_KEY_DOWN))
+			YOffset -= 2.0f;
+		if (vp_is_keydown(VP_KEY_RIGHT))
+			XOffset += 2.0f;
+
 		Running = vp_handle_messages();
-
-		vp_render_target TransparentCircle = CalculateRenderTarget(Textures[0], tex_x, tex_y, AtlasSize.w, AtlasSize.h, 0);
 		
-		vp_render_target GreenSquare = CalculateRenderTarget(Textures[1], 100, 100, AtlasSize.w, AtlasSize.h, 1);
-
-		vp_render_pushback(GreenSquare);
-		vp_render_pushback(TransparentCircle);
+		int TargetsSize = 0;
+		if(Game.UpdateAndRender != vp_nullptr)
+		{
+			TargetsSize = Game.UpdateAndRender(Textures, Config, PlayerX, PlayerY, AtlasSize, Targets, XOffset, YOffset);
+		}
+		for (int Index = 0; Index < TargetsSize; ++Index)
+		{
+			vp_render_pushback(Targets[Index]);
+		}
 
 		vp_present();
 	}
