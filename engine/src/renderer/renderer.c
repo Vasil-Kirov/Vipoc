@@ -20,6 +20,8 @@ typedef struct gl_state
 #define VP_MAX_TEXTURES 2048
 
 internal gl_state renderer_state;
+global_var vp_render_target to_render[1024];
+global_var int last_tex_index;
 
 vp_texture
 load_bmp_file(char *path);
@@ -121,6 +123,8 @@ void RendererInit()
 	vp_arena_free_to_chunk(fragment_shader_source);
 	vp_arena_free_to_chunk(vertex_shader_source);
 	GenGLBuffs();
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 
@@ -145,38 +149,42 @@ vp_load_texture(char *path, int width, int height)
 }
 
 void
-vp_render_pushback(vec4 position, vec4 tex_location)
+vp_render_pushback(vp_render_target target)
+{
+	to_render[last_tex_index++] = target;
+}
+
+void
+FrameBufferToVerts(vp_render_target target)
 {
 	// Left Triangle
 
 	// Bottom left
-	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){position.x1, position.y1, 0.0f};
-	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){tex_location.x1, tex_location.y1, 0.0f};
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){target.world_position.x1, target.world_position.y1, 0.0f};
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){target.texture_position.x1, target.texture_position.y1, 0.0f};
 
 	// Top Left
-	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){position.x1, position.y2, 0.0f};
-	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){tex_location.x1, tex_location.y2, 0.0f};
-	
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){target.world_position.x1, target.world_position.y2, 0.0f};
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){target.texture_position.x1, target.texture_position.y2, 0.0f};
+
 	// Top Right
-	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){position.x2, position.y2, 0.0f};
-	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){tex_location.x2, tex_location.y2, 0.0f};
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){target.world_position.x2, target.world_position.y2, 0.0f};
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){target.texture_position.x2, target.texture_position.y2, 0.0f};
 
 	// Right triangle
 
 	// Bottom Left
-	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){position.x1, position.y1, 0.0f};
-	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){tex_location.x1, tex_location.y1, 0.0f};
-	
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){target.world_position.x1, target.world_position.y1, 0.0f};
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){target.texture_position.x1, target.texture_position.y1, 0.0f};
+
 	// Top Right
-	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){position.x2, position.y2, 0.0f};
-	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){tex_location.x2, tex_location.y2, 0.0f};
-	
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){target.world_position.x2, target.world_position.y2, 0.0f};
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){target.texture_position.x2, target.texture_position.y2, 0.0f};
+
 	// Bottom Right
-	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){position.x2, position.y1, 0.0f};
-	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){tex_location.x2, tex_location.y1, 0.0f};
-
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){target.world_position.x2, target.world_position.y1, 0.0f};
+	renderer_state.frame_verts[renderer_state.last_frame_index++] = (vec3){target.texture_position.x2, target.texture_position.y1, 0.0f};
 }
-
 
 void
 GenGLBuffs()
@@ -184,13 +192,35 @@ GenGLBuffs()
 	glGenVertexArrays(1, &(renderer_state.vao));
 	glGenBuffers(1, &(renderer_state.vbo));
 }
+void
+SortRenderEntries(vp_render_target *Textures, int Size)
+{
+	for(int Index = 0; Index < Size; ++Index)
+	{
+		for(int Index2 = Index; Index2 < Size; ++Index2)
+		{
+			if(Textures[Index].layer_id > Textures[Index2].layer_id)
+			{
+				vp_render_target tmp = Textures[Index];
+				Textures[Index] = Textures[Index2];
+				Textures[Index2] = tmp;
+			}
+		}
+	}
+}
 
 
-bool32 render_update()
+bool32
+render_update()
 {
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
-	if(renderer_state.last_frame_index == 0) return TRUE;
+	if(last_tex_index == 0) return TRUE;
+	SortRenderEntries(to_render, last_tex_index);
+	for(int Index = 0; Index < last_tex_index; ++Index)
+	{
+		FrameBufferToVerts(to_render[Index]);
+	}
 
 	glBindVertexArray(renderer_state.vao);
 
@@ -216,6 +246,7 @@ bool32 render_update()
 
 	glDrawArrays(GL_TRIANGLES, 0, renderer_state.last_frame_index * 3);
 	renderer_state.last_frame_index = 0;
+	last_tex_index = 0;
 
 	platform_swap_buffers();
 	return TRUE;

@@ -31,3 +31,9 @@ typedef struct atlas_member
     float h;
 } atlas_member; 
 
+typedef struct rectangle
+{
+    int w;
+    int h;
+} rectangle;
+

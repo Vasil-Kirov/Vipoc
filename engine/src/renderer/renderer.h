@@ -18,6 +18,13 @@ typedef struct vec3
 	GLfloat z;
 } vec3;
 #pragma pack(pop)
+typedef struct vec4
+{
+	float x1;
+	float y1;
+	float x2;
+	float y2;
+} vec4;
 #pragma pack(push, 1)
 typedef struct bitmap_header
 {
@@ -35,6 +42,14 @@ typedef struct bitmap_header
 } bitmap_header;
 #pragma pack(pop)
 
+
+typedef struct vp_render_target
+{
+	int layer_id;
+	vec4 world_position;
+	vec4 texture_position;
+} vp_render_target;
+
 typedef struct vp_texture
 {
 	meters x;
@@ -44,13 +59,7 @@ typedef struct vp_texture
 	unsigned char *pixels;
 } vp_texture;
 
-typedef struct vec4
-{
-	float x1;
-	float y1;
-	float x2;
-	float y2;
-} vec4;
+
 
 VP_API void
 vp_load_texture(char *path, int width, int height);
@@ -60,8 +69,7 @@ vp_load_texture(char *path, int width, int height);
 // values must be between -1 and 1
 // function shouldn't be called before vp_load_texture
 VP_API void
-vp_render_pushback(vec4 position, vec4 tex_location);
-
+vp_render_pushback(vp_render_target target);
 
 void
 renderer_buffer_reset();
