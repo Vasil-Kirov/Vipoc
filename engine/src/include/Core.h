@@ -1,10 +1,14 @@
+#ifdef __cplusplus
+	extern "C"{
+#endif
+
 #pragma once
 #include "include/defines.h"
 
 
 typedef struct vp_config
 {
-    char *name;
+    char const *name;
     int x;
     int y;
     int w;
@@ -21,4 +25,6 @@ typedef struct vp_game
 } vp_game;
 
 
-
+#ifdef __cplusplus
+	}
+#endif

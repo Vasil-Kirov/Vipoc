@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+	extern "C"{
+#endif
+
 #pragma once
 
 // TODO: When exporting try to put the gl files in the engine so there aren't any dependencies
@@ -83,3 +87,8 @@ extern PFNGLGENERATEMIPMAPPROC glGenerateMipmap;
 #endif
 
 void LoadGLExtensions();
+
+
+#ifdef __cplusplus
+	}
+#endif

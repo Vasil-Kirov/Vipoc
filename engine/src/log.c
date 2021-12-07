@@ -13,10 +13,10 @@ logger_init()
 }
 
 
-void vp_log(log_level level, const char *str, char *color, ...)
+void vp_log(log_level level, const char *str, const char *color, ...)
 {
     const char *to_append[] = {"[FATAL]: ", "[ERROR]: ", "[WARN]: ", "[INFO]: "};
-    char to_print[4096];
+    char to_print[4096] = {};
     memset(to_print, 0, 4096);
 
 //    vstd_strcat(to_print, color);
@@ -26,7 +26,9 @@ void vp_log(log_level level, const char *str, char *color, ...)
     va_list args;
     va_start(args, color);
 
-    vstd_vsnsprintf(to_print, 4096, to_print, args);
+    char copy[4096] = {};
+    memcpy(copy, to_print, 4096);
+    vstd_vsnsprintf(to_print, 4096, copy, args);
 
     va_end(args);
     

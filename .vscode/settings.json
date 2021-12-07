@@ -3,6 +3,11 @@
         "renderer.h": "c",
         "vp_memory.h": "c",
         "platform.h": "c",
-        "cmath": "c"
+        "cmath": "c",
+        "cglm.h": "c",
+        "windowsx.h": "c",
+        "entity.h": "c",
+        "defines.h": "c",
+        "application.h": "c"
     }
 }

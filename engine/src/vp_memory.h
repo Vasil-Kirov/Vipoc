@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+	extern "C"{
+#endif
+
 #pragma once
 
 #include "include/defines.h"
@@ -35,3 +39,7 @@ vp_allocate_asset(uint64 size);
 
 void
 vp_free_asset_memory();
+
+#ifdef __cplusplus
+	}
+#endif

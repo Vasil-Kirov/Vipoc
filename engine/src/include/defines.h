@@ -1,25 +1,14 @@
+#ifdef __cplusplus
+	extern "C"{
+#endif
+
+
 #pragma once
 
 #include <stdint.h>
-
-
-
-
-
-void* __cdecl memset(
-    void*  _Dst,
-    int    _Val,
-    size_t _Size
-    );
+#include <memory.h>
 
 _Check_return_ int __cdecl atoi(_In_z_ char const *_String);
-
-_NODISCARD _Check_return_
-int __cdecl memcmp(
-    _In_reads_bytes_(_Size) void const* _Buf1,
-    _In_reads_bytes_(_Size) void const* _Buf2,
-    _In_                    size_t      _Size
-    );
 
 #define VP_USE_DEFAULT 2147483648U
 
@@ -71,9 +60,9 @@ typedef int32_t int32;
 typedef int64_t int64;
 
 
-#define _KB(b) b << 10
-#define _MB(b) b << 20
-#define _GB(b) b << 30
+#define _KB(b) (b << 10)
+#define _MB(b) (b << 20)
+#define _GB(b) (b << 30)
 
 #define KB(b) _KB((int64)b)
 #define MB(b) _MB((int64)b)
@@ -102,5 +91,12 @@ typedef struct entire_file
 	void *contents;
 } entire_file;
 
-#define true 1
-#define false 0
+#ifndef __cplusplus
+	#define true 1
+	#define false 0
+#endif
+
+
+#ifdef __cplusplus
+	}
+#endif

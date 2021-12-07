@@ -4,7 +4,7 @@ SetLocal EnableDelayedExpansion
 
 
 IF [%1] == [] (
-    SET CompilerFlags=-debug -Wvarargs -Wall -DVIPOC_DEBUG
+    SET CompilerFlags=-O0 -g -Wvarargs -Wall -DVIPOC_DEBUG
 ) ELSE IF [%1] == [release] (
     ECHO -------- RELEASE --------
     SET CompilerFlags=-O3 -Wvarargs -Wall -Werror
@@ -24,7 +24,7 @@ Set Libraries=-L../bin/ -lVipoc.lib -luser32
 
 
 ECHO "Building hot reload DLL"
-clang src/hot_reload.c -shared %CompilerFlags% -o../bin/hot_reload.dll %Includes% %Defines%
+clang++ src/hot_reload.cpp -shared %CompilerFlags% -o../bin/hot_reload.dll %Includes% %Defines%
 
 ECHO "Building %assembly%..."
-clang src/main.c %CompilerFlags% -o ../bin/%assembly%.exe %defines% %Includes% %Libraries% -Xlinker -MAP 
+clang++ src/main.cpp %CompilerFlags% -o ../bin/%assembly%.exe %defines% %Includes% %Libraries% -Xlinker -MAP 

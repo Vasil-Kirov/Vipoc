@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+	extern "C"{
+#endif
+
 #pragma once
 
 #include "application.h"
@@ -11,5 +15,7 @@ VP_API void
 vp_init(vp_game game);
 
 
-
+#ifdef __cplusplus
+	}
+#endif
 

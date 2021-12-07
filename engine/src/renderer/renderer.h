@@ -1,4 +1,9 @@
 #pragma once
+#ifdef __cplusplus
+	extern "C"{
+#endif
+
+
 
 #include "renderer/load_gl_black_magic.h"
 
@@ -6,25 +11,13 @@
 #include "vp_memory.h"
 #include "log.h"
 
+#include "renderer/math_3d.h"
+
 
 typedef float meters;
 
 // NOTE(Vasko): no padding (is it needed?)
-#pragma pack(push, 1)
-typedef struct vec3
-{
-	GLfloat x;
-	GLfloat y;
-	GLfloat z;
-} vec3;
-#pragma pack(pop)
-typedef struct vec4
-{
-	float x1;
-	float y1;
-	float x2;
-	float y2;
-} vec4;
+
 #pragma pack(push, 1)
 typedef struct bitmap_header
 {
@@ -43,12 +36,19 @@ typedef struct bitmap_header
 #pragma pack(pop)
 
 
+typedef struct atlas
+{
+	GLuint texture;
+	uint32 width;
+	uint32 height;
+} atlas;
 typedef struct vp_render_target
 {
 	int layer_id;
-	vec4 world_position;
-	vec4 texture_position;
+	m2 world_position;
+	m2 texture_position;
 } vp_render_target;
+
 
 typedef struct vp_texture
 {
@@ -61,10 +61,30 @@ typedef struct vp_texture
 
 typedef struct ascii_char
 {
-	vec4 rect;
+	m2 rect;
 	int advance_x;
 	int offset_y;
 } ascii_char;
+
+typedef struct delta_time
+{
+	float value;
+	float last_frame;
+} delta_time;
+
+typedef enum vp_direction
+{
+	VP_UP=0,
+	VP_DOWN=1,
+	VP_LEFT=2,
+	VP_RIGHT=3
+} vp_direction;
+
+VP_API float
+vp_get_dtime();
+
+VP_API void
+vp_draw_cube(v3 position, v4 color);
 
 VP_API void
 vp_parse_font_fnt(entire_file file);
@@ -76,16 +96,28 @@ VP_API void
 vp_load_text_atlas(char *path);
 
 VP_API void
-vp_draw_text(char *text, float x, float y);
+vp_draw_text(char *text, float x, float y, v4 color);
 
-VP_API
-void vp_load_texture(char *path, int width, int height);
+VP_API void
+vp_load_texture(char *path);
+
+VP_API void
+vp_move_camera(vp_direction direction, float camera_speed);
 
 // Position = world position, Tex_Location = location in atlas
 // values must be between -1 and 1
 // function shouldn't be called before vp_load_texture
 VP_API void
 vp_render_pushback(vp_render_target target);
+
+VP_API void
+vp_camera_mouse_callback(double xpos, double ypos);
+
+VP_API void
+vp_force_2d(bool32 on);
+
+VP_API void
+vp_draw_rectangle(m2 location, v4 color, int layer_id);
 
 void
 renderer_buffer_reset();
@@ -98,3 +130,14 @@ GenGLBuffs();
 
 bool32
 render_update();
+
+float
+meters_to_gl(float num, bool32 is_horizontal);
+
+vp_render_target
+normalize_render_target(vp_render_target target);
+
+
+#ifdef __cplusplus
+	}
+#endif

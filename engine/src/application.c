@@ -50,6 +50,7 @@ void application_create(vp_game *game)
 
 bool32 vp_handle_messages()
 {
+
 	if(!platform_handle_message()) return FALSE;
 	return TRUE;
 }

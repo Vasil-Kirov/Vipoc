@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+	extern "C"{
+#endif
+
 #include "include/defines.h"
 
 #define DEFINE_KEY(name, code) VP_KEY_##name = code
@@ -150,3 +154,8 @@ void input_mouse_position(int x, int y);
 VP_API bool32 vp_is_keydown(keys key);
 VP_API bool32 vp_is_mbdown(buttons button);
 VP_API void vp_get_mouse_pos(int *x, int *y);
+
+
+#ifdef __cplusplus
+	}
+#endif

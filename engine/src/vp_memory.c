@@ -14,7 +14,8 @@ vp_arena *memory_init(uint64 size)
 	memory_arena.isInitialized = true;
 
 	// Permanent memory should never be 0ed
-	memory_arena.start = platform_allocate_memory_chunk(size);
+	// OPTIMIZE: Currently allocating a lot of memory for entities that might not be needed
+	memory_arena.start = platform_allocate_memory_chunk(size*20);
 	
 	// Temporary memory 0ed all the time
 	temp_memory.start = platform_allocate_memory_chunk(size*4);

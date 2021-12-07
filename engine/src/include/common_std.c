@@ -49,6 +49,7 @@ void _vstd_IntToStr(int num, char* arr_to_fill)
 	{
 		arr_to_fill[0] = '-';
 		num_size++;
+		num = -num;
 	}
 	arr_to_fill[num_size + 1] = '\0';
 	for (int i = num_size; num != 0; --i)

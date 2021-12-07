@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+	extern "C"{
+#endif
+
 #pragma once
 
 #include "include/std.h"
@@ -21,10 +25,12 @@ typedef enum log_level
 } log_level;
 
 
-VP_API void logger_init();
+void
+logger_init();
 
 
-VP_API void vp_log(log_level level, const char *str, char *color, ...);
+VP_API void
+vp_log(log_level level, const char *str, const char *color, ...);
 
 
 
@@ -32,3 +38,9 @@ VP_API void vp_log(log_level level, const char *str, char *color, ...);
 #define VP_ERROR(str, ...) vp_log(LOG_LEVEL_ERROR, str, ANSI_COLOR_MAGENTA, __VA_ARGS__)
 #define VP_WARN(str, ...) vp_log(LOG_LEVEL_WARN, str, ANSI_COLOR_YELLOW, __VA_ARGS__)
 #define VP_INFO(str, ...) vp_log(LOG_LEVEL_INFO, str, ANSI_COLOR_CYAN, __VA_ARGS__)
+
+
+
+#ifdef __cplusplus
+	}
+#endif

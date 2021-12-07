@@ -11,6 +11,7 @@
 #include "input.h"
 #include "include/Core.h"
 
+typedef BOOL(WINAPI * PFNWGLSWAPINTERVALEXTPROC)(int interval);
 
 typedef struct win32_state
 {
@@ -20,9 +21,17 @@ typedef struct win32_state
 	int h;
 } win32_state;
 
+typedef struct cursor
+{
+	int32 x;
+	int32 y;
+} cursor;
+
 
 internal win32_state *Win32State;
 internal vp_memory raw_input_memory;
+internal uint32 ms_at_start;
+internal cursor mouse; 
 
 LRESULT CALLBACK
 WindowProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
@@ -59,7 +68,21 @@ platform_init(vp_config game, platform_state *pstate)
 			Win32LoadRawInput(Win32State->Window);
 			Win32LoadOpenGL(Win32State->Window);
 			glViewport(0, 0, game.w, game.h);
+			ms_at_start = GetTickCount();
 			
+			RECT WindowRect = {};
+			GetWindowRect(Win32State->Window, &WindowRect);
+			MapWindowPoints(HWND_DESKTOP, GetParent(Win32State->Window), (LPPOINT)&WindowRect, 2);
+
+			int new_pos_x = WindowRect.left + ((WindowRect.right - WindowRect.left) / 2);
+			int new_pos_y = WindowRect.top + ((WindowRect.bottom - WindowRect.top) / 2);
+
+			mouse.x = new_pos_x;
+			mouse.y = new_pos_y;
+
+			SetCursorPos(new_pos_x, new_pos_y);
+
+
 			return TRUE;
 		} 
 	}
@@ -158,6 +181,11 @@ platform_allocate_memory_chunk(uint64 size)
 
 }
 
+uint32
+platform_get_ms_since_start()
+{
+	return GetTickCount() - ms_at_start;
+}
 int64
 platform_get_frequency()
 {
@@ -181,6 +209,7 @@ HandleRawInput(RAWINPUT *raw_input);
 bool32
 platform_handle_message()
 {
+
 	MSG Message;
 	while(PeekMessageA(&Message, 0, 0, 0, PM_REMOVE))
 	{
@@ -206,8 +235,10 @@ platform_handle_message()
 		
 		TranslateMessage(&Message);
 		DispatchMessageA(&Message);
+	
 		
 	}
+
 	return true;
 
 }
@@ -340,10 +371,8 @@ Win32LoadOpenGL(HWND Window)
 		VP_INFO("GL_VERSION %s\n", glGetString(GL_VERSION));
 		GLuint BlitTextureHandle = 1;
 		glGenTextures(1, &BlitTextureHandle);
-		typedef BOOL(WINAPI * PFNWGLSWAPINTERVALEXTPROC)(int interval);
 		PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = NULL;
 		wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-
 		if(wglSwapIntervalEXT)
 		{
 			wglSwapIntervalEXT(1);
@@ -402,82 +431,22 @@ platform_output_string(char *str, uint8 color)
 	SetConsoleTextAttribute(STDOUT, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED);
 }
 
-
-
-void
-vp_render_pixels(render_buffer *Buffer)
+bool32
+platform_toggle_vsync(bool32 toggle)
 {
-	// started rendering with OpenGL. Look at renderer/renderer.c
-	#if 0
-	// NOTE(Vasko): If I start rendering with opengl these should be the window width and 
-	//              height
+	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = NULL;
+	wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
+	if(wglSwapIntervalEXT)
+	{
+		wglSwapIntervalEXT(toggle);
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 
-	// NOTE(Vasko): I don't know what the top comment means
-	glViewport(0, 0, Buffer->Width, Buffer->Height);
-	
-	
-	
-	glBindTexture(GL_TEXTURE_2D, 1);
-
-	// NOTE(Vasko): For some reason it doesn't find this define, I can't be bothered
-	#define GL_BGRA_EXT                       0x80E1
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, Buffer->Width, Buffer->Height, 0, GL_BGRA_EXT, 
-				GL_UNSIGNED_BYTE, Buffer->Memory);
-	
-	
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	
-	
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	
-	
-	glEnable(GL_TEXTURE_2D);
-	
-	glClearColor(1.0f, 0.0f, 1.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-	
-	glMatrixMode(GL_TEXTURE);
-	glLoadIdentity();
-	
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	
-	glBegin(GL_TRIANGLES);
-	
-	int32 P = 1;
-	// NOTE(Vasko): Lower triangle
-	glTexCoord2f(0.0f, 0.0f);
-	glVertex2i(-P, -P);
-	
-	glTexCoord2f(1.0f, 0.0f);
-	glVertex2i(P, -P);
-	
-	glTexCoord2f(1.0f, 1.0f);
-	glVertex2i(P, P);
-	
-	// NOTE(Vasko): Upper triangle
-	glTexCoord2f(0.0f, 0.0f);
-	glVertex2i(-P, -P);
-	
-	glTexCoord2f(1.0f, 1.0f);
-	glVertex2i(P, P);
-	
-	glTexCoord2f(0.0f, 1.0f);
-	glVertex2i(-P, P);
-	
-	glEnd();
-	platform_swap_buffers();
-	#endif
 }
-
-
 
 
 LRESULT CALLBACK WindowProc(
@@ -490,6 +459,13 @@ LRESULT CALLBACK WindowProc(
 	LRESULT Result = 0;
 	switch(Message)
 	{
+		case WM_SETCURSOR:
+		{
+			// TODO: make a way for the engine user to set the cursro
+			// probably an internal variable that can be changed by a function
+//			HCURSOR Cursor = LoadCursor(NULL, IDC_ARROW);
+			SetCursor(0);
+		}
 		case WM_SIZE:
 		{
 			// TODO: Make a messaging system, let the user handle this
@@ -505,6 +481,43 @@ LRESULT CALLBACK WindowProc(
 																RenderBuffer.Width * RenderBuffer.Height * RenderBuffer.BytesPerPixel, 
 																MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
 			#endif
+		}break;
+		case WM_MOUSEMOVE:
+		{
+			if(GetActiveWindow() == Win32State->Window)
+			{
+				RECT WindowRect = {};
+				GetWindowRect(Win32State->Window, &WindowRect);
+				MapWindowPoints(HWND_DESKTOP, GetParent(Win32State->Window), (LPPOINT)&WindowRect, 2);
+
+				int new_pos_x = WindowRect.left + ((WindowRect.right - WindowRect.left) / 2);
+				int new_pos_y = WindowRect.top + ((WindowRect.bottom - WindowRect.top) / 2);
+
+				POINT MousePos = {};
+				GetCursorPos(&MousePos);
+				int32 x = MousePos.x;
+				int32 y = MousePos.y;
+
+
+				x -= new_pos_x;
+				y -= new_pos_y;
+				if(x && y)
+				{
+					mouse.x += x;
+					mouse.y += y;
+
+					if(vp_is_keydown(VP_KEY_R))
+					{
+						mouse.x = 600;
+						mouse.y = 400;
+					}
+
+					SetCursorPos(new_pos_x, new_pos_y);
+
+					vp_camera_mouse_callback(mouse.x, mouse.y);
+					
+				}
+			}
 		}break;
 		case WM_PAINT:
 		{
@@ -527,7 +540,7 @@ LRESULT CALLBACK WindowProc(
 		{
 			PostQuitMessage(0);
 		} break;
-		
+
 		default:
 		{
 			Result = DefWindowProcA(Window, Message, wParam, lParam);
@@ -536,6 +549,4 @@ LRESULT CALLBACK WindowProc(
 	return Result;
 	
 }
-
-
 #endif

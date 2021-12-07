@@ -10,12 +10,12 @@ FOR /R %%f in (*.c) do (
 )
 
 IF [%1] == [] (
-	SET CompilerFlags=--debug -shared -Wvarargs -Wall -DVIPOC_DEBUG
+	SET CompilerFlags=-O0 -g -shared -Wvarargs -Wall -DVIPOC_DEBUG
 ) ELSE IF [%1] == [release] (
 	ECHO -------- RELEASE --------
 	SET CompilerFlags=-O3 -shared -Wvarargs -Wall -Werror
 ) ELSE IF [%1] == [debug] (
-	SET CompilerFlags=--debug -shared -Wvarargs -Wall -DVIPOC_DEBUG
+	SET CompilerFlags=-g -shared -Wvarargs -Wall -DVIPOC_DEBUG
 ) ELSE (
 	ECHO ERROR: unknown build type '%1'
 	GOTO :ERROR
@@ -25,7 +25,7 @@ IF [%1] == [] (
 	SET assembly=Vipoc
 	SET Defines=-DVIPOC_EXPORT -DVIPOC_WIN32 -D_CRT_SECURE_NO_WARNINGS
 	SET CompilerFlags=%CompilerFlags% -ffast-math -mavx
-	SET Includes=-Isrc
+	SET Includes=-Isrc -I../include/cglm
 	Set Libraries=-luser32 -lGdi32 -lOpenGL32
 
 

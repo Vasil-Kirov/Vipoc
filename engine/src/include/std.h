@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+	extern "C"{
+#endif
+
 #pragma once
 
 #include "include/defines.h"
@@ -54,3 +58,6 @@ _vstd_sPrintf(int FormatSize, char *buff, const char* str, ...);
 VP_API void
 Error(const char *error_msg);
 
+#ifdef __cplusplus
+	}
+#endif

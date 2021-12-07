@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+	extern "C"{
+#endif
+
 #pragma once
 #include "include/defines.h"
 
@@ -59,6 +63,15 @@ platform_get_height();
 VP_API int64
 platform_get_perf_counter();
 
-
 VP_API int64
 platform_get_frequency();
+
+VP_API uint32
+platform_get_ms_since_start();
+
+VP_API bool32
+platform_toggle_vsync(bool32 toggle);
+
+#ifdef __cplusplus
+	}
+#endif
