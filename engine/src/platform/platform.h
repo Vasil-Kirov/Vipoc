@@ -53,10 +53,12 @@ void
 platform_exit(bool32 is_error);
 
 
+// Get the width of the screen
 int
 platform_get_width();
 
 
+// Get the height of the screen
 int
 platform_get_height();
 

@@ -9,7 +9,13 @@
 		renderer.text_verts[renderer.last_text_index].position = (v4){target.world_position.x##num1, target.world_position.y##num2, 0.0f, 1.0f};	\
 		renderer.text_verts[renderer.last_text_index].texture = (v4){target.texture_position.x##num1, target.texture_position.y##num2, 0.0f, 0.0f};	\
 		renderer.text_verts[renderer.last_text_index].color = color
+#define push_frame_vert(vert, tex, color_in)	\
+		renderer.frame_verts[renderer.last_frame_vert].position = (v4){vert.x, vert.y, vert.z, 1.0f};	\
+		renderer.frame_verts[renderer.last_frame_vert].texture = (v4){tex.x, tex.y,	0.0f, 1.0f};	\
+		renderer.frame_verts[renderer.last_frame_vert++].color = color_in;
 
+void
+draw_test_cube();
 
 typedef struct gl_state
 {
@@ -20,6 +26,7 @@ typedef struct gl_state
 	atlas texture_atlas;
 	atlas text_atlas;
 	vertex *frame_verts;
+	uint32 last_frame_vert;
 	vertex *text_verts;
 	uint32 last_text_index;
 	uint32 *indexes;
@@ -27,11 +34,15 @@ typedef struct gl_state
 } gl_state;
 
 internal gl_state renderer;
+internal camera cm;
 internal ascii_char ascii_char_map[256];
 
 
 #define CHECK_GL_ERROR() if(glGetError() != 0) {VP_ERROR("OPENGL ERROR: %d", glGetError());}
 
+
+f32 Scale = 0.6f;
+// JUMP HERE FOR MAIN CODE
 bool32
 render_update()
 {
@@ -39,63 +50,109 @@ render_update()
 	glClear(GL_COLOR_BUFFER_BIT);
 
 
-	// TEXT RENDERING
+//	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	GLint uniform_location = glGetUniformLocation(renderer.shader_program, "texture1");
-	CHECK_GL_ERROR();
+	glUniform1i(uniform_location, 0);
 
-	glUniform1i(uniform_location, 1);
-	CHECK_GL_ERROR();
+	draw_test_cube();
+	m4 translation = create_mat4(
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f,-2.0f,
+		0.0f, 0.0f, 0.0f, 1.0f
+	);
+	m4 rotation_y = y_rotation(Scale);
+	m4 rotation_x = x_rotation(Scale);
+	Scale += .01f;
+	m4 world = mat4_multiply_multiple(3, translation, rotation_x, rotation_y);
+
+	v3 U = {1.0f, 0.0f, 0.0f};
+	v3 V = {0.0f, 1.0f, 0.0f};
+	v3 N = {0.0f, 0.0f, 1.0f};
+	
+	m4 project = projection((float)platform_get_width() / (float)platform_get_height(), 90.0f);
+
+
+	m4 camera_transform = create_mat4(
+		U.x,  U.y, 	U.z, -cm.position.x,
+		V.x,  V.y, 	V.z, -cm.position.y,
+		N.x,  N.y, 	N.z, -cm.position.z,
+		0.0f, 0.0f, 0.0, 1.0f	
+	);
+
+	m4 MVP = mat4_multiply_multiple(3, project, camera_transform, world);
+	MVP = transpose(MVP);
+	set_shader_uniform_mat4("MVP", MVP);
 
 	glBindVertexArray(renderer.vao);
-	CHECK_GL_ERROR();
 
 	glBindBuffer(GL_ARRAY_BUFFER, renderer.vbo);
-	CHECK_GL_ERROR();
+	glBufferData(GL_ARRAY_BUFFER, renderer.last_frame_vert * sizeof(vertex), renderer.frame_verts, GL_STATIC_DRAW);
 
-	glBufferData(GL_ARRAY_BUFFER, renderer.last_text_index * sizeof(vertex), renderer.text_verts, GL_STATIC_DRAW);
-	CHECK_GL_ERROR();
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer.ebo);
-	CHECK_GL_ERROR();
-	
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer.ebo);		
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, renderer.last_index * sizeof(uint32), renderer.indexes, GL_STATIC_DRAW);
-	CHECK_GL_ERROR();
 
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(0));
-	CHECK_GL_ERROR();
-
 	glEnableVertexAttribArray(0);
-	CHECK_GL_ERROR();
 
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(sizeof(v4)));
-	CHECK_GL_ERROR();
-
 	glEnableVertexAttribArray(1);
-	CHECK_GL_ERROR();
 
 	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(sizeof(v4)*2));
-	CHECK_GL_ERROR();
-
 	glEnableVertexAttribArray(2);
-	CHECK_GL_ERROR();
-
 
 	glUseProgram(renderer.shader_program);
-	CHECK_GL_ERROR();
-
 	glBindVertexArray(renderer.vao);
-	CHECK_GL_ERROR();
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer.ebo);
-	CHECK_GL_ERROR();
-
 	glDrawElements(GL_TRIANGLES, renderer.last_index, GL_UNSIGNED_INT, vp_nullptr);
-	CHECK_GL_ERROR();
+	
+	// TEXT RENDERING
+	if(renderer.last_text_index > 0)
+	{
 
+		m4 I = identity();
+		set_shader_uniform_mat4("MVP", I);
+
+		GLint uniform_location = glGetUniformLocation(renderer.shader_program, "texture1");
+		glUniform1i(uniform_location, 1);
+
+		glBindVertexArray(renderer.vao);
+
+		glBindBuffer(GL_ARRAY_BUFFER, renderer.vbo);
+		glBufferData(GL_ARRAY_BUFFER, renderer.last_text_index * sizeof(vertex), renderer.text_verts, GL_STATIC_DRAW);
+
+
+
+		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(0));
+		glEnableVertexAttribArray(0);
+
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(sizeof(v4)));
+		glEnableVertexAttribArray(1);
+
+		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(sizeof(v4)*2));
+		glEnableVertexAttribArray(2);
+
+		glUseProgram(renderer.shader_program);
+		glBindVertexArray(renderer.vao);
+
+		glDrawArrays(GL_TRIANGLES, 0, renderer.last_text_index);
+
+		renderer.last_text_index = 0;
+	}
+
+
+	renderer.last_frame_vert = 0;
 	renderer.last_index = 0;
-	renderer.last_text_index = 0;
 	platform_swap_buffers();
-	return TRUE;
+	return true;	
+}
+
+
+void
+vp_move_camera(v3 by)
+{
+	cm.position.x += by.x;
+	cm.position.y += by.y;
+	cm.position.z += by.z;
 }
 
 
@@ -189,25 +246,25 @@ vp_draw_text(char *text, float x, float y, v4 color)
 
 		// Bottom left
 		push_text_verts(target, 1, 1, color);
-		renderer.indexes[renderer.last_index++] = renderer.last_text_index++;
+		renderer.last_text_index++;
 		// Top Left
 		push_text_verts(target, 1, 2, color);
-		renderer.indexes[renderer.last_index++] = renderer.last_text_index++;
+		renderer.last_text_index++;
 		// Top Right
 		push_text_verts(target, 2, 2, color);
-		renderer.indexes[renderer.last_index++] = renderer.last_text_index++;
+		renderer.last_text_index++;
 
 		// Right triangle
 
 		// Bottom Left
 		push_text_verts(target, 1, 1, color);
-		renderer.indexes[renderer.last_index++] = renderer.last_text_index++;
+		renderer.last_text_index++;
 		// Top Right
 		push_text_verts(target, 2, 2, color);
-		renderer.indexes[renderer.last_index++] = renderer.last_text_index++;
+		renderer.last_text_index++;
 		// Bottom Right
 		push_text_verts(target, 2, 1, color);
-		renderer.indexes[renderer.last_index++] = renderer.last_text_index++;
+		renderer.last_text_index++;
 
 		space_from_last_char += ascii_char_map[(int)text[index]].advance_x;
 		if(text[index] == '\n')
@@ -220,7 +277,7 @@ vp_draw_text(char *text, float x, float y, v4 color)
 
 // PLACEHOLDER:
 void
-vp_camera_mouse_callback()
+vp_camera_mouse_callback(double xpos, double ypos)
 {
 
 }
@@ -294,6 +351,66 @@ vp_parse_font_fnt(entire_file file)
 		// NOTE: Might be better to have some more concrete way to define the end of a file
 		if(id == 126) break;
 	}
+}
+
+void
+draw_test_cube()
+{
+	v3 tex = {0.0f, 0.0f, 0.0f};
+	v4 r = {1.0f, 0.0f , 0.0f, 1.0f};
+	v4 g = {0.0f, 1.0f , 0.0f, 1.0f};
+	v4 b = {0.0f, 0.0f , 1.0f, 1.0f};
+	v3 pos[8];
+	pos[0] = (v3){0.5f, 0.5f, 0.5f };		// 0
+	pos[1] = (v3){ -0.5f, 0.5f, -0.5f };	// 1
+	pos[2] = (v3){ -0.5f, 0.5f, 0.5f };		// 2
+	pos[3] = (v3){ 0.5f, -0.5f, -0.5f };	// 3
+	pos[4] = (v3){ -0.5f, -0.5f, -0.5f };	// 4
+	pos[5] = (v3){ 0.5f, 0.5f, -0.5f };		// 5
+	pos[6] = (v3){ 0.5f, -0.5f, 0.5f };		// 6
+	pos[7] = (v3){ -0.5f, -0.5f, 0.5f };	// 7
+
+	int indexes_offset = renderer.last_frame_vert;
+	push_frame_vert(pos[0], tex, r);
+	push_frame_vert(pos[1], tex, g);
+	push_frame_vert(pos[2], tex, b);
+	push_frame_vert(pos[3], tex, r);
+	push_frame_vert(pos[4], tex, g);
+	push_frame_vert(pos[5], tex, b);
+	push_frame_vert(pos[6], tex, r);
+	push_frame_vert(pos[7], tex, g);
+	
+	unsigned int Indexes[] = {
+		// Front
+		4, 5, 1,
+		4, 3, 5, 
+
+		// Right 
+		5, 3, 0,
+		3, 6, 0,
+
+		// Back
+		6, 7, 2,
+		6, 2, 0,
+
+		// Left
+		7, 4, 1, 
+		7, 1, 2,
+
+		// Bottom
+		7, 6, 4,
+		6, 3, 4,
+
+		// Top
+		1, 5, 0,
+		1, 0, 2
+	};
+	
+	for(int i = 0; i < sizeof(Indexes)/sizeof(unsigned int); ++i)
+	{
+		renderer.indexes[renderer.last_index++] = Indexes[i] + indexes_offset;
+	}
+
 }
 
 void
@@ -426,6 +543,10 @@ void RendererInit()
 	GenGLBuffs();
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	
+	glEnable(GL_CULL_FACE);
+	glFrontFace(GL_CCW);
+	glCullFace(GL_FRONT);
 }
 
 

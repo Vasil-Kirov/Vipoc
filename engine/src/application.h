@@ -7,6 +7,25 @@
 // This is needed for VP_API to work
 #include "include/Core.h"
 #include "renderer/math_3d.h"
+#include "input.h"
+
+typedef struct vp_config
+{
+    char const *name;
+    int x;
+    int y;
+    int w;
+    int h;
+    void (*vp_on_key_down)(vp_keys key, bool32 is_down);
+} vp_config;
+
+
+typedef struct vp_game
+{
+    vp_config config;
+    // Game on_resize function
+    bool32 (*vp_on_resize)(struct vp_game *game, int w, int h);
+} vp_game;
 
 
 void application_create(vp_game *game);

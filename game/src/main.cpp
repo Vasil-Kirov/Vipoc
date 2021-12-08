@@ -8,28 +8,33 @@ static vp_game Config;
 
 void HandleInput()
 {
-	#if 0 
-	float CamSpeed = .1f;
-	if(vp_is_keydown(VP_KEY_W))
-	{
-		vp_move_camera(VP_UP, CamSpeed);
-	}
-	if(vp_is_keydown(VP_KEY_S))
-	{
-		vp_move_camera(VP_DOWN, CamSpeed);
-	}
-	if(vp_is_keydown(VP_KEY_A))
-	{
-		vp_move_camera(VP_LEFT, CamSpeed);
-	}
-	if(vp_is_keydown(VP_KEY_D))
-	{
-		vp_move_camera(VP_RIGHT, CamSpeed);
-	}
-	#endif
+		float CamSpeed = .1f;
+		v3 ToMove = {};
+		if(vp_is_keydown(VP_KEY_W))
+		{
+			ToMove.z -= CamSpeed;
+		}
+		if(vp_is_keydown(VP_KEY_S))
+		{
+			ToMove.z += CamSpeed;
+		}
+		if(vp_is_keydown(VP_KEY_A))
+		{
+			ToMove.x -= CamSpeed;
+		}
+		if(vp_is_keydown(VP_KEY_D))
+		{
+			ToMove.x += CamSpeed;
+		}
+		vp_move_camera(ToMove);
 }
 
 
+void
+OnKeyDown(vp_keys Key, bool32 IsDown)
+{
+
+}
 
 bool32
 OnResize(vp_game *internal_game, int Width, int Height)
@@ -74,6 +79,7 @@ main()
 	Config.config.x = VP_USE_DEFAULT;
 	Config.config.y = VP_USE_DEFAULT;
 	Config.config.name = "test game";
+	Config.config.vp_on_key_down = OnKeyDown;
 	Config.vp_on_resize = OnResize;
 	vp_init(Config);
 	char PathToFolder[MAX_PATH] = {};
@@ -134,7 +140,6 @@ main()
 	int32 FPS = 0;
 	int32 MSPerFrame = 0;
 	reloader Game = {};
-	vp_render_target Targets[1024];
 	Game = LoadDLL(PathToFolder);
 
 	Free(TempStorage);
@@ -157,7 +162,7 @@ main()
 	bool32 VSyncToggle = false;
 
 	int64 PerfFrequency = platform_get_frequency();
-	int64 StartCounter = platform_get_perf_counter();	
+	int64 StartCounter = platform_get_perf_counter();
 	while(Running)
 	{
 		if(LastReloadCounter++ >= 120)
@@ -173,12 +178,12 @@ main()
 			VSyncToggle = !VSyncToggle;
 		}
 
-		
 		Running = vp_handle_messages();
 
+		HandleInput();
 
-		v3 cube_position = {100.0f, 100.0f, 100.0f};
-		v4 crimson_color = {0.863f, 0.078f, 0.235f, 1.0f};
+//		v3 cube_position = {100.0f, 100.0f, 100.0f};
+//		v4 crimson_color = {0.863f, 0.078f, 0.235f, 1.0f};
 	//	vp_draw_cube(cube_position, crimson_color);
 
 

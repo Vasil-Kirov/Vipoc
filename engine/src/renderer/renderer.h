@@ -72,6 +72,14 @@ typedef struct delta_time
 	float last_frame;
 } delta_time;
 
+typedef struct camera
+{
+	v3 position;
+	v3 U;
+	v3 V;
+	v3 N;
+} camera;
+
 typedef enum vp_direction
 {
 	VP_UP=0,
@@ -102,7 +110,7 @@ VP_API void
 vp_load_texture(char *path);
 
 VP_API void
-vp_move_camera(vp_direction direction, float camera_speed);
+vp_move_camera(v3 by);
 
 // Position = world position, Tex_Location = location in atlas
 // values must be between -1 and 1

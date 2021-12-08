@@ -1,3 +1,5 @@
+#pragma once
+
 #ifdef __cplusplus
 	extern "C"{
 #endif
@@ -23,7 +25,7 @@ typedef enum keys {
     DEFINE_KEY(TAB, 0x09),
     DEFINE_KEY(SHIFT, 0x10),
     DEFINE_KEY(CONTROL, 0x11),
-
+    DEFINE_KEY(ALT, 0x12),
     DEFINE_KEY(PAUSE, 0x13),
     DEFINE_KEY(CAPITAL, 0x14),
 
@@ -146,6 +148,7 @@ typedef enum keys {
     DEFINE_KEY(GRAVE, 0xC0)
 } keys;
 
+typedef enum keys vp_keys;
 
 void input_keyboard_key(keys key, bool32 is_down);
 void input_mouse_button(buttons button, bool32 is_down);

@@ -8,6 +8,8 @@
         "windowsx.h": "c",
         "entity.h": "c",
         "defines.h": "c",
-        "application.h": "c"
+        "application.h": "c",
+        "core.h": "c",
+        "input.h": "c"
     }
 }

@@ -8,10 +8,13 @@
 #include "platform/platform.h"
 #include "log.h"
 #include "renderer/renderer.h"
+#include "application.h"
 #include "input.h"
 #include "include/Core.h"
 
-typedef BOOL(WINAPI * PFNWGLSWAPINTERVALEXTPROC)(int interval);
+typedef BOOL (WINAPI * PFNWGLSWAPINTERVALEXTPROC)(int interval);
+typedef void (*vp_on_button_down)(vp_keys key, bool32 is_down);
+
 
 typedef struct win32_state
 {
@@ -32,6 +35,7 @@ internal win32_state *Win32State;
 internal vp_memory raw_input_memory;
 internal uint32 ms_at_start;
 internal cursor mouse; 
+internal vp_on_button_down button_callback;
 
 LRESULT CALLBACK
 WindowProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
@@ -46,6 +50,7 @@ platform_init(vp_config game, platform_state *pstate)
 	int y = game.y; 
 	int w = game.w; 
 	int h = game.h;
+	button_callback = game.vp_on_key_down;
 	pstate->state = platform_allocate_memory_chunk(sizeof(win32_state));
 	Win32State = (win32_state *)pstate->state; 
 	Win32State->w = game.w;
@@ -273,6 +278,7 @@ HandleRawInput(RAWINPUT *raw_input)
 			bool32 is_down = ((flags & RI_KEY_BREAK) == 0);
 
 			input_keyboard_key(raw_input->data.keyboard.VKey, is_down);
+			if(button_callback != vp_nullptr) button_callback(raw_input->data.keyboard.VKey, is_down);
 		} break;
 		case RIM_TYPEMOUSE:
 		{
@@ -463,8 +469,8 @@ LRESULT CALLBACK WindowProc(
 		{
 			// TODO: make a way for the engine user to set the cursro
 			// probably an internal variable that can be changed by a function
-//			HCURSOR Cursor = LoadCursor(NULL, IDC_ARROW);
-			SetCursor(0);
+			HCURSOR Cursor = LoadCursor(NULL, IDC_ARROW);
+			SetCursor(Cursor);
 		}
 		case WM_SIZE:
 		{
@@ -484,7 +490,7 @@ LRESULT CALLBACK WindowProc(
 		}break;
 		case WM_MOUSEMOVE:
 		{
-			if(GetActiveWindow() == Win32State->Window)
+			if(GetActiveWindow() == Win32State->Window && !vp_is_keydown(VP_KEY_ALT))
 			{
 				RECT WindowRect = {};
 				GetWindowRect(Win32State->Window, &WindowRect);

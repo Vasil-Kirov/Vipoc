@@ -31,6 +31,7 @@ IF [%1] == [] (
 
 
 	ECHO "Building %assembly%..."
-	clang %Files% %CompilerFlags% -o ../bin/%assembly%.dll %Defines% %Includes% %Libraries% -Xlinker -MAP 
+	clang %Files% %CompilerFlags% -o ../bin/%assembly%.dll %Defines% %Includes% %Libraries% -Xlinker -MAP -Xlinker -INCREMENTAL
+ 
 
 

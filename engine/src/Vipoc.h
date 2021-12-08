@@ -9,6 +9,7 @@
 #include "log.h"
 #include "renderer/renderer.h"
 #include "platform/platform.h"
+#include "application.h"
 
 
 VP_API void
