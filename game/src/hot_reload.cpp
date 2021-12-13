@@ -33,12 +33,10 @@ m2 CalculateWorldPos(float X, float Y, float Width, float Height)
 	return Pos;
 }
 
-vp_render_target
+vp_2d_render_target
 CalculateRenderTarget(atlas_member Member, float X, float Y, float Width, float Height, int LayerID)
 {
-
-
-	vp_render_target Result = {};
+	vp_2d_render_target Result = {};
 	Result.layer_id = LayerID;
 	Result.world_position = (m2){X, Y, X+Width, Y+Height};
 //	Result.world_position = CalculateWorldPos(X-OffsetX, Y-OffsetY, Width, Height);

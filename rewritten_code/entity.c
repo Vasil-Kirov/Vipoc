@@ -21,7 +21,7 @@ init_entity_system()
 
 
 int
-vp_create_entity(vp_tags tag, vp_render_target render, m2 hitbox, entity_func execute, collision_func on_collision)
+vp_create_entity(vp_tags tag, vp_2d_render_target render, m2 hitbox, entity_func execute, collision_func on_collision)
 {
 	vp_entity new_entity = {};
 	new_entity.id = last_entity;
@@ -186,7 +186,7 @@ entities_to_renderer()
 			{
 				entities[index].execute(&entities[index]);
 			}
-			vp_render_target to_render = normalize_render_target(entities[index].render);
+			vp_2d_render_target to_render = normalize_render_target(entities[index].render);
 			vp_render_pushback(to_render);
 			
 			entities[index].prev_pos.x = entities[index].hitbox.x1 ;

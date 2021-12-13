@@ -13,6 +13,36 @@
 #include "include/Core.h"
 
 typedef BOOL (WINAPI * PFNWGLSWAPINTERVALEXTPROC)(int interval);
+typedef BOOL (WINAPI * PFNWGLCHOOSEPIXELFORMATARBPROC)(HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats);
+typedef HGLRC WINAPI wglCreateContextAttribsARB_type(HDC hdc, HGLRC hShareContext,
+        const int *attribList);
+wglCreateContextAttribsARB_type *wglCreateContextAttribsARB;
+wglCreateContextAttribsARB_type *wglCreateContextAttribsARB;
+
+#define WGL_CONTEXT_MAJOR_VERSION_ARB             0x2091
+#define WGL_CONTEXT_MINOR_VERSION_ARB             0x2092
+#define WGL_CONTEXT_PROFILE_MASK_ARB              0x9126
+
+#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB          0x00000001
+
+typedef BOOL WINAPI wglChoosePixelFormatARB_type(HDC hdc, const int *piAttribIList,
+        const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats);
+wglChoosePixelFormatARB_type *wglChoosePixelFormatARB;
+
+// See https://www.khronos.org/registry/OpenGL/extensions/ARB/WGL_ARB_pixel_format.txt for all values
+#define WGL_DRAW_TO_WINDOW_ARB                    0x2001
+#define WGL_ACCELERATION_ARB                      0x2003
+#define WGL_SUPPORT_OPENGL_ARB                    0x2010
+#define WGL_DOUBLE_BUFFER_ARB                     0x2011
+#define WGL_PIXEL_TYPE_ARB                        0x2013
+#define WGL_COLOR_BITS_ARB                        0x2014
+#define WGL_DEPTH_BITS_ARB                        0x2022
+#define WGL_STENCIL_BITS_ARB                      0x2023
+
+#define WGL_FULL_ACCELERATION_ARB                 0x2027
+#define WGL_TYPE_RGBA_ARB                         0x202B
+
+
 typedef void (*vp_on_button_down)(vp_keys key, bool32 is_down);
 
 
@@ -55,9 +85,9 @@ platform_init(vp_config game, platform_state *pstate)
 	Win32State = (win32_state *)pstate->state; 
 	Win32State->w = game.w;
 	Win32State->h = game.h;
-
+    
 	Win32State->Instance = GetModuleHandleA(0);
-
+    
 	WNDCLASSA wnd = {};
 	wnd.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 	wnd.lpfnWndProc = WindowProc;
@@ -78,16 +108,16 @@ platform_init(vp_config game, platform_state *pstate)
 			RECT WindowRect = {};
 			GetWindowRect(Win32State->Window, &WindowRect);
 			MapWindowPoints(HWND_DESKTOP, GetParent(Win32State->Window), (LPPOINT)&WindowRect, 2);
-
+            
 			int new_pos_x = WindowRect.left + ((WindowRect.right - WindowRect.left) / 2);
 			int new_pos_y = WindowRect.top + ((WindowRect.bottom - WindowRect.top) / 2);
-
+            
 			mouse.x = new_pos_x;
 			mouse.y = new_pos_y;
-
+            
 			SetCursorPos(new_pos_x, new_pos_y);
-
-
+            
+            
 			return TRUE;
 		} 
 	}
@@ -98,12 +128,12 @@ platform_init(vp_config game, platform_state *pstate)
 void Win32LoadRawInput(HWND Window)
 {
 	RAWINPUTDEVICE rids[5];
-
+    
 	rids[0].usUsage = 0x02; // Mouse
 	rids[0].usUsagePage = 0x01;
 	rids[0].dwFlags = RIDEV_INPUTSINK; 
 	rids[0].hwndTarget = Window;
-
+    
 	rids[1].usUsage = 0x06; // Keyboard
 	rids[1].usUsagePage = 0x01;
 	rids[1].dwFlags = RIDEV_INPUTSINK; 
@@ -113,18 +143,18 @@ void Win32LoadRawInput(HWND Window)
 	rids[2].usUsagePage = 0x01;
 	rids[2].dwFlags = RIDEV_INPUTSINK; 
 	rids[2].hwndTarget = Window;
-
+    
 	rids[3].usUsage = 0x05; // Controller
 	rids[3].usUsagePage = 0x01;
 	rids[3].dwFlags = RIDEV_INPUTSINK; 
 	rids[3].hwndTarget = Window;
-
+    
 	rids[4].usUsage = 0x01; // Mouse
 	rids[4].usUsagePage = 0x01;
 	rids[4].dwFlags = RIDEV_INPUTSINK; 
 	rids[4].hwndTarget = Window;
-
-
+    
+    
 	if (RegisterRawInputDevices(rids, 5, sizeof(RAWINPUTDEVICE)) == FALSE) Error("RegisterRawInputDevice failed!\n");
 }
 
@@ -146,7 +176,7 @@ platform_get_absolute_path(char *output)
 			break;
 		}
 	}
-
+    
 	size = vstd_strlen(output);
 	for(int i = size-1; i >= 0; --i)
 	{
@@ -159,14 +189,16 @@ platform_get_absolute_path(char *output)
 }
 
 
-void
+bool32
 platform_read_entire_file(char *path, entire_file *e_file)
 {
 	HANDLE File = CreateFileA(path, GENERIC_READ, 0, vp_nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, vp_nullptr);
-	if(File == INVALID_HANDLE_VALUE) return;
+	if(File == INVALID_HANDLE_VALUE) return false;
 	e_file->size = GetFileSize(File, vp_nullptr);
 	ReadFile(File, e_file->contents, e_file->size, vp_nullptr, vp_nullptr);
 	CloseHandle(File);
+	if (e_file->size > 0) return true;
+	return false;
 }
 
 uint64
@@ -183,7 +215,7 @@ void *
 platform_allocate_memory_chunk(uint64 size)
 {
 	return VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_READWRITE);
-
+    
 }
 
 uint32
@@ -214,6 +246,13 @@ HandleRawInput(RAWINPUT *raw_input);
 bool32
 platform_handle_message()
 {
+	if(!vp_is_mbdown(VP_MOUSE_BUTTON_LEFT))
+	{
+		POINT MousePos = {};
+		GetCursorPos(&MousePos);
+		vp_update_mouse_pos(MousePos.x, MousePos.y);
+	}
+
 
 	MSG Message;
 	while(PeekMessageA(&Message, 0, 0, 0, PM_REMOVE))
@@ -240,12 +279,12 @@ platform_handle_message()
 		
 		TranslateMessage(&Message);
 		DispatchMessageA(&Message);
-	
+        
 		
 	}
-
+    
 	return true;
-
+    
 }
 
 
@@ -276,7 +315,7 @@ HandleRawInput(RAWINPUT *raw_input)
 		{
 			unsigned short flags = raw_input->data.keyboard.Flags;
 			bool32 is_down = ((flags & RI_KEY_BREAK) == 0);
-
+            
 			input_keyboard_key(raw_input->data.keyboard.VKey, is_down);
 			if(button_callback != vp_nullptr) button_callback(raw_input->data.keyboard.VKey, is_down);
 		} break;
@@ -336,62 +375,139 @@ HandleRawInput(RAWINPUT *raw_input)
 		{
 			
 		} break;
-
+        
 	}
 };
+
+
+/* Microsoft are the devil incarnate */ 
+void
+LoadOpenGLExtensions()
+{
+	WNDCLASSA window_class = {
+        .style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC,
+        .lpfnWndProc = DefWindowProcA,
+        .hInstance = GetModuleHandle(0),
+        .lpszClassName = "Dummy_WGL_djuasiodwa",
+    };
+
+    if (!RegisterClassA(&window_class)) {
+        Error("Failed to register dummy OpenGL window.");
+    }
+	    HWND dummy_window = CreateWindowExA(
+        0,
+        window_class.lpszClassName,
+        "Dummy OpenGL Window",
+        0,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        0,
+        0,
+        window_class.hInstance,
+        0);
+
+    if (!dummy_window) {
+        Error("Failed to create dummy OpenGL window.");
+    }
+
+    HDC dummy_dc = GetDC(dummy_window);
+
+	PIXELFORMATDESCRIPTOR pfd = {
+        .nSize = sizeof(pfd),
+        .nVersion = 1,
+        .iPixelType = PFD_TYPE_RGBA,
+        .dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER ,
+        .cColorBits = 32,
+        .cAlphaBits = 8,
+        .iLayerType = PFD_MAIN_PLANE,
+        .cDepthBits = 24,
+        .cStencilBits = 8,
+    };
+	int SuggestedPixelFormatIndex = ChoosePixelFormat(dummy_dc, &pfd);
+	DescribePixelFormat(dummy_dc, SuggestedPixelFormatIndex, sizeof(PIXELFORMATDESCRIPTOR), 
+						&pfd);
+	if(!SetPixelFormat(dummy_dc, SuggestedPixelFormatIndex, &pfd)) Error("Failed to set pixel format for the dummy context");
+	HGLRC OpenGLRC = wglCreateContext(dummy_dc);
+	if(!wglMakeCurrent(dummy_dc, OpenGLRC)) Error("Failed to make current the dummy context");
+
+	wglCreateContextAttribsARB = (wglCreateContextAttribsARB_type*)wglGetProcAddress(
+        "wglCreateContextAttribsARB");
+    wglChoosePixelFormatARB = (wglChoosePixelFormatARB_type*)wglGetProcAddress(
+        "wglChoosePixelFormatARB");
+
+	wglMakeCurrent(dummy_dc, 0);
+	wglDeleteContext(OpenGLRC);
+	ReleaseDC(dummy_window, dummy_dc);
+	DestroyWindow(dummy_window);
+}
+
 
 void
 Win32LoadOpenGL(HWND Window)
 {
+	LoadOpenGLExtensions();
+
 	HDC WindowDC = GetDC(Window);
-	// NOTE(Vasko): desired pixel format
-	PIXELFORMATDESCRIPTOR dpf = {0}; // NOTE(Vasko): not sure if this works
-	dpf.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-	dpf.nVersion = 1;
-	dpf.dwFlags = PFD_SUPPORT_OPENGL|PFD_DRAW_TO_WINDOW|PFD_DOUBLEBUFFER;
-	dpf.cColorBits = 32;
-	dpf.cAlphaBits = 8;
-	dpf.iLayerType = PFD_MAIN_PLANE;
-	
-	int SuggestedPixelFormatIndex = ChoosePixelFormat(WindowDC, &dpf);
-	PIXELFORMATDESCRIPTOR spf;
-	DescribePixelFormat(WindowDC, SuggestedPixelFormatIndex, sizeof(PIXELFORMATDESCRIPTOR), 
-						&spf);
-	
-	
-	SetPixelFormat(WindowDC, SuggestedPixelFormatIndex, &spf);
-	
-	HGLRC OpenGLRC = wglCreateContext(WindowDC);
-	if(wglMakeCurrent(WindowDC, OpenGLRC))
+
+	int pixel_format_attribs[] = {
+		WGL_DRAW_TO_WINDOW_ARB,		GL_TRUE,
+		WGL_SUPPORT_OPENGL_ARB,		GL_TRUE,
+		WGL_DOUBLE_BUFFER_ARB,		GL_TRUE,
+		WGL_SAMPLE_BUFFERS_ARB, GL_TRUE,
+		WGL_ACCELERATION_ARB,		WGL_FULL_ACCELERATION_ARB,
+		WGL_PIXEL_TYPE_ARB,			WGL_TYPE_RGBA_ARB,
+		WGL_COLOR_BITS_ARB, 		32,
+		WGL_DEPTH_BITS_ARB, 		24,
+		WGL_STENCIL_BITS_ARB, 		0,
+		WGL_SAMPLES_ARB, 16,
+		0
+	};
+	int pixel_format;
+	UINT num_formats;
+
+	wglChoosePixelFormatARB(WindowDC, pixel_format_attribs, 0, 1, &pixel_format, &num_formats);
+	if(!num_formats)
 	{
-		// NOTE: ??
-		int attribs[] = {WGL_CONTEXT_MAJOR_VERSION_ARB, 3, WGL_CONTEXT_MINOR_VERSION_ARB, 3, WGL_CONTEXT_LAYER_PLANE_ARB, 0, 
-						WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB, WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB, 0};
-		
-		PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
-		HGLRC ExtendedContext = wglCreateContextAttribsARB(WindowDC, 0,
-								attribs);
+		Error("Failed to choose pixelformat!");
+	}
 
-		if(!wglMakeCurrent(WindowDC, ExtendedContext)) Error("Failed to make current extended gl context");
+	PIXELFORMATDESCRIPTOR pfd;
+	DescribePixelFormat(WindowDC, pixel_format, sizeof(pfd), &pfd);
+	
+	if(!SetPixelFormat(WindowDC, pixel_format, &pfd))
+	{
+		Error("Failed to set the OpenGL 3.3 pixel format.");
+	}
+	int gl33_attribs[] = {
+        WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+        WGL_CONTEXT_MINOR_VERSION_ARB, 3,
+        WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+        0,
+    };
+	HGLRC gl33_context = wglCreateContextAttribsARB(WindowDC, 0, gl33_attribs);
+	if (!gl33_context)
+	{
+        Error("Failed to create OpenGL 3.3 context.");
+    }
 
-		VP_INFO("GL_VERSION %s\n", glGetString(GL_VERSION));
-		GLuint BlitTextureHandle = 1;
-		glGenTextures(1, &BlitTextureHandle);
-		PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = NULL;
-		wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-		if(wglSwapIntervalEXT)
-		{
-			wglSwapIntervalEXT(1);
-		}
-		else
-		{
-			VP_ERROR("FAILED TO ENABLE OPENGL!");
-		}
+	if(!wglMakeCurrent(WindowDC, gl33_context))
+	{
+		Error("Failed to activate OpenGL 3.3 rendering context.");
+	}
+
+	VP_INFO("GL_VERSION %s\n", glGetString(GL_VERSION));
+
+	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = NULL;
+	wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
+	if(wglSwapIntervalEXT)
+	{
+		wglSwapIntervalEXT(1);
 	}
 	else
 	{
-		// TODO(Vasko): probably never gonna happen but could do something with it
-		Error("faild to get opengl context!");
+		VP_ERROR("FAILED TO ENABLE OPENGL!");
 	}
 	
 	ReleaseDC(Window, WindowDC);
@@ -428,12 +544,12 @@ platform_output_string(char *str, uint8 color)
 	//		ERROR = 1
 	//		WARN = 2
 	//		INFO = 3
-
+    
 	int attrib = colors[color];
 	SetConsoleTextAttribute(STDOUT, attrib);
 	OutputDebugStringA(str);
 	unsigned long written = 0;
-	WriteConsoleA(STDOUT, str, vstd_strlen(str), &written, 0);
+	WriteFile(STDOUT, str, vstd_strlen(str), &written, 0);
 	SetConsoleTextAttribute(STDOUT, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED);
 }
 
@@ -451,7 +567,7 @@ platform_toggle_vsync(bool32 toggle)
 	{
 		return false;
 	}
-
+    
 }
 
 
@@ -467,7 +583,7 @@ LRESULT CALLBACK WindowProc(
 	{
 		case WM_SETCURSOR:
 		{
-			// TODO: make a way for the engine user to set the cursro
+			// TODO: make a way for the engine user to set the cursor
 			// probably an internal variable that can be changed by a function
 			HCURSOR Cursor = LoadCursor(NULL, IDC_ARROW);
 			SetCursor(Cursor);
@@ -480,47 +596,47 @@ LRESULT CALLBACK WindowProc(
 			int Width = ClientRect.right - ClientRect.left;
 			int Height = ClientRect.bottom - ClientRect.top;
 			glViewport(0, 0, Width, Height);
-
+            
 #if 0
 			if(RenderBuffer.Memory != 0) VirtualFree(RenderBuffer.Memory, 0, MEM_RELEASE);
 			RenderBuffer.Memory = (unsigned char *)VirtualAlloc(NULL, 
 																RenderBuffer.Width * RenderBuffer.Height * RenderBuffer.BytesPerPixel, 
 																MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
-			#endif
+#endif
 		}break;
 		case WM_MOUSEMOVE:
 		{
-			if(GetActiveWindow() == Win32State->Window && !vp_is_keydown(VP_KEY_ALT))
+			if(GetActiveWindow() == Win32State->Window && vp_is_mbdown(VP_MOUSE_BUTTON_LEFT))
 			{
 				RECT WindowRect = {};
 				GetWindowRect(Win32State->Window, &WindowRect);
 				MapWindowPoints(HWND_DESKTOP, GetParent(Win32State->Window), (LPPOINT)&WindowRect, 2);
-
+                
 				int new_pos_x = WindowRect.left + ((WindowRect.right - WindowRect.left) / 2);
 				int new_pos_y = WindowRect.top + ((WindowRect.bottom - WindowRect.top) / 2);
-
+                
 				POINT MousePos = {};
 				GetCursorPos(&MousePos);
 				int32 x = MousePos.x;
 				int32 y = MousePos.y;
-
-
+                
+                
 				x -= new_pos_x;
 				y -= new_pos_y;
 				if(x && y)
 				{
 					mouse.x += x;
 					mouse.y += y;
-
+                    
 					if(vp_is_keydown(VP_KEY_R))
 					{
 						mouse.x = 600;
 						mouse.y = 400;
 					}
-
-					SetCursorPos(new_pos_x, new_pos_y);
-
-					vp_camera_mouse_callback(mouse.x, mouse.y);
+                    
+//					SetCursorPos(new_pos_x, new_pos_y);
+                    
+					vp_camera_mouse_callback(x, y);
 					
 				}
 			}
@@ -546,7 +662,7 @@ LRESULT CALLBACK WindowProc(
 		{
 			PostQuitMessage(0);
 		} break;
-
+        
 		default:
 		{
 			Result = DefWindowProcA(Window, Message, wParam, lParam);

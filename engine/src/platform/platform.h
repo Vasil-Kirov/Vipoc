@@ -33,7 +33,7 @@ void
 platform_allocate_console();
 
 
-VP_API void
+VP_API bool32
 platform_read_entire_file(char *path, entire_file *e_file);
 
 

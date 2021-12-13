@@ -4,12 +4,12 @@ SetLocal EnableDelayedExpansion
 
 
 IF [%1] == [] (
-    SET CompilerFlags=-O0 -g -Wvarargs -Wall -DVIPOC_DEBUG
+    SET CompilerFlags=-O0 -Wvarargs -Wall -DVIPOC_DEBUG
 ) ELSE IF [%1] == [release] (
     ECHO -------- RELEASE --------
     SET CompilerFlags=-O3 -Wvarargs -Wall -Werror
 ) ELSE IF [%1] == [debug] (
-    SET CompilerFlags=-g -Wvarargs -Wall -DVIPOC_DEBUG
+    SET CompilerFlags=--debug -O0 -Wvarargs -Wall -DVIPOC_DEBUG
 ) ELSE (
     ECHO ERROR: unknown build type '%1'
     GOTO :ERROR

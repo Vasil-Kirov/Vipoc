@@ -77,7 +77,7 @@ typedef struct hot_render_target
     int LayerID;
 } hot_render_target;
 
-#define GAME_UPDATE_AND_RENDER(name) int name(atlas_member *Members, vp_game Game, float PlayerX, float PlayerY, rectangle AtlasSize, vp_render_target *Targets, int XOffset, int YOffset)
+#define GAME_UPDATE_AND_RENDER(name) int name(atlas_member *Members, vp_game Game, float PlayerX, float PlayerY, rectangle AtlasSize, vp_2d_render_target *Targets, int XOffset, int YOffset)
 typedef GAME_UPDATE_AND_RENDER(game_update_and_render);
 GAME_UPDATE_AND_RENDER(GameUpdateAndRenderStub)
 {
@@ -90,6 +90,16 @@ typedef struct reloader
     game_update_and_render *UpdateAndRender;
 } reloader;
 
+
+/* NOTE: the char array EmptyString must be allocated to size of MAX_PATH before the call*/
+inline char *
+OutputPathFromSource(char *EmptyString, char *SourcePath, const char *ToAdd)
+{
+	memset(EmptyString, 0, MAX_PATH);
+	vstd_strcat(EmptyString, SourcePath);
+	vstd_strcat(EmptyString, ToAdd);
+	return EmptyString;
+}
 
 rectangle
 GetAtlasRect(entire_file File)

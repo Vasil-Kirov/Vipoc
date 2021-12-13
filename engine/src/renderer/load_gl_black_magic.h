@@ -19,7 +19,7 @@
 
 // I think wglext needs to be included after gl.h... probably
 #ifdef VIPOC_WIN32
-    #define WGL_WGLEXT_PROTOTYPES
+//    #define WGL_WGLEXT_PROTOTYPES
     #include <GL/wglext.h>
 #endif
 

@@ -1,0 +1,55 @@
+version(1);
+
+project_name = "Vipoc";
+
+patterns = {
+	"*.c",
+	"*.h",
+	"*.cpp",
+	"*.bat",
+	"*.sh",
+	"*.4coder"
+};
+
+blacklist_paterns = {
+	".*"
+};
+
+load_paths = {
+	{ {".", .relative = true, .recursive = true}, {.os = "win"}},
+	{ {".", .relative = true, .recursive = true}, {.os = "linux"}}
+};
+
+command_list = {
+	{
+		.name = "build",
+		.out = "*compilation*",
+		.footer_panel = true,
+		.save_dirty_files = true,
+		.cursor_at_end = false,
+		.cmd = {{ "build-all.bat", .os = "win"}, 
+				{ "build-all.sh",  .os ="linux"}},
+	},
+	{
+		.name = "run",
+		.out = "*run*",
+		.footer_panel = false,
+		.save_dirty_files = false,
+		.cursro_at_end = true,
+		.cmd = { {"bin\game.exe", .os = "win"} },
+	},
+	{
+		.name = "gbuild",
+		.out = "*compilation*",
+		.footer_panel = true,
+		.save_dirty_files = true,
+		.cursor_at_end = false,
+		.cmd = {{ "!.bat", .os = "win"}, 
+				{ "!.sh",  .os ="linux"}},
+	},
+};
+
+fkey_command[1] = "build";
+fkey_command[2] = "run";
+fkey_command[3] = "gbuild";
+

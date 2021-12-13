@@ -10,12 +10,12 @@ FOR /R %%f in (*.c) do (
 )
 
 IF [%1] == [] (
-	SET CompilerFlags=-O0 -g -shared -Wvarargs -Wall -DVIPOC_DEBUG
+	SET CompilerFlags=-O0 -shared -Wvarargs -Wall -DVIPOC_DEBUG
 ) ELSE IF [%1] == [release] (
 	ECHO -------- RELEASE --------
 	SET CompilerFlags=-O3 -shared -Wvarargs -Wall -Werror
 ) ELSE IF [%1] == [debug] (
-	SET CompilerFlags=-g -shared -Wvarargs -Wall -DVIPOC_DEBUG
+	SET CompilerFlags=--debug -O0 -shared -Wvarargs -Wall -DVIPOC_DEBUG
 ) ELSE (
 	ECHO ERROR: unknown build type '%1'
 	GOTO :ERROR

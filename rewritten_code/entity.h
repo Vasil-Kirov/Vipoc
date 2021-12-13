@@ -63,7 +63,7 @@ typedef struct entity
 	vp_tags tag;
 	float speed;
 	float direction;
-	vp_render_target render;
+	vp_2d_render_target render;
 	m2 hitbox;
 	v2 prev_pos;
 	entity_func execute;
@@ -77,7 +77,7 @@ init_entity_system();
 
 // Entity execute function can be vp_nullptr
 VP_API int
-vp_create_entity(vp_tags tag, vp_render_target render, m2 hitbox, entity_func execute, collision_func on_collision);
+vp_create_entity(vp_tags tag, vp_2d_render_target render, m2 hitbox, entity_func execute, collision_func on_collision);
 
 VP_API vp_entity *
 vp_get_entity(int id);

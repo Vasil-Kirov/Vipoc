@@ -1,17 +1,7 @@
 @ECHO OFF
 CLS
 
-IF [%1] == [] (
-    SET Type=debug
-) ELSE IF [%1] == [release] (
-    ECHO -------- RELEASE --------
-    SET Type=release
-) ELSE IF [%1] == [debug] (
-        SET Type=debug
-) ELSE (
-    ECHO ERROR: unknown build type '%1'
-    GOTO :ERROR
-)
+Set Type=%1
 
 PUSHD engine
 CALL build.bat %Type%

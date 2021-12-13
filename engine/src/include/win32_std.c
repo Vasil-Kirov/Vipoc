@@ -185,7 +185,7 @@ void _vstd_sPrintf(int FormatSize, char *buff, const char* str, ...)
 void Error(const char *error_msg)
 {
 	char buf[4096];
-	vstd_sprintf(buf, "%s\nError Code: %s\n", error_msg, GetLastError());
+	vstd_sprintf(buf, "%s\nError Code: %d\n", error_msg, GetLastError());
 	MessageBoxA(NULL, buf, NULL, MB_OK);
 	ExitProcess(1);
 }

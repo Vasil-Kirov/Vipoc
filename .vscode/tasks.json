@@ -6,7 +6,7 @@
             "windows": {
                 "command": "${workspaceFolder}/engine/build.bat debug"
             },
-            "linux":{
+            "linux": {
                 "command": "${workspaceFolder}/engine/build.sh debug"
             },
             "options": {
@@ -21,7 +21,7 @@
             "windows": {
                 "command": "${workspaceFolder}/game/build.bat debug"
             },
-            "linux":{
+            "linux": {
                 "command": "${workspaceFolder}/game/build.sh debug"
             },
             "options": {
@@ -34,9 +34,9 @@
             "type": "shell",
             "label": "Build All",
             "windows": {
-                "command": "${workspaceFolder}/build-all.bat debug"
+                "command": "${workspaceFolder}/build-all.bat"
             },
-            "linux":{
+            "linux": {
                 "command": "${workspaceFolder}/build-all.sh"
             },
             "options": {
@@ -45,8 +45,12 @@
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
+            },
+            "presentation": {
+                "reveal": "silent",
+                "clear": true
+              },              
+            "problemMatcher": []
         }
-        
     ]
 }

@@ -1,3 +1,162 @@
+
+#if 0
+int32
+vp_load_obj(char *path)
+{
+	entire_file obj_file = {};
+	vp_memory obj_file_memory = vp_allocate_temp(MB(1));
+	obj_file.contents = obj_file_memory.ptr;
+	if(!platform_read_entire_file(path, &obj_file)) return -1;
+	
+	uint64 size_to_allocate = (obj_file.size + KB(10))/6;
+	obj new_object = {}; 
+	obj_allocate_memory_for((void **)&new_object.verts, size_to_allocate);
+	obj_allocate_memory_for((void **)&new_object.texture, size_to_allocate);
+	obj_allocate_memory_for((void **)&new_object.norms, size_to_allocate);
+	obj_allocate_memory_for((void **)&new_object.vert_indexes, size_to_allocate);
+	obj_allocate_memory_for((void **)&new_object.norms_indexes, size_to_allocate);
+	obj_allocate_memory_for((void **)&new_object.texture_indexes, size_to_allocate);
+
+
+
+	char *at = (char *)obj_file.contents;
+	uint64 size = obj_file.size;
+	uint64 last_vert = 0;
+	uint64 last_norm = 0;
+	uint64 last_text = 0;
+	uint64 last_vert_index = 0;
+	uint64 last_norm_index = 0;
+	uint64 last_text_index = 0;
+	while(size > 0)
+	{
+		char *start_at = at;
+		if(*at == 'v')
+		{
+			at++;
+			if(*at == 'n')
+			{
+				at+=2;
+				new_object.norms[last_norm].x = catof(at);
+				ToAndPastC(at, ' ');
+				new_object.norms[last_norm].y = catof(at);
+				ToAndPastC(at, ' ');
+				new_object.norms[last_norm++].z = catof(at);
+			}
+			else if(*at == 't')
+			{
+				at+=2;
+				new_object.texture[last_text].x = catof(at);
+				ToAndPastC(at, ' ');
+				new_object.texture[last_text].y = catof(at);
+				ToAndPastC(at, ' ');
+				new_object.texture[last_text++].z = catof(at);
+			}
+			else
+			{
+				at++;
+				new_object.verts[last_vert].x = catof(at);
+				ToAndPastC(at, ' ');
+				new_object.verts[last_vert].y = catof(at);
+				ToAndPastC(at, ' ');
+				new_object.verts[last_vert++].z = catof(at);
+			}
+		}
+		else if(*at == 'f')
+		{
+			at++;
+			// TODO: Support for other layouts
+			while(true)
+			{
+				at++;
+				new_object.vert_indexes[last_vert_index++] = catof(at)-1;
+				ToAndPastC(at, '/');
+				new_object.texture_indexes[last_text_index++] = catof(at)-1;
+				ToAndPastC(at, '/');
+				new_object.norms_indexes[last_norm_index++] = catof(at)-1;
+				while(*at >= '0' && *at <= '9') at++;
+				if(*at == '\n') break;
+			}
+		}
+
+		ToAndPast(at, "\n");
+		size -= (at - start_at); 
+	}
+	// CLEANUP: There has to be a better way to do this!
+	new_object.norms[last_norm].x = OBJ_FIELD_END;
+	new_object.texture[last_text].x = OBJ_FIELD_END;
+	new_object.verts[last_vert].x = OBJ_FIELD_END;
+	new_object.vert_indexes[last_vert_index++] = INT32_MAX;
+	new_object.texture_indexes[last_text_index++] = INT32_MAX;
+	new_object.norms_indexes[last_norm_index++] = INT32_MAX;
+
+	renderer.objects[renderer.last_object] = new_object;
+	return renderer.last_object++;
+}
+#endif
+
+void
+draw_test_cube()
+{
+	v3 tex = {0.0f, 0.0f, 0.0f};
+	v4 r = {1.0f, 0.0f , 0.0f, 1.0f};
+	v4 g = {0.0f, 1.0f , 0.0f, 1.0f};
+	v4 b = {0.0f, 0.0f , 1.0f, 1.0f};
+	v3 pos[8];
+	pos[0] = (v3){0.5f, 0.5f, 0.5f };		// 0
+	pos[1] = (v3){ -0.5f, 0.5f, -0.5f };	// 1
+	pos[2] = (v3){ -0.5f, 0.5f, 0.5f };		// 2
+	pos[3] = (v3){ 0.5f, -0.5f, -0.5f };	// 3
+	pos[4] = (v3){ -0.5f, -0.5f, -0.5f };	// 4
+	pos[5] = (v3){ 0.5f, 0.5f, -0.5f };		// 5
+	pos[6] = (v3){ 0.5f, -0.5f, 0.5f };		// 6
+	pos[7] = (v3){ -0.5f, -0.5f, 0.5f };	// 7
+    
+	int indexes_offset = renderer.last_frame_vert;
+	push_frame_vert(pos[0], tex, r);
+	push_frame_vert(pos[1], tex, g);
+	push_frame_vert(pos[2], tex, b);
+	push_frame_vert(pos[3], tex, r);
+	push_frame_vert(pos[4], tex, g);
+	push_frame_vert(pos[5], tex, b);
+	push_frame_vert(pos[6], tex, r);
+	push_frame_vert(pos[7], tex, g);
+	
+	unsigned int Indexes[] = {
+		// Front
+		4, 5, 1,
+		4, 3, 5, 
+        
+		// Right 
+		5, 3, 0,
+		3, 6, 0,
+        
+		// Back
+		6, 7, 2,
+		6, 2, 0,
+        
+		// Left
+		7, 4, 1, 
+		7, 1, 2,
+        
+		// Bottom
+		7, 6, 4,
+		6, 3, 4,
+        
+		// Top
+		1, 5, 0,
+		1, 0, 2
+	};
+	
+	for(int i = 0; i < sizeof(Indexes)/sizeof(unsigned int); ++i)
+	{
+		renderer.indexes[renderer.last_index++] = Indexes[i] + indexes_offset;
+	}
+    
+}
+
+
+
+
 #include "renderer/renderer.h"
 #include "platform/platform.h"
 
@@ -268,8 +427,8 @@ normalize_v3(v3 target)
 }
 
 
-vp_render_target
-normalize_render_target(vp_render_target target)
+vp_2d_render_target
+normalize_render_target(vp_2d_render_target target)
 {
 	target.world_position.x1 = meters_to_gl(target.world_position.x1, true);
 	target.world_position.x2 = meters_to_gl(target.world_position.x2, true);
@@ -434,7 +593,7 @@ vp_draw_text(char *text, float x, float y, v3 color)
 	{
 		int char_width = ascii_char_map[(int)text[index]].rect.x2 - ascii_char_map[(int)text[index]].rect.x1;
 		int char_height = ascii_char_map[(int)text[index]].rect.y2 - ascii_char_map[(int)text[index]].rect.y1;
-		vp_render_target target = {};
+		vp_2d_render_target target = {};
 		target.world_position.x1 = x + space_from_last_char;
 		target.world_position.x2 = target.world_position.x1 + char_width;
 		target.world_position.y1 = y - vert_from_last_char;
@@ -614,7 +773,7 @@ vp_load_texture(char *path, int width, int height)
 }
 
 void
-vp_render_pushback(vp_render_target target)
+vp_render_pushback(vp_2d_render_target target)
 {
 	to_render[last_tex_index].color = (v4){1.0f, 1.0f, 1.0f, 1.0f};
 	to_render[last_tex_index++].target = target;

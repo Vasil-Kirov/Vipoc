@@ -8,32 +8,46 @@ static vp_game Config;
 
 void HandleInput()
 {
-		float CamSpeed = .1f;
-		v3 ToMove = {};
-		if(vp_is_keydown(VP_KEY_W))
-		{
-			ToMove.z -= CamSpeed;
-		}
-		if(vp_is_keydown(VP_KEY_S))
-		{
-			ToMove.z += CamSpeed;
-		}
-		if(vp_is_keydown(VP_KEY_A))
-		{
-			ToMove.x -= CamSpeed;
-		}
-		if(vp_is_keydown(VP_KEY_D))
-		{
-			ToMove.x += CamSpeed;
-		}
-		vp_move_camera(ToMove);
+    float CamSpeed = 10.0f;
+    if(vp_is_keydown(VP_KEY_SPACE))
+    {
+        vp_move_camera(VP_UP, CamSpeed);
+    }
+    if(vp_is_keydown(VP_KEY_SHIFT))
+    {
+        vp_move_camera(VP_DOWN, CamSpeed);
+    }
+    if(vp_is_keydown(VP_KEY_A))
+    {
+        vp_move_camera(VP_LEFT, CamSpeed);
+    }
+    if(vp_is_keydown(VP_KEY_D))
+    {
+        vp_move_camera(VP_RIGHT, CamSpeed);
+    }
 }
 
+
+static bool32 VSyncToggle = false;
 
 void
 OnKeyDown(vp_keys Key, bool32 IsDown)
 {
-
+	if(IsDown)
+	{
+		if(vp_is_keydown(VP_KEY_CONTROL))
+		{
+			if(Key == VP_KEY_X)
+				vp_toggle_polygons();
+			
+			if(vp_is_keydown(VP_KEY_V))
+			{
+				platform_toggle_vsync(VSyncToggle);
+				VSyncToggle = !VSyncToggle;
+			}
+		}
+		
+	}
 }
 
 bool32
@@ -70,7 +84,6 @@ LoadDLL(char *PathToFolder)
 	return Result;
 }
 
-
 int
 main()
 {
@@ -82,68 +95,77 @@ main()
 	Config.config.vp_on_key_down = OnKeyDown;
 	Config.vp_on_resize = OnResize;
 	vp_init(Config);
-	char PathToFolder[MAX_PATH] = {};
+    
+    char PathToFolder[MAX_PATH] = {};
 	platform_get_absolute_path(PathToFolder);
-
-
+    
+    
 	allocator PermanentStorage = {};
 	PermanentStorage.Start = platform_allocate_memory_chunk(MB(10));
 	allocator TempStorage = {};
 	TempStorage.Start = platform_allocate_memory_chunk(MB(125));
-
+    
 	PermanentStorage.End = PermanentStorage.Start;
 	TempStorage.End = TempStorage.Start;
-
+    
 	rectangle AtlasSize = {};
 	entire_file AtlasInfoFile = {};
 	AtlasInfoFile.contents = Allocate(MB(1), TempStorage);
+
 	{
 		char AtlasInfoFileLocation[MAX_PATH] = {};
 		vstd_strcat(AtlasInfoFileLocation, PathToFolder);
 		vstd_strcat(AtlasInfoFileLocation, "assets/test_atlas.vat");
 		platform_read_entire_file(AtlasInfoFileLocation, &AtlasInfoFile);
 		AtlasSize = GetAtlasRect(AtlasInfoFile);
-
+        
 		char AtlasFileLocation[MAX_PATH] = {};
 		vstd_strcat(AtlasFileLocation, PathToFolder);
 		vstd_strcat(AtlasFileLocation, "assets/test.bmp");
-
+        
 		vp_load_texture(AtlasFileLocation);
 	}
 	entire_file FontInfoFile = {};
 	{
 		FontInfoFile.contents = Allocate(MB(1), TempStorage);
-
+        
 		char FontInfoFileLocation[MAX_PATH] = {};
 		vstd_strcat(FontInfoFileLocation, PathToFolder);
 		vstd_strcat(FontInfoFileLocation, "assets/consolas.fnt");
 		platform_read_entire_file(FontInfoFileLocation, &FontInfoFile);
-
+        
 		char FontFileLocation[MAX_PATH] = {};
 		vstd_strcat(FontFileLocation, PathToFolder);
 		vstd_strcat(FontFileLocation, "assets/consolas.bmp");
-
+        
 		vp_parse_font_fnt(FontInfoFile);
 		vp_load_text_atlas(FontFileLocation);
 		
 	}
 
-
+	int Objects[1024] = {};
+	int LastObject = 0;
+	memset(Objects, -1, 1024);
+	{
+		char EmptyString[MAX_PATH] = {};
+		Objects[LastObject++] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder, "assets/simple_axis.obj"));
+		Objects[LastObject++] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder, "assets/cube.obj"));
+	}
 	atlas_member Textures[1024];
 	ParseVATFile(Textures, AtlasInfoFile);
-
+    
 	bool32 Running = true;
-
-
+    
+    
 	int LastReloadCounter = 0;
 	int FPSReloadCounter = 15;
 	int32 FPS = 0;
 	int32 MSPerFrame = 0;
 	reloader Game = {};
 	Game = LoadDLL(PathToFolder);
-
+    
 	Free(TempStorage);
-
+    
 #if 0
 	uint32 TileMap[9][17] =
 	{
@@ -158,9 +180,7 @@ main()
 		{1, 1, 1, 1,  1, 1, 1, 1,   1, 1, 1, 1,  1, 1, 1, 1}
 	};
 #endif
-
-	bool32 VSyncToggle = false;
-
+    
 	int64 PerfFrequency = platform_get_frequency();
 	int64 StartCounter = platform_get_perf_counter();
 	while(Running)
@@ -171,23 +191,16 @@ main()
 			Game = LoadDLL(PathToFolder);
 			LastReloadCounter = 0;
 		}
-
-		if(vp_is_keydown(VP_KEY_V))
-		{
-			platform_toggle_vsync(VSyncToggle);
-			VSyncToggle = !VSyncToggle;
-		}
-
+        
 		Running = vp_handle_messages();
-
+        
+		v3 AxisPosition = {100, 0, -100};
+		v3 CubePosition = {0, -20, 0};
+		vp_object_pushback(Objects[0], (v4){1.0f, 1.0f, 1.0f, 1.0f}, AxisPosition);
+		vp_object_pushback(Objects[1], (v4){1.0f, 0.0f, 0.5f, 0.1f}, CubePosition);
 		HandleInput();
-
-//		v3 cube_position = {100.0f, 100.0f, 100.0f};
-//		v4 crimson_color = {0.863f, 0.078f, 0.235f, 1.0f};
-	//	vp_draw_cube(cube_position, crimson_color);
-
-
-
+        
+        
 		/* END OF CODE! ONLY PERFORMANCE CALCULATIONS AFTER THIS LABEL */
 		int64 EndCounter = platform_get_perf_counter();
 		int64 Elapsed = EndCounter - StartCounter;
@@ -200,9 +213,9 @@ main()
 		}
 		
 		char ToDraw[2048] = {};	
-		vstd_sprintf(ToDraw, "%dms FPS: %d\nnew line", MSPerFrame, FPS);
+		vstd_sprintf(ToDraw, "%dms FPS: %d\nlines\nof\ntext", MSPerFrame, FPS);
 		
-		vp_draw_text(ToDraw, 5, Config.config.h - 35, (v4){1.0f, 1.0f, 1.0f, 0.7f});
+		vp_draw_text(ToDraw, 5, Config.config.h - 35, (v4){1.0f, 1.0f, 1.0f, 1.0f});
 		vp_present();
 		StartCounter = EndCounter;
 	}
