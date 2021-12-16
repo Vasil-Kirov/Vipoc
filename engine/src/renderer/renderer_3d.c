@@ -5,13 +5,13 @@
 
 #define swapf(a, b) {float tmp = a; a = b; b = tmp;}
 
-#define push_text_verts(target, num1, num2, color_in, matrix)	\
+#define push_text_verts(target, num1, num2, color_in, matrix)									\
 renderer.text_verts[renderer.last_text_index].position = (v4){target.world_position.x##num1, target.world_position.y##num2, 0.0f, 1.0f};	\
 renderer.text_verts[renderer.last_text_index].texture = (v4){target.texture_position.x##num1, target.texture_position.y##num2, 0.0f, 0.0f};	\
-renderer.text_verts[renderer.last_text_index].color = color_in;																				\
+renderer.text_verts[renderer.last_text_index].color = color_in;																					\
 renderer.text_verts[renderer.last_text_index++].transform = matrix
 
-#define push_frame_vert(vert, tex, color_in, normal_in, matrix)	\
+#define push_frame_vert(vert, tex, color_in, normal_in, matrix)									\
 renderer.frame_verts[renderer.last_frame_vert].position = (v4){vert.x, vert.y, vert.z, 1.0f};	\
 renderer.frame_verts[renderer.last_frame_vert].texture = (v4){tex.x, tex.y,	0.0f, 1.0f};		\
 renderer.frame_verts[renderer.last_frame_vert].color = color_in;								\
@@ -75,7 +75,9 @@ render_update()
 {
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
+	glFrontFace(GL_CW);
+
+
 	float current_frame = SECONDS_SINCE_START();
 	delta.value = current_frame - delta.last_frame;
 	delta.last_frame = current_frame;
@@ -172,6 +174,8 @@ render_update()
 	// TEXT RENDERING
 	if(renderer.last_text_index > 0)
 	{
+		glFrontFace(GL_CCW);
+
 		/* Undoing the light for Text and UI */
 		set_shader_uniform_vec3("light.ambient", (v3){1.0f, 1.0f, 1.0f});
 		set_shader_uniform_vec3("light.diffuse", (v3){1.0f, 1.0f, 1.0f});
@@ -392,6 +396,22 @@ normalize_v3(v3 target, float minx, float maxx, float from, float to)
 	return result;
 }
 
+bool32
+check_cw_culling(v3 points[3])
+{
+	v3 edge_a = {};
+	v3 edge_b = {};
+	edge_a.x = points[1].x - points[0].x;
+	edge_a.y = points[1].y - points[0].y;
+	edge_a.z = points[1].z - points[0].z;
+
+	edge_b.x = points[2].x - points[0].x;
+	edge_b.y = points[2].y - points[0].y;
+	edge_b.z = points[2].z - points[0].z;
+
+	return (edge_a.x * edge_b.y - edge_a.y *edge_b.x);
+}
+
 v3
 gl_to_meters(v3 target)
 {
@@ -447,7 +467,7 @@ vp_object_pushback(int32 index, v4 color, v3 position)
 				normal = (v4){object.norms[object.norms_indexes[i]].x, object.norms[object.norms_indexes[i]].y, object.norms[object.norms_indexes[i]].z, 1.0f};
 			}
 		}
-		if ((renderer.frame_verts + renderer.last_frame_vert) > renderer.frame_verts_end) { VP_FATAL("FRAME BUFFER OVERFLOW!"); }
+		if ((void *)(renderer.frame_verts + renderer.last_frame_vert) > renderer.frame_verts_end) { VP_FATAL("FRAME BUFFER OVERFLOW!"); }
 		push_frame_vert(object.verts[i], empty_tex, color, normal, translation);
 	}
 	for(int i = 0; i < object.last_vert_index; ++i)
@@ -702,7 +722,7 @@ vp_load_simple_obj(char *path)
 				new_object.norms[last_norm].y = catof(at);
 				ToAndPastC(at, ' ');
 				new_object.norms[last_norm++].z = catof(at);
-				if((char *)new_object.norms + last_norm > norms_memory_end) VP_FATAL("MEMORY OVERFLOW AT LINE: %d", __LINE__);
+				if((void *)((char *)new_object.norms + last_norm) > norms_memory_end) VP_FATAL("MEMORY OVERFLOW AT LINE: %d", __LINE__);
 			}
 			else
 			{
@@ -712,7 +732,7 @@ vp_load_simple_obj(char *path)
 				new_object.verts[last_vert].y = catof(at);
 				ToAndPastC(at, ' ');
 				new_object.verts[last_vert++].z = catof(at);
-				if((char *)new_object.verts + last_vert > vert_memory_end) VP_FATAL("MEMORY OVERFLOW AT LINE: %d", __LINE__);
+				if((void *)((char *)new_object.verts + last_vert) > vert_memory_end) VP_FATAL("MEMORY OVERFLOW AT LINE: %d", __LINE__);
 			}
 		}
 		else if(*at == 'f')
@@ -721,11 +741,11 @@ vp_load_simple_obj(char *path)
 			while(true)
 			{
 				new_object.vert_indexes[last_vert_index++] = catof(at)-1;
-				if((char *)new_object.vert_indexes + last_vert_index > vert_index_memory_end) VP_FATAL("MEMORY OVERFLOW AT LINE: %d", __LINE__);
+				if((void *)((char *)new_object.vert_indexes + last_vert_index) > vert_index_memory_end) VP_FATAL("MEMORY OVERFLOW AT LINE: %d", __LINE__);
 				ToAndPastC(at, '/');
 				while(*at == '/') at++;
 				new_object.norms_indexes[last_norm_index++] = catof(at)-1;
-				if((char *)new_object.norms_indexes + last_norm_index > norms_index_memory_end) VP_FATAL("MEMORY OVERFLOW AT LINE: %d", __LINE__);
+				if((void *)((char *)new_object.norms_indexes + last_norm_index) > norms_index_memory_end) VP_FATAL("MEMORY OVERFLOW AT LINE: %d", __LINE__);
 
 				while(*at >= '0' && *at <= '9') at++;
 				if(*at == '\n') break;
@@ -886,14 +906,14 @@ void RendererInit()
 	if(glGetError() != 0) VP_ERROR("GL ERROR: %d\n", glGetError());
 
 	glEnable(GL_DEPTH_TEST);
-//	glEnable(GL_CULL_FACE);
-//	glFrontFace(GL_CW);
-//	glCullFace(GL_FRONT);
+	glEnable(GL_CULL_FACE);
+	glFrontFace(GL_CCW);
+	glCullFace(GL_FRONT);
 
 	cm.position = (v3){0.0f, 5.0f, 5.0f};
 	cm.is_locked = false;
 
-	light.position = (v3){1.2f, 5.0f, 2.0f};
+	light.position = (v3){-4.0f, 5.0f, 2.0f};
 	
 }
 
