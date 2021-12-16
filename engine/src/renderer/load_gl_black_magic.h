@@ -70,6 +70,7 @@ extern PFNGLGENBUFFERSPROC glGenBuffers;
 extern PFNGLBINDBUFFERPROC glBindBuffer;
 extern PFNGLBUFFERDATAPROC glBufferData;
 extern PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
+extern PFNGLVERTEXATTRIBDIVISORPROC glVertexAttribDivisor;
 extern PFNGLDELETEBUFFERSPROC glDeleteBuffers;
 extern PFNGLMULTIDRAWELEMENTSPROC glMultiDrawElements;
 extern PFNGLBUFFERSUBDATAPROC glBufferSubData;
@@ -80,6 +81,9 @@ extern PFNGLUNMAPBUFFERPROC glUnmapBuffer;
 extern PFNGLGENVERTEXARRAYSPROC glGenVertexArrays;
 extern PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
 extern PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays;
+
+/* Added by me */
+extern PFNGLUNIFORM3FPROC glUniform3f;
 
 #ifdef VIPOC_WIN32
 extern PFNGLACTIVETEXTUREPROC glActiveTexture;

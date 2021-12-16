@@ -40,6 +40,8 @@ typedef struct vertex
 	v4 position;
 	v4 texture;
 	v4 color;
+	v4 normal;
+	m4 transform;
 } vertex;
 #pragma pack(pop)
 
@@ -59,7 +61,18 @@ typedef struct camera
 	float pitch;
 	double mouse_x;
 	double mouse_y;
+	bool32 is_locked;
 } camera;
+
+typedef struct vp_light
+{
+	v3 position;
+
+    v3 ambient;
+    v3 diffuse;
+    v3 specular;
+} vp_light;
+
 
 inline void
 set_shader_uniform_mat4(char *str, m4 mat);
@@ -304,6 +317,17 @@ v3_scale(v3 A, f32 B)
 	return R;
 }
 
+inline v3 
+v3_negate(v3 A)
+{
+	return (v3){-A.x, -A.y, -A.z};
+}
+
+inline v3
+v3_v3_scale(v3 A, v3 B)
+{
+	return (v3){A.x * B.x, A.y * B.y, A.z * B.z};
+}
 
 inline f32
 v3_dot(v3 A, v3 B)
@@ -311,11 +335,6 @@ v3_dot(v3 A, v3 B)
 	return (A.x * B.x + A.y * B.y + A.z * B.z);
 }
 
-inline v3 
-v3_negate(v3 A)
-{
-	return (v3){-A.x, -A.y, -A.z};
-}
 
 inline m4
 point_at(v3 pos, v3 target, v3 up)
@@ -338,6 +357,19 @@ point_at(v3 pos, v3 target, v3 up)
 	return matrix;
 }
 
+
+inline m4
+translate(v3 position)
+{
+	return 	create_mat4(
+			1.0f, 0.0f, 0.0f, position.x,
+			0.0f, 1.0f, 0.0f, position.y,
+			0.0f, 0.0f, 1.0f, position.z,
+			0.0f, 0.0f, 0.0f, 1.0f
+			);
+
+}
+
 /* I have no idea what this does so it' just copied */
 inline m4
 quick_inverse(m4 m)
@@ -351,4 +383,22 @@ quick_inverse(m4 m)
 	matrix.m[3][2] = -(m.m[3][0] * matrix.m[0][2] + m.m[3][1] * matrix.m[1][2] + m.m[3][2] * matrix.m[2][2]);
 	matrix.m[3][3] = 1.0f;
 	return matrix;
+}
+
+
+/* Calculates the view matrix and gives it back in column-major order */
+inline m4
+calculate_view_matrix(camera *cm)
+{
+	v3 up = {0.0f, 1.0f, 0.0f};
+	v3 target = {0.0f, 0.0f, 1.0f};
+	m4 camera_y_rotation = y_rotation(cm->yaw);
+	m4 camera_x_rotation = x_rotation(cm->pitch);
+	m4 camera_rotation = mat4_multiply(camera_x_rotation, camera_y_rotation);
+	cm->look_dir = mat4_v3_multiply(camera_rotation, target);
+	target = v3_add(cm->position, cm->look_dir);
+	
+	
+	m4 camera = point_at(cm->position, target, up);
+	return transpose(quick_inverse(camera));
 }

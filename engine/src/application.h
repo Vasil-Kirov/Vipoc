@@ -1,9 +1,10 @@
+#pragma once
+
 #ifdef __cplusplus
 	extern "C"{
 #endif
 
-#pragma once
-
+#define VP_RAND_MAX 0x7fff
 // This is needed for VP_API to work
 #include "include/Core.h"
 #include "renderer/math_3d.h"
@@ -31,6 +32,11 @@ typedef struct vp_game
 void application_create(vp_game *game);
 void application_run();
 
+VP_API uint64
+vp_random_seed();
+
+VP_API uint64
+vp_random_from_seed(uint64 *seed);
 
 VP_API bool32 
 vp_handle_messages();

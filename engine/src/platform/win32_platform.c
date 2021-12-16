@@ -620,10 +620,7 @@ LRESULT CALLBACK WindowProc(
 				int32 x = MousePos.x;
 				int32 y = MousePos.y;
                 
-                
-				x -= new_pos_x;
-				y -= new_pos_y;
-				if(x && y)
+				if(x != new_pos_x && y != new_pos_y)
 				{
 					mouse.x += x;
 					mouse.y += y;

@@ -44,6 +44,8 @@ typedef float meters;
 		uint32 *vert_indexes;
 		uint32 *texture_indexes;
 		uint32 *norms_indexes;
+		uint32 last_vert;
+		uint32 last_vert_index;
 	} obj;
 	
 	typedef struct atlas
@@ -82,6 +84,7 @@ typedef float meters;
 		float last_frame;
 	} delta_time;
 	
+	
 	typedef enum vp_direction
 	{
 		VP_UP=0,
@@ -116,13 +119,19 @@ VP_API void
 	vp_load_text_atlas(char *path);
 
 VP_API void
-	vp_draw_text(char *text, float x, float y, v4 color);
+	vp_draw_text(char *text, float x, float y, v4 color, float scaler);
 
 VP_API void
 	vp_load_texture(char *path);
 
 VP_API void
 	vp_move_camera(vp_direction direction, f32 speed);
+	
+VP_API void
+	vp_unlock_camera();
+
+VP_API void
+	vp_set_directional_light(v3 direction);
 
 // Position = world position, Tex_Location = location in atlas
 // values must be between -1 and 1
@@ -136,8 +145,13 @@ VP_API void
 VP_API void
 	vp_force_2d(bool32 on);
 
+/* location in meters 0 - 10 = -1 - 1 */
 VP_API void
 	vp_draw_rectangle(m2 location, v4 color, int layer_id);
+	
+VP_API void
+	vp_lock_camera(float yaw, float pitch, v3 xyz);
+
 
 void
 	vp_update_mouse_pos(double xpos, double ypos);
@@ -160,6 +174,14 @@ float
 vp_2d_render_target
 	normalize_render_target(vp_2d_render_target target);
 
+void
+	set_shader_uniform_f(char *str, float to_set);
+
+void
+	set_shader_uniform_vec3(char *str, v3 vector);
+
+v3
+	gl_to_meters(v3 target);
 	
 #ifdef __cplusplus
 }

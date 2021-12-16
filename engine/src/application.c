@@ -65,3 +65,25 @@ void vp_present()
 	vp_free_temp_memory();
 }
 
+uint64
+vp_random_seed()
+{
+	uint64 seed = 0;
+	__asm__ (
+	"RDSEED %0;"
+	:"=r"(seed)
+	);
+	
+	return seed;
+}
+
+
+uint64
+vp_random_from_seed(uint64 *seed)
+{
+	*seed = *seed * 1103515245 + 12345; 
+    return (*seed % ((unsigned int)VP_RAND_MAX + 1)); 
+}
+
+
+

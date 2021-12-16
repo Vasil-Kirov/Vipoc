@@ -3,6 +3,14 @@
 #include <stdlib.h>
 #include <Vipoc.h>
 
+struct console
+{
+	bool32 IsOn;
+	bool32 IsStarting;
+	char Command[1024];
+	int LastChar;
+	float Position;
+};
 
 typedef struct allocator
 {

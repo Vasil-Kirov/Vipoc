@@ -60,6 +60,10 @@ PFNGLGENVERTEXARRAYSPROC glGenVertexArrays = NULL;
 PFNGLBINDVERTEXARRAYPROC glBindVertexArray = NULL;
 PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays = NULL;
 
+/* Added by me */
+PFNGLVERTEXATTRIBDIVISORARBPROC glVertexAttribDivisor = NULL;
+PFNGLUNIFORM3FPROC glUniform3f = NULL;
+
 #ifdef VIPOC_WIN32
     PFNGLACTIVETEXTUREPROC glActiveTexture = NULL;
     PFNGLGENERATEMIPMAPPROC glGenerateMipmap = NULL;
@@ -70,7 +74,6 @@ void LoadGLExtensions()
     #ifdef VIPOC_WIN32
         // Program
         glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC)wglGetProcAddress("glGetProgramInfoLog");
-
         glCreateProgram = (PFNGLCREATEPROGRAMPROC)wglGetProcAddress("glCreateProgram");
         glDeleteProgram = (PFNGLDELETEPROGRAMPROC)wglGetProcAddress("glDeleteProgram");
         glUseProgram = (PFNGLUSEPROGRAMPROC)wglGetProcAddress("glUseProgram");
@@ -128,5 +131,10 @@ void LoadGLExtensions()
         // Multitexturing GL Does Not Load 1.3+ Functionality in Windows
         glActiveTexture = (PFNGLACTIVETEXTUREPROC)wglGetProcAddress("glActiveTexture");
         glGenerateMipmap = (PFNGLGENERATEMIPMAPPROC)wglGetProcAddress("glGenerateMipmap");
+
+        /* Added by me */
+        glVertexAttribDivisor = (PFNGLVERTEXATTRIBDIVISORPROC)wglGetProcAddress("glVertexAttribDivisor");
+        glUniform3f = (PFNGLUNIFORM3FPROC)wglGetProcAddress("glUniform3f");
+
     #endif
 }
