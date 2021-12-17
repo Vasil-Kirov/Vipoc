@@ -34,10 +34,10 @@ vp_log(log_level level, const char *str, const char *color, ...);
 
 
 
-#define VP_FATAL(str, ...) vp_log(LOG_LEVEL_FATAL, str, ANSI_COLOR_RED, __VA_ARGS__)
-#define VP_ERROR(str, ...) vp_log(LOG_LEVEL_ERROR, str, ANSI_COLOR_MAGENTA, __VA_ARGS__)
-#define VP_WARN(str, ...) vp_log(LOG_LEVEL_WARN, str, ANSI_COLOR_YELLOW, __VA_ARGS__)
-#define VP_INFO(str, ...) vp_log(LOG_LEVEL_INFO, str, ANSI_COLOR_CYAN, __VA_ARGS__)
+#define VP_FATAL(str, ...) vp_log(LOG_LEVEL_FATAL, str, ANSI_COLOR_RED, #__VA_ARGS__)
+#define VP_ERROR(str, ...) vp_log(LOG_LEVEL_ERROR, str, ANSI_COLOR_MAGENTA, #__VA_ARGS__)
+#define VP_WARN(str, ...) vp_log(LOG_LEVEL_WARN, str, ANSI_COLOR_YELLOW, #__VA_ARGS__)
+#define VP_INFO(str, ...) vp_log(LOG_LEVEL_INFO, str, ANSI_COLOR_CYAN, #__VA_ARGS__)
 
 
 

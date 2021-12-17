@@ -7,10 +7,22 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 
+#include <stdlib.h>
+#include <limits.h>
 
 #include "platform/platform.h"
+#include "application.h"
 #include "renderer/renderer.h"
 #include <GL/glx.h>
+
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_BLUE    "\x1b[34m"
+#define ANSI_COLOR_MAGENTA "\x1b[35m"
+#define ANSI_COLOR_CYAN    "\x1b[36m"
+
+#define ANSI_COLOR_RESET   "\x1b[0m"
 
 
 typedef struct linux_state
@@ -130,6 +142,76 @@ LinuxLoadOpenGL(Display *display, int screen)
 					   pBufferId,
 					   glCtx );
 	return true;
+}
+
+
+void
+platform_swap_buffers()
+{
+	glXSwapBuffers(internal_state->display, glXGetCurrentDrawable());
+}
+
+void
+platform_output_string(char *str, uint8 color)
+{
+	char output[4096] = {};
+	char *colors[4] = {ANSI_COLOR_MAGENTA, ANSI_COLOR_RED, ANSI_COLOR_YELLOW, ANSI_COLOR_CYAN};
+	vstd_strcat(output, colors[color]);
+	vstd_strcat(output, str);
+	vstd_strcat(output, ANSI_COLOR_RESET);
+	vstd_printf(output);
+}
+
+void
+platform_allocate_console()
+{
+
+}
+
+uint64
+platform_get_size_of_file(char *path)
+{
+    struct stat stat_buf;
+    int rc = stat(path, &stat_buf);
+    return rc == 0 ? stat_buf.st_size : -1;
+}
+
+
+bool32
+platform_read_entire_file(char *path, entire_file *e_file)
+{
+	int file = open(path, O_RDONLY);
+	if(file == -1) return false;
+	e_file->size = platform_get_size_of_file(path);
+	if(read(file, e_file->contents, e_file->size) == -1) return false;
+	return true;
+}
+
+void
+platform_get_absolute_path(char *output)
+{
+	realpath();
+	int size = vstd_strlen(output);
+	
+	// twice to remove the exe name and then to leave the bin directory
+	for(int i = size-1; i >= 0; --i)
+	{
+		if(output[i] == '\\')
+		{
+			output[i] = '\0';
+			break;
+		}
+	}
+    
+	size = vstd_strlen(output);
+	for(int i = size-1; i >= 0; --i)
+	{
+		if(output[i] == '\\')
+		{
+			output[i+1] = '\0';
+			break;
+		}
+	}
 }
 
 

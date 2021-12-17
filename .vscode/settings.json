@@ -14,6 +14,10 @@
         "load_gl_black_magic.h": "c",
         "xutility": "c",
         "type_traits": "c",
-        "xtr1common": "c"
+        "xtr1common": "c",
+        "glx.h": "c",
+        "limits.h": "c",
+        "stdlib.h": "c",
+        "stat.h": "c"
     }
 }

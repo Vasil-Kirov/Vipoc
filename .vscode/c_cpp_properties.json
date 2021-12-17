@@ -6,8 +6,7 @@
                 "${default}",
                 "${workspaceFolder}/engine/src/**",
                 "/usr/include",
-                "/usr/local/include",
-                "${workspaceFolder}/include/cglm"
+                "/usr/local/include"
             ],
             "defines": [
                 "VIPOC_DEBUG",
@@ -25,6 +24,7 @@
             "name": "Win32",
             "includePath": [
                 "${default}",
+                "${workspaceFolder}",
                 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.19041.0\\um\\",
                 "${workspaceFolder}/engine/src/**"
             ],
