@@ -1,19 +1,24 @@
-#ifdef VIPOC_LINUX
+#if defined VIPOC_LINUX
 
+#define _XOPEN_SOURCE 500
+#define GLX_GLXEXT_PROTOTYPES
 
 #include <X11/Xlib.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <time.h>
+#include <dlfcn.h>
+#include <errno.h>
 
-#include <stdlib.h>
-#include <limits.h>
 
 #include "platform/platform.h"
 #include "application.h"
 #include "renderer/renderer.h"
 #include <GL/glx.h>
+
+
 
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -31,14 +36,17 @@ typedef struct linux_state
 	Window window;
 	XEvent event;
 	int screen;
+	struct timespec start_time;
 } linux_state;
 internal linux_state *internal_state;
 
+int error_handler(Display * d, XErrorEvent * e);
 
 bool32
-platform_init(vp_config game, platform_state *pstate)
+platform_init(vp_config config, platform_state *pstate)
 {
-	
+	clock_gettime(CLOCK_REALTIME, &internal_state->start_time);
+
 	pstate->state = platform_allocate_memory_chunk(sizeof(linux_state));
 	internal_state = (linux_state *)pstate->state; 
 
@@ -52,7 +60,7 @@ platform_init(vp_config game, platform_state *pstate)
 	internal_state->screen = DefaultScreen(internal_state->display);
 
 	internal_state->window = XCreateSimpleWindow(internal_state->display, RootWindow(internal_state->display, internal_state->screen), 
-												game.x, game.y, game.w, game.h, 1, 
+												config.x, config.y, config.w, config.h, 1, 
 												BlackPixel(internal_state->display, internal_state->screen),
 												WhitePixel(internal_state->display, internal_state->screen));
 
@@ -62,10 +70,18 @@ platform_init(vp_config game, platform_state *pstate)
 
 
 	if(!LinuxLoadOpenGL(internal_state->display, internal_state->screen)) return false;
+	XSetErrorHandler(error_handler);
 
 	return true;
 
 }
+
+int error_handler(Display * d, XErrorEvent * e)
+{
+	VP_ERROR("XError: %d\nRequest: %d\n", e->error_code, e->request_code);
+    return 0;
+}
+
 
 
 bool32
@@ -184,13 +200,15 @@ platform_read_entire_file(char *path, entire_file *e_file)
 	if(file == -1) return false;
 	e_file->size = platform_get_size_of_file(path);
 	if(read(file, e_file->contents, e_file->size) == -1) return false;
+	close(file);
 	return true;
 }
 
 void
 platform_get_absolute_path(char *output)
 {
-	realpath();
+	readlink("/proc/self/exe", output, PATH_MAX);
+
 	int size = vstd_strlen(output);
 	
 	// twice to remove the exe name and then to leave the bin directory
@@ -214,5 +232,134 @@ platform_get_absolute_path(char *output)
 	}
 }
 
+void
+platform_exit(bool32 is_error)
+{
+	_exit(is_error);
+}
+
+int
+platform_get_width()
+{
+	XWindowAttributes status = {};
+	XGetWindowAttributes(internal_state->display, internal_state->window, &status);	
+	return(status.width);
+}
+
+int
+platform_get_height()
+{
+	XWindowAttributes status = {};
+	XGetWindowAttributes(internal_state->display, internal_state->window, &status);	
+	return(status.height);
+}
+
+uint32
+platform_get_ms_since_start()
+{
+	struct timespec time = {};
+	clock_gettime(CLOCK_REALTIME, &time);
+	return (internal_state->start_time.tv_nsec - time.tv_nsec) / 1000000;
+}
+
+bool32
+platform_toggle_vsync(bool32 toggle)
+{
+	glXSwapIntervalEXT(internal_state->display, internal_state->window, toggle);
+}
+
+platform_sharable
+platform_load_sharable(const char *path)
+{
+	platform_sharable sharable;
+	sharable.sharable = dlopen(path, RTLD_NOW);
+	return sharable;
+};
+
+void *
+platform_get_function_from_sharable(platform_sharable sharable, const char *func_name)
+{
+	return glXGetProcAddress(func_name);
+}
+
+void
+platform_free_sharable(platform_sharable sharable)
+{
+	dlclose(sharable.sharable);
+}
+
+const char *
+platform_get_sharable_extension()
+{
+	return ".so";
+}
+
+
+int _read_write_copy(const char *to, const char *from)
+{
+    int fd_to, fd_from;
+    char buf[4096];
+    ssize_t nread;
+    int saved_errno;
+
+    fd_from = open(from, O_RDONLY);
+    if (fd_from < 0)
+        return -1;
+
+    fd_to = open(to, O_WRONLY | O_CREAT | O_EXCL, 0666);
+    if (fd_to < 0)
+        goto out_error;
+
+    while (nread = read(fd_from, buf, sizeof buf), nread > 0)
+    {
+        char *out_ptr = buf;
+        ssize_t nwritten;
+
+        do {
+            nwritten = write(fd_to, out_ptr, nread);
+
+            if (nwritten >= 0)
+            {
+                nread -= nwritten;
+                out_ptr += nwritten;
+            }
+            else if (errno != EINTR)
+            {
+                goto out_error;
+            }
+        } while (nread > 0);
+    }
+
+    if (nread == 0)
+    {
+        if (close(fd_to) < 0)
+        {
+            fd_to = -1;
+            goto out_error;
+        }
+        close(fd_from);
+
+        /* Success! */
+        return 0;
+    }
+
+  out_error:
+    saved_errno = errno;
+
+    close(fd_from);
+    if (fd_to >= 0)
+        close(fd_to);
+
+    errno = saved_errno;
+    return -1;
+}
+
+
+VP_API bool32
+platform_copy_file(const char *old_path, const char *new_path)
+{
+	if(_read_write_copy(new_path, old_path) == -1) return false;
+	return true;
+}
 
 #endif

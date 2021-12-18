@@ -156,26 +156,28 @@ OnResize(vp_game *internal_game, int Width, int Height)
 }
 
 reloader
-LoadDLL(char *PathToFolder)
+LoadSharable(char *PathToFolder)
 {
 	reloader Result = {};
 	char DLLPath[MAX_PATH] = {};
 	strcpy(DLLPath, PathToFolder);
-	vstd_strcat(DLLPath, "bin\\hot_reload.dll");
+	vstd_strcat(DLLPath, "bin\\hot_reload");
+	vstd_strcat(DLLPath, platform_get_sharable_extension());
 	
 	char TempDLLPath[MAX_PATH] = {};
 	strcpy(TempDLLPath, PathToFolder);
-	vstd_strcat(TempDLLPath, "bin\\hot_reload_temp.dll");
-	
-	if(CopyFile(DLLPath, TempDLLPath, FALSE) == FALSE) VP_ERROR("Failed to copy DLL!");
-	Result.DLL = LoadLibraryA(TempDLLPath);
-	if(Result.DLL == vp_nullptr)
+	vstd_strcat(TempDLLPath, "bin\\hot_reload_temp");
+	vstd_strcat(DLLPath, platform_get_sharable_extension());
+
+	if(platform_copy_file(DLLPath, TempDLLPath) == FALSE) VP_ERROR("Failed to copy sharable!");
+	Result.DLL = platform_load_sharable(TempDLLPath);
+	if(Result.DLL.sharable == vp_nullptr)
 	{
-		VP_ERROR("Failed to load DLL");
+		VP_ERROR("Failed to load sharable");
 		return (reloader){};
 	}
 	// TODO: Default UpdateAndRender function if this one fails
-	Result.UpdateAndRender = (game_update_and_render *)GetProcAddress(Result.DLL, "GameUpdateAndRender");
+	Result.UpdateAndRender = (game_update_and_render *)platform_get_function_from_sharable(Result.DLL, "GameUpdateAndRender");
 	if(Result.UpdateAndRender == vp_nullptr) VP_ERROR("Failed to get GameUpdateAndRender function!");
 	return Result;
 }
@@ -259,7 +261,7 @@ main()
 	int32 FPS = 0;
 	int32 MSPerFrame = 0;
 	reloader Game = {};
-	Game = LoadDLL(PathToFolder);
+	Game = LoadSharable(PathToFolder);
     
 	Free(TempStorage);
 	
@@ -289,8 +291,8 @@ main()
 	{
 		if(LastReloadCounter++ >= 120)
 		{
-			if(Game.DLL != vp_nullptr) FreeLibrary(Game.DLL);
-			Game = LoadDLL(PathToFolder);
+			if(Game.DLL.sharable != vp_nullptr) platform_free_sharable(Game.DLL);
+			Game = LoadSharable(PathToFolder);
 			LastReloadCounter = 0;
 		}
         

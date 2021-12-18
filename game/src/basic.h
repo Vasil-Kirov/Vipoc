@@ -94,7 +94,7 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRenderStub)
 
 typedef struct reloader
 {
-    HMODULE DLL;
+    platform_sharable DLL;
     game_update_and_render *UpdateAndRender;
 } reloader;
 
