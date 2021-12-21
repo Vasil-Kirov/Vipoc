@@ -5,18 +5,18 @@
 
 #define swapf(a, b) {float tmp = a; a = b; b = tmp;}
 
-#define push_text_verts(target, num1, num2, color_in, matrix)									\
-renderer.text_verts[renderer.last_text_index].position = (v4){target.world_position.x##num1, target.world_position.y##num2, 0.0f, 1.0f};	\
-renderer.text_verts[renderer.last_text_index].texture = (v4){target.texture_position.x##num1, target.texture_position.y##num2, 0.0f, 0.0f};	\
-renderer.text_verts[renderer.last_text_index].color = color_in;																					\
-renderer.text_verts[renderer.last_text_index++].transform = matrix
+#define push_text_verts(target, num1, num2, color_in, pos_in_world, z)																					\
+renderer.text_verts[renderer.last_text_index].position = (v4){target.world_position.x##num1, target.world_position.y##num2, z, 1.0f};	\
+renderer.text_verts[renderer.last_text_index].texture = (v4){target.texture_position.x##num1, target.texture_position.y##num2, 0.0f, 0.0f};			\
+renderer.text_verts[renderer.last_text_index].color = color_in;																						\
+renderer.text_verts[renderer.last_text_index++].world_pos = pos_in_world
 
-#define push_frame_vert(vert, tex, color_in, normal_in, matrix)									\
+#define push_frame_vert(vert, tex, color_in, normal_in, pos_in_world)							\
 renderer.frame_verts[renderer.last_frame_vert].position = (v4){vert.x, vert.y, vert.z, 1.0f};	\
 renderer.frame_verts[renderer.last_frame_vert].texture = (v4){tex.x, tex.y,	0.0f, 1.0f};		\
 renderer.frame_verts[renderer.last_frame_vert].color = color_in;								\
 renderer.frame_verts[renderer.last_frame_vert].normal = normal_in;								\
-renderer.frame_verts[renderer.last_frame_vert++].transform = matrix
+renderer.frame_verts[renderer.last_frame_vert++].world_pos = pos_in_world
 
 typedef struct gl_state
 {
@@ -45,6 +45,21 @@ typedef struct objects_memory
 	uint64 allocate_from;
 } objects_memory;
 
+typedef struct obj_identifier
+{
+	v3 position;
+	int object_index;
+	v4 color;
+} obj_identifier;
+
+typedef struct cached
+{
+	obj_identifier in[1024];
+	int last_cached;
+	int last_cached_vert;
+	int last_cached_index;
+} cached;
+
 typedef struct transformation
 {
 	m4 rotation;
@@ -54,6 +69,13 @@ typedef struct transformation
 	m4 view;
 } transformation;
 
+typedef struct ui_targets
+{
+	vp_2d_render_target target;
+	v4 color;
+} ui_targets;
+
+
 internal objects_memory obj_manage;
 internal gl_state renderer;
 internal transformation matrices;
@@ -61,12 +83,22 @@ internal camera cm;
 internal ascii_char ascii_char_map[256];
 internal delta_time delta;
 internal vp_light light;
-
+internal cached cache;
+internal obj_identifier to_render_objects[2048];
+internal int last_pushed_object;
+internal ui_targets *to_render_2d;
+internal int last_2d_target;
 
 #define CHECK_GL_ERROR() {int error = glGetError(); if(error != 0) {VP_ERROR("OPENGL ERROR at line %d: %d", __LINE__, error);}}
 #define VERTEX_MEMORY MB(100)
-#define INDEX_MEMORY MB(5)
+#define INDEX_MEMORY MB(10)
 
+
+void
+pushed_objects_to_verts();
+
+void
+draw_ui_targets();
 
 #define SECONDS_SINCE_START() (float)platform_get_ms_since_start() / 1000.0f
 // JUMP HERE FOR MAIN CODE
@@ -81,6 +113,9 @@ render_update()
 	float current_frame = SECONDS_SINCE_START();
 	delta.value = current_frame - delta.last_frame;
 	delta.last_frame = current_frame;
+
+	pushed_objects_to_verts();
+	last_pushed_object = 0;
 
 	if(renderer.last_frame_vert * sizeof(vertex) > VERTEX_MEMORY) VP_FATAL("VERTECIES OVERFLOW!");
 	if(renderer.last_index * sizeof(unsigned int) > INDEX_MEMORY) VP_FATAL("INDICES OVERFLOW!");
@@ -103,7 +138,7 @@ render_update()
 
 	/* Light calculations */
 	
-	vp_object_pushback(1, (v4){1.0f, 1.0f, 1.0f, 1.0f}, gl_to_meters(light.position));
+//	vp_object_pushback(1, (v4){1.0f, 1.0f, 1.0f, 1.0f}, gl_to_meters(light.position));
 	v3 light_color = {1.0f, 1.0f, 1.0f};
 //	light_color.x = sin(SECONDS_SINCE_START() * 2.0f);
 //	light_color.y = sin(SECONDS_SINCE_START() * 0.7f);
@@ -116,7 +151,7 @@ render_update()
 	set_shader_uniform_vec3("light.specular", (v3){1.0f, 1.0f, 1.0f});
 
 	// material properties
-	set_shader_uniform_vec3("material.ambient", (v3){1.0f, 0.5f, 0.31f});
+	set_shader_uniform_vec3("material.ambient", (v3){1.0f, 1.0f, 1.0f});
 	set_shader_uniform_vec3("material.diffuse", (v3){1.0f, 0.5f, 0.31f});
 	set_shader_uniform_vec3("material.specular", (v3){0.5f, 0.5f, 0.5f}); // specular lighting doesn't have full effect on this object's material
 	set_shader_uniform_f("material.shininess", 32.0f);
@@ -124,7 +159,7 @@ render_update()
 	
 	
 	
-	int stride = sizeof(v4) * 8;
+	int stride = sizeof(v3) + (sizeof(v4) * 4);
 
 	glBindVertexArray(renderer.vao);
 	
@@ -146,35 +181,19 @@ render_update()
 	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)*3));
 	glEnableVertexAttribArray(3);
 
-
-	int pos = glGetAttribLocation(renderer.shader_program, "UniqueTransform");
-	int pos1 = pos + 0;
-	int pos2 = pos + 1;
-	int pos3 = pos + 2;
-	int pos4 = pos + 3;
-	glEnableVertexAttribArray(pos1);
-	glEnableVertexAttribArray(pos2);
-	glEnableVertexAttribArray(pos3);
-	glEnableVertexAttribArray(pos4);
-
-	glVertexAttribPointer(pos1, 4, GL_FLOAT, GL_FALSE, stride, (void *)(sizeof(v4)*4));
-	glVertexAttribPointer(pos2, 4, GL_FLOAT, GL_FALSE, stride, (void *)(sizeof(v4)*5));
-	glVertexAttribPointer(pos3, 4, GL_FLOAT, GL_FALSE, stride, (void *)(sizeof(v4)*6));
-	glVertexAttribPointer(pos4, 4, GL_FLOAT, GL_FALSE, stride, (void *)(sizeof(v4)*7));
-
-	glVertexAttribDivisor(pos1, 0);
-	glVertexAttribDivisor(pos2, 0);
-	glVertexAttribDivisor(pos3, 0);
-	glVertexAttribDivisor(pos4, 0);
+	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)*4));
+	glEnableVertexAttribArray(4);
+	
 	
 	glUseProgram(renderer.shader_program);
 	glBindVertexArray(renderer.vao);
 	glDrawElements(GL_TRIANGLES, renderer.last_index, GL_UNSIGNED_INT, vp_nullptr);
 	
 	// TEXT RENDERING
-	if(renderer.last_text_index > 0)
+	if(last_2d_target > 0)
 	{
-		glFrontFace(GL_CCW);
+		draw_ui_targets();
+		last_2d_target = 0;
 
 		/* Undoing the light for Text and UI */
 		set_shader_uniform_vec3("light.ambient", (v3){1.0f, 1.0f, 1.0f});
@@ -209,26 +228,8 @@ render_update()
 		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)*3));
 		glEnableVertexAttribArray(3);
 		
-
-		int pos = glGetAttribLocation(renderer.shader_program, "UniqueTransform");
-		int pos1 = pos + 0;
-		int pos2 = pos + 1;
-		int pos3 = pos + 2;
-		int pos4 = pos + 3;
-		glEnableVertexAttribArray(pos1);
-		glEnableVertexAttribArray(pos2);
-		glEnableVertexAttribArray(pos3);
-		glEnableVertexAttribArray(pos4);
-
-		glVertexAttribPointer(pos1, 4, GL_FLOAT, GL_FALSE, stride, (void *)(sizeof(v4)*4));
-		glVertexAttribPointer(pos2, 4, GL_FLOAT, GL_FALSE, stride, (void *)(sizeof(v4)*5));
-		glVertexAttribPointer(pos3, 4, GL_FLOAT, GL_FALSE, stride, (void *)(sizeof(v4)*6));
-		glVertexAttribPointer(pos4, 4, GL_FLOAT, GL_FALSE, stride, (void *)(sizeof(v4)*7));
-
-		glVertexAttribDivisor(pos1, 0);
-		glVertexAttribDivisor(pos2, 0);
-		glVertexAttribDivisor(pos3, 0);
-		glVertexAttribDivisor(pos4, 0);
+		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)*4));
+		glEnableVertexAttribArray(4);
 
 
 		
@@ -245,10 +246,71 @@ render_update()
 	}
 	
 	
-	renderer.last_frame_vert = 0;
-	renderer.last_index = 0;
+	renderer.last_frame_vert = cache.last_cached_vert;
+	renderer.last_index = cache.last_cached_index;
 	platform_swap_buffers();
 	return true;	
+}
+
+bool32
+check_for_cache(obj_identifier object)
+{
+	for(int index = 0; index < cache.last_cached; ++index)
+	{
+		if(object.object_index == cache.in[index].object_index)
+		{
+			if(v3_check_equality(object.position, cache.in[index].position)) return true;
+		}
+	}
+	return false;
+}
+
+void
+add_verts_from_obj(obj object, v3 position, v4 color)
+{
+	v3 empty_tex = (v3){-1.0f, -1.0f, -1.0f};
+
+	int index_offset = renderer.last_frame_vert;
+	
+	bool32 SwitchNoNorms = false;
+	for(int i = 0; i < object.last_vert; ++i)
+	{
+		v4 normal = {1.0f, 1.0f, 1.0f, 1.0f};
+		if(!SwitchNoNorms)
+		{
+			uint64 norm_index = object.norms_indexes[i];
+			if(norm_index == INT32_MAX)
+			{
+				SwitchNoNorms = true;
+			}
+			else
+			{
+				normal = (v4){object.norms[object.norms_indexes[i]].x, object.norms[object.norms_indexes[i]].y, object.norms[object.norms_indexes[i]].z, 1.0f};
+			}
+		}
+		#ifdef VIPOC_DEBUG
+		if ((void *)(renderer.frame_verts + renderer.last_frame_vert) > renderer.frame_verts_end) { VP_FATAL("FRAME BUFFER OVERFLOW!"); }
+		#endif
+		push_frame_vert(object.verts[i], empty_tex, color, normal, position);
+	}
+	for(int i = 0; i < object.last_vert_index; ++i)
+	{
+		#ifdef VIPOC_DEBUG
+		if(renderer.last_index > INDEX_MEMORY * (sizeof(uint32) / sizeof(char))) VP_FATAL("INDEX MEMORY OVERFLOW");
+		#endif
+		renderer.indexes[renderer.last_index++] = object.vert_indexes[i]+index_offset;
+	}
+}
+
+void
+pushed_objects_to_verts()
+{
+	for(int index = 0; index < last_pushed_object; ++index)
+	{
+		if(check_for_cache(to_render_objects[index])) continue;
+		add_verts_from_obj(renderer.objects[to_render_objects[index].object_index], to_render_objects[index].position, to_render_objects[index].color);
+	}
+
 }
 
 void
@@ -343,7 +405,6 @@ set_shader_uniform_mat4(char *str, m4 mat)
 vp_texture
 load_bmp_file(char *path)
 {
-	
 	vp_texture result = {};
 	// Should be fine ?
 	vp_memory file_memory = vp_allocate_temp(MB(10));
@@ -428,61 +489,95 @@ gl_to_meters(v3 target)
 }
 
 bool32
-vp_object_pushback(int32 index, v4 color, v3 position)
+vp_object_pushback(int32 index, v4 color, v3 position, bool32 cachable)
 {
 	// 0 0 0 - center of the world
 	// 10 meters = 2 gl (-1 to 1)
 	position = normalize_v3(position, -10000, 10000, -1000, 1000);
 
-	m4 translation = translate(position);
-	translation = transpose(translation);
 
 	if(index < 0 || index >= renderer.last_object)
 	{
 		VP_ERROR("INVALID OBJECT INDEX!");
 		return false;
 	}
-	obj object = renderer.objects[index];
-	v3 empty_tex = (v3){-1.0f, -1.0f, -1.0f};
-
-	int index_offset = renderer.last_frame_vert;
-	bool32 SwitchNoNorms = false;
-
-	for(int i = 0; i < object.last_vert; ++i)
+	to_render_objects[last_pushed_object].object_index = index;
+	to_render_objects[last_pushed_object].position = position;
+	to_render_objects[last_pushed_object++].color = color;
+	
+	obj_identifier identify = {};
+	identify.object_index = index;
+	identify.position = position;
+	identify.color = color;
+	if(cachable && !check_for_cache(identify))
 	{
-		if(i == 212897)
-		{
-			VP_ERROR("YO WTFFFF");
-		}
-		v4 normal = {1.0f, 1.0f, 1.0f, 1.0f};
-		if(!SwitchNoNorms)
-		{
-			uint64 norm_index = object.norms_indexes[i];
-			if(norm_index == INT32_MAX)
-			{
-				SwitchNoNorms = true;
-			}
-			else
-			{
-				normal = (v4){object.norms[object.norms_indexes[i]].x, object.norms[object.norms_indexes[i]].y, object.norms[object.norms_indexes[i]].z, 1.0f};
-			}
-		}
-		if ((void *)(renderer.frame_verts + renderer.last_frame_vert) > renderer.frame_verts_end) { VP_FATAL("FRAME BUFFER OVERFLOW!"); }
-		push_frame_vert(object.verts[i], empty_tex, color, normal, translation);
-	}
-	for(int i = 0; i < object.last_vert_index; ++i)
-	{		
-		if(renderer.last_index > INDEX_MEMORY * (sizeof(uint32) / sizeof(char))) VP_FATAL("INDEX MEMORY OVERFLOW");
-		renderer.indexes[renderer.last_index++] = object.vert_indexes[i]+index_offset;
+		cache.in[cache.last_cached++] = identify;
+		add_verts_from_obj(renderer.objects[index], position, color);
+		cache.last_cached_vert 	= renderer.last_frame_vert;
+		cache.last_cached_index	= renderer.last_index;
 	}
 	return true;
+}
+
+// TAKE FROM HERE
+#if 0
+	
+	return true;
+#endif
+
+
+// TODO: Optimize
+void
+sort_2d_target()
+{
+	for(int i = 0; i < last_2d_target; ++i)
+	{
+		for(int j = 0; j < last_2d_target; ++j)
+		{
+			if(to_render_2d[i].target.layer_id > to_render_2d[j].target.layer_id)
+			{
+				ui_targets tmp = to_render_2d[i];
+				to_render_2d[i] = to_render_2d[j];
+				to_render_2d[j] = tmp;
+			}
+		}
+	}
+}
+
+void
+draw_ui_targets()
+{
+	sort_2d_target();
+	v3 I = {0.0f, 0.0f, 0.0f};
+	float base_z = -10.0f;
+	for(int index = 0; index < last_2d_target; ++index)
+	{
+		vp_2d_render_target location = to_render_2d[index].target;
+		v4 color = to_render_2d[index].color;
+		
+		float z = 0.0f;
+		// Top Left
+		push_text_verts(location, 2, 1, color, I, z);
+		// Top Right
+		push_text_verts(location, 1, 2, color, I, z);
+		// Bottom left
+		push_text_verts(location, 1, 1, color, I, z);
+			
+		// Right triangle
+
+		// Top Right
+		push_text_verts(location, 2, 2, color, I, z);
+		// Bottom Left
+		push_text_verts(location, 1, 2, color, I, z);
+		// Bottom Right
+		push_text_verts(location, 2, 1, color, I, z);
+	}
 }
 
 /* location in meters 0 - 10 = -1 - 1 */ 
 void
 vp_draw_rectangle(m2 position, v4 color, int layer_id)
 {
-	m4 I = identity();
 	vp_2d_render_target location = {};
 	location.texture_position = (m2){-1.0f, -1.0f, -1.0f, -1.0f};
 	location.layer_id = layer_id;
@@ -493,33 +588,19 @@ vp_draw_rectangle(m2 position, v4 color, int layer_id)
 
 	location.world_position.y1 = normalize_between(location.world_position.y1, 0, 5.625f, -1, 1);
 	location.world_position.y2 = normalize_between(location.world_position.y2, 0, 5.625f, -1, 1);
-
-	// Bottom left
-	push_text_verts(location, 1, 1, color, I);
-	// Top Left
-	push_text_verts(location, 1, 2, color, I);
-	// Top Right
-	push_text_verts(location, 2, 2, color, I);
-		
-	// Right triangle
-
-	// Bottom Left
-	push_text_verts(location, 1, 1, color, I);
-	// Top Right
-	push_text_verts(location, 2, 2, color, I);
-	// Bottom Right
-	push_text_verts(location, 2, 1, color, I);
+	
+	to_render_2d[last_2d_target].target = location;
+	to_render_2d[last_2d_target++].color = color;
 }
 
 
 void
-vp_draw_text(char *text, float x, float y, v4 color, float scaler)
+vp_draw_text(char *text, float x, float y, v4 color, float scaler, int layer_id)
 {
 	x = normalize_between(x, 0, 10, 0, platform_get_width());
 	y = normalize_between(y, 0, 5.625f, 0, platform_get_height());
 	int space_from_last_char = 0;
 	int vert_from_last_char = 0;
-	m4 I = identity(); // Don't want to transform the text
 	for(int index = 0; text[index] != '\0'; ++index)
 	{
 		int char_width = ascii_char_map[(int)text[index]].rect.x2 - ascii_char_map[(int)text[index]].rect.x1;
@@ -532,6 +613,7 @@ vp_draw_text(char *text, float x, float y, v4 color, float scaler)
 		target.world_position.y1 = y - vert_from_last_char;
 		target.world_position.y2 = target.world_position.y1 + char_height;
 		target.texture_position = ascii_char_map[(int)text[index]].rect;
+		target.layer_id = layer_id;
 		
 		
 		/* Normalize Coordinates */
@@ -546,7 +628,6 @@ vp_draw_text(char *text, float x, float y, v4 color, float scaler)
 		target.texture_position.y2 = normalize_tex_coordinate(target.texture_position.y2, renderer.text_atlas.height, 0);
 		
 
-		/* NOTE: This looks pretty cool I should make it a toggle */
 		if(is_poly)
 		{
 			target.texture_position.x1 = -1;
@@ -555,24 +636,8 @@ vp_draw_text(char *text, float x, float y, v4 color, float scaler)
 			target.texture_position.y2 = -1;
 		}
 
-		// Left Triangle
-
-		
-		// Bottom left
-		push_text_verts(target, 1, 1, color, I);
-		// Top Left
-		push_text_verts(target, 1, 2, color, I);
-		// Top Right
-		push_text_verts(target, 2, 2, color, I);
-		
-		// Right triangle
-		
-		// Bottom Left
-		push_text_verts(target, 1, 1, color, I);
-		// Top Right
-		push_text_verts(target, 2, 2, color, I);
-		// Bottom Right
-		push_text_verts(target, 2, 1, color, I);
+		to_render_2d[last_2d_target].target = target;
+		to_render_2d[last_2d_target++].color = color;
 		
 		space_from_last_char += ascii_char_map[(int)text[index]].advance_x * scaler;
 		if(text[index] == '\n')
@@ -697,13 +762,14 @@ vp_load_simple_obj(char *path)
 	size_to_allocate /= 2;
 	obj new_object = {}; 
 	void *vert_memory_end 			= obj_allocate_memory_for((void **)&new_object.verts, size_to_allocate);
-	void *vert_index_memory_end 	= obj_allocate_memory_for((void **)&new_object.vert_indexes, size_to_allocate);
+	void *vert_index_memory_end 	= obj_allocate_memory_for((void **)&new_object.vert_indexes, size_to_allocate*10);
 	void *norms_memory_end 			= obj_allocate_memory_for((void **)&new_object.norms, size_to_allocate);
 	void *norms_index_memory_end 	= obj_allocate_memory_for((void **)&new_object.norms_indexes, size_to_allocate);
 
 
+
 	char *at = (char *)obj_file.contents;
-	uint64 size = obj_file.size;
+	int64 size = obj_file.size;
 	uint64 last_vert = 0;
 	uint64 last_vert_index = 0;
 	uint64 last_norm = 0;
@@ -742,13 +808,17 @@ vp_load_simple_obj(char *path)
 			{
 				new_object.vert_indexes[last_vert_index++] = catof(at)-1;
 				if((void *)((char *)new_object.vert_indexes + last_vert_index) > vert_index_memory_end) VP_FATAL("MEMORY OVERFLOW AT LINE: %d", __LINE__);
-				ToAndPastC(at, '/');
-				while(*at == '/') at++;
-				new_object.norms_indexes[last_norm_index++] = catof(at)-1;
-				if((void *)((char *)new_object.norms_indexes + last_norm_index) > norms_index_memory_end) VP_FATAL("MEMORY OVERFLOW AT LINE: %d", __LINE__);
-
 				while(*at >= '0' && *at <= '9') at++;
-				if(*at == '\n') break;
+				
+				if(*at=='/')
+				{
+					ToAndPastC(at, '/');
+					while(*at == '/') at++;
+					new_object.norms_indexes[last_norm_index++] = catof(at)-1;
+					if((void *)((char *)new_object.norms_indexes + last_norm_index) > norms_index_memory_end) VP_FATAL("MEMORY OVERFLOW AT LINE: %d", __LINE__);
+				}
+				while(*at >= '0' && *at <= '9') at++;
+				if(*at == '\n' || *at == VP_NEW_LINE) break;
 				at++;
 			}
 		}
@@ -806,6 +876,8 @@ void RendererInit()
 	vp_memory indexes_memory = vp_arena_allocate(INDEX_MEMORY);
 	renderer.indexes = (uint32 *)indexes_memory.ptr;
 
+	vp_memory targets_2d_memory = vp_arena_allocate(KB(100));
+	to_render_2d = targets_2d_memory.ptr;
 
 	obj_manage.memory = vp_arena_allocate(MB(100));
 	obj_manage.end = (void *)((char *)obj_manage.memory.ptr + MB(100));
@@ -904,6 +976,7 @@ void RendererInit()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_MULTISAMPLE);
 	if(glGetError() != 0) VP_ERROR("GL ERROR: %d\n", glGetError());
+	
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);

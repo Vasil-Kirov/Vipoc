@@ -98,7 +98,7 @@ VP_API void
 	vp_toggle_polygons();
 
 VP_API bool32
-	vp_object_pushback(int32 index, v4 color, v3 position);
+	vp_object_pushback(int32 index, v4 color, v3 position, bool32 cachable);
 
 VP_API int32
 	vp_load_simple_obj(char *path);
@@ -119,7 +119,7 @@ VP_API void
 	vp_load_text_atlas(char *path);
 
 VP_API void
-	vp_draw_text(char *text, float x, float y, v4 color, float scaler);
+	vp_draw_text(char *text, float x, float y, v4 color, float scaler, int layer_id);
 
 VP_API void
 	vp_load_texture(char *path);

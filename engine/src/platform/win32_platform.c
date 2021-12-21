@@ -461,7 +461,7 @@ Win32LoadOpenGL(HWND Window)
 		WGL_COLOR_BITS_ARB, 		32,
 		WGL_DEPTH_BITS_ARB, 		24,
 		WGL_STENCIL_BITS_ARB, 		0,
-		WGL_SAMPLES_ARB, 16,
+		WGL_SAMPLES_ARB, 			4,
 		0
 	};
 	int pixel_format;
@@ -571,6 +571,40 @@ platform_toggle_vsync(bool32 toggle)
 }
 
 
+const char *
+platform_get_sharable_extension()
+{
+	return ".dll";
+}
+
+void
+platform_free_sharable(platform_sharable sharable)
+{
+	FreeLibrary((HMODULE)sharable.sharable);
+}
+
+void *
+platform_get_function_from_sharable(platform_sharable sharable, const char *func_name)
+{
+	return GetProcAddress((HMODULE)sharable.sharable, func_name);
+}
+
+platform_sharable
+platform_load_sharable(const char *path)
+{
+	platform_sharable sharable = {};
+	sharable.sharable = (void *)LoadLibraryA(path);
+	return sharable;
+}
+
+bool32
+platform_copy_file(const char *old_path, const char *new_path)
+{
+	if(CopyFileA(old_path, new_path, FALSE) == 0) return false;
+	return true;
+}
+
+
 LRESULT CALLBACK WindowProc(
 							HWND   Window,
 							UINT   Message,
@@ -668,4 +702,5 @@ LRESULT CALLBACK WindowProc(
 	return Result;
 	
 }
+
 #endif

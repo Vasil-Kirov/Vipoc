@@ -32,7 +32,6 @@ uniform Material material;
 
 void main()
 {
-
 	vec3 ambient = light.ambient * material.ambient;
   	
     // diffuse 

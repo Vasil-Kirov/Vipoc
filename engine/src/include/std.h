@@ -7,8 +7,8 @@
 #include "include/defines.h"
 
 
-#define vstd_printf(str, ...) _vstd_Printf(sizeof(str) - 1, str, #__VA_ARGS__)
-#define vstd_sprintf(buff, str, ...) _vstd_sPrintf(sizeof(str) - 1, buff, str, #__VA_ARGS__)
+#define vstd_printf(str, ...) _vstd_Printf(sizeof(str) - 1, str, __VA_ARGS__)
+#define vstd_sprintf(buff, str, ...) _vstd_sPrintf(sizeof(str) - 1, buff, str, __VA_ARGS__)
 
 typedef struct vstdRect 
 {

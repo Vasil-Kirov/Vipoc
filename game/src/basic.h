@@ -118,7 +118,7 @@ GetAtlasRect(entire_file File)
 	At++;
 	while(true)
 	{
-		if(*At == '\n') break;
+		if(*At == VP_NEW_LINE) break;
 		if(*At == 'w')
 		{
 			At++;

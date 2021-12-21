@@ -3,7 +3,7 @@ layout (location = 0) in vec4 Pos;
 layout (location = 1) in vec4 Tex;
 layout (location = 2) in vec4 Color;
 layout (location = 3) in vec4 Normal;
-layout (location = 4) in mat4 UniqueTransform;
+layout (location = 4) in vec3 WorldPosition;
 
 out vec2 TexCoord;
 out vec3 NormalOut;
@@ -15,7 +15,12 @@ uniform mat4 MVP;
 
 void main()
 {
-	vec4 position = UniqueTransform * Pos;
+	// @Note: OpenGL wants matrices to be column major
+	mat4 Translation = mat4(1.0, 				0.0, 				0.0, 				0,
+							0.0, 				1.0, 				0.0, 				0,
+							0.0, 				0.0, 				1.0, 				0,
+							WorldPosition.x, 	WorldPosition.y, 	WorldPosition.z, 	1.0);
+	vec4 position = Translation * Pos;
 
 	gl_Position = MVP * position;
 

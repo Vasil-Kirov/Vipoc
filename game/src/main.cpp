@@ -8,6 +8,8 @@ static vp_game Config;
 global_var console Console;
 #define TILE_MAP_WIDTH 16
 #define TILE_MAP_HEIGHT 9
+global_var v2 PlayerPosition = {1, 1};
+global_var uint32 TileMap[TILE_MAP_HEIGHT][TILE_MAP_WIDTH];
 
 static bool32 IsCameraLocked;
 void
@@ -17,27 +19,29 @@ LockCamera()
 	IsCameraLocked = true;
 }
 
-void HandleInput()
+
+void
+HandleInput()
 {
 	if(Console.IsOn) return;
 	
     float CamSpeed = 10.0f;
-    if(vp_is_keydown(VP_KEY_W))
+	if(vp_is_keydown(VP_KEY_W))
     {
-        vp_move_camera(VP_UP, CamSpeed);
+	    vp_move_camera(VP_UP, CamSpeed);
     }
     if(vp_is_keydown(VP_KEY_S))
     {
         vp_move_camera(VP_DOWN, CamSpeed);
-    }
+	}
     if(vp_is_keydown(VP_KEY_A))
     {
         vp_move_camera(VP_LEFT, CamSpeed);
-    }
+	}
     if(vp_is_keydown(VP_KEY_D))
     {
         vp_move_camera(VP_RIGHT, CamSpeed);
-    }
+	}
 }
 
 
@@ -45,6 +49,44 @@ static bool32 VSyncToggle = false;
 
 void
 StopConsole();
+
+
+void
+HandlePlayerMovement(vp_keys Key)
+{
+	if(!IsCameraLocked) return;
+	uint32 PosX = (uint32)PlayerPosition.x;
+    uint32 PosY = (uint32)PlayerPosition.y;
+    
+	if(Key == VP_KEY_W)
+    {
+		if(TileMap[PosY + 1][PosX] != 1)
+		{
+			PlayerPosition.y++;
+		}
+    }
+    if(Key == VP_KEY_S)
+    {
+		if(TileMap[PosY - 1][PosX] != 1)
+		{
+			PlayerPosition.y--;
+		}
+    }
+    if(Key == VP_KEY_A)
+    {
+		if(TileMap[PosY][PosX + 1] != 1)
+		{
+			PlayerPosition.x++;
+		}
+	}
+    if(Key == VP_KEY_D)
+    {
+		if(TileMap[PosY][PosX - 1] != 1)
+		{
+			PlayerPosition.x--;
+		}
+	}
+}
 
 void
 OnKeyDown(vp_keys Key, bool32 IsDown)
@@ -104,6 +146,8 @@ OnKeyDown(vp_keys Key, bool32 IsDown)
 				VSyncToggle = !VSyncToggle;
 			}
 		}
+		
+		HandlePlayerMovement(Key);
 		
 	}
 }
@@ -167,7 +211,7 @@ LoadSharable(char *PathToFolder)
 	char TempDLLPath[MAX_PATH] = {};
 	strcpy(TempDLLPath, PathToFolder);
 	vstd_strcat(TempDLLPath, "bin\\hot_reload_temp");
-	vstd_strcat(DLLPath, platform_get_sharable_extension());
+	vstd_strcat(TempDLLPath, platform_get_sharable_extension());
 
 	if(platform_copy_file(DLLPath, TempDLLPath) == FALSE) VP_ERROR("Failed to copy sharable!");
 	Result.DLL = platform_load_sharable(TempDLLPath);
@@ -248,7 +292,7 @@ main()
 	{
 		char EmptyString[MAX_PATH] = {};
 		Objects[LastObject++] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder, "assets/cube.obj"));
-		Objects[LastObject++] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder, "assets/lamb.obj"));
+		Objects[LastObject++] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder, "assets/HumanLowPoly.obj"));
 	}
 	atlas_member Textures[1024];
 	ParseVATFile(Textures, AtlasInfoFile);
@@ -269,19 +313,21 @@ main()
     uint32 YOffsetOfMap[TILE_MAP_HEIGHT][TILE_MAP_WIDTH] = {};
 	GenerateYOffsetForTileMap(YOffsetOfMap, &RandomSeed);
 	
-
-	uint32 TileMap[TILE_MAP_HEIGHT][TILE_MAP_WIDTH] =
 	{
-		{1, 1, 1, 1,  1, 1, 1, 1,   1, 1, 1, 1,  1, 1, 1, 1}, 
-		{1, 0, 0, 0,  0, 0, 0, 0,   0, 0, 0, 0,  0, 0, 0, 1}, 
-		{1, 0, 0, 0,  0, 0, 0, 0,   0, 0, 0, 0,  0, 0, 0, 1}, 
-		{1, 0, 0, 0,  0, 0, 0, 0,   0, 0, 0, 0,  0, 0, 0, 1}, 
-		{1, 0, 0, 0,  0, 0, 0, 0,   0, 0, 0, 0,  0, 0, 0, 1}, 
-		{1, 0, 0, 0,  0, 0, 0, 0,   0, 0, 0, 0,  0, 0, 0, 1},
-		{1, 0, 0, 0,  0, 0, 0, 0,   0, 0, 0, 0,  0, 0, 0, 1},
-		{1, 0, 0, 0,  0, 0, 0, 0,   0, 0, 0, 0,  0, 0, 0, 1},
-		{1, 1, 1, 1,  1, 1, 1, 1,   1, 1, 1, 1,  1, 1, 1, 1}
-	};
+		uint32 tmp[TILE_MAP_HEIGHT][TILE_MAP_WIDTH] =
+		{
+			{1, 1, 1, 1,  1, 1, 1, 1,   1, 1, 1, 1,  1, 1, 1, 1},
+			{1, 0, 0, 0,  0, 0, 0, 0,   0, 0, 0, 0,  0, 0, 0, 1},
+			{1, 0, 0, 0,  0, 0, 0, 0,   0, 0, 0, 0,  0, 0, 0, 1},
+			{1, 0, 0, 0,  0, 0, 0, 0,   0, 0, 0, 0,  0, 0, 0, 1},
+			{1, 0, 0, 0,  0, 0, 0, 0,   0, 0, 0, 0,  0, 0, 0, 1},
+			{1, 0, 0, 0,  0, 0, 0, 0,   0, 0, 0, 0,  0, 0, 0, 1},
+			{1, 0, 0, 0,  0, 0, 0, 0,   0, 0, 0, 0,  0, 0, 0, 1},
+			{1, 0, 0, 0,  0, 0, 0, 0,   0, 0, 0, 0,  0, 0, 0, 1},
+			{1, 1, 1, 1,  1, 1, 1, 1,   1, 1, 1, 1,  1, 1, 1, 1}
+		};
+		memcpy(TileMap, tmp, sizeof(tmp));	
+	}
 
 	LockCamera();
 	int64 PerfFrequency = platform_get_frequency();
@@ -304,41 +350,44 @@ main()
 		}
 		if(Console.IsOn || Console.IsStarting)
 		{
-			vp_draw_rectangle((m2){0, 5.625f, 10, Console.Position}, (v4){0.2f, 0.7f, 0.4f, 0.6f}, 10);
-			vp_draw_rectangle((m2){0, Console.Position + .3f, 10, Console.Position + .1f}, (v4){1.0, 1.0f, 1.0f, 1.0f}, 11);
+			vp_draw_rectangle((m2){0, Console.Position, 10, 5.625f}, (v4){0.2f, 0.7f, 0.4f, 0.6f}, 10);
+			vp_draw_rectangle((m2){0, Console.Position + .1f, 10, Console.Position + .3f}, (v4){1.0, 1.0f, 1.0f, 1.0f}, 11);
 			if(vp_is_keydown(VP_KEY_ENTER))
 			{
 				HandleCommand(Console.Command);
 				StopConsole();
 			}
-			vp_draw_text(Console.Command, 0, Console.Position + .1f, (v4){0.0f, 0.0f, 0.0f, 1.0f}, 1.0f);
+			vp_draw_text(Console.Command, 0, Console.Position + .1f, (v4){0.0f, 0.0f, 0.0f, 1.0f}, 1.0f, 12);
 		}
+		
 		
 		for(int row = 0; row < TILE_MAP_HEIGHT; ++row)
 		{
 			for(int column = 0; column < TILE_MAP_WIDTH; ++column)
 			{
 				v4 TileColor = (v4){0.3f, 0.6f, 0.8f, 1.0f};
+				float y_bonus = 5;
 				if (TileMap[row][column] == 0)
 				{
-					TileColor = (v4){ 0.5f, 0.5f, 0.5f, 1.0f };
+					TileColor = (v4){ 0.5f, 0.5f, 0.5f, 1.0f };	
+					y_bonus = 0;
 				}
 				float column_size = 20;
 				float row_size = 20;
-				v3 OBJPosition = (v3){column_size * column, (float)YOffsetOfMap[row][column], row_size * row};
-				vp_object_pushback(Objects[0], TileColor, OBJPosition);
+				v3 OBJPosition = (v3){column_size * column, (float)YOffsetOfMap[row][column]+y_bonus, row_size * row};
+				if(column == PlayerPosition.x && row == PlayerPosition.y)
+				{
+					vp_object_pushback(Objects[1], (v4){1.0f, 1.0f, 1.0f, 1.0f}, (v3){OBJPosition.x, OBJPosition.y+10, OBJPosition.z}, false);					
+				}
+				vp_object_pushback(Objects[0], TileColor, OBJPosition, false);
 			}
 		}
 		
-	#if 0
-		v3 AxisPosition = {-100, 0, 100};
-		v3 CubePosition = {0, 0, -10};
-		vp_object_pushback(Objects[0], (v4){1.0f, 1.0f, 1.0f, 1.0f}, AxisPosition);
-		vp_object_pushback(Objects[1], (v4){1.0f, 0.0f, 0.5f, 0.1f}, CubePosition);
-		vp_object_pushback(Objects[1], (v4){1.0f, 0.0f, 0.5f, 0.1f}, (v3){-20, 0, -30});
-		vp_object_pushback(Objects[1], (v4){1.0f, 0.0f, 0.5f, 0.1f}, (v3){-40, 0, -50});
-		vp_object_pushback(Objects[1], (v4){1.0f, 0.0f, 0.5f, 0.1f}, (v3){-60, 0, -70});
-	#endif
+		if(vp_is_keydown(VP_KEY_R))
+		{
+			GenerateYOffsetForTileMap(YOffsetOfMap, &RandomSeed);
+		}
+
 		HandleInput();
         
         
@@ -356,7 +405,7 @@ main()
 		char ToDraw[2048] = {};	
 		vstd_sprintf(ToDraw, "%dms FPS: %d", MSPerFrame, FPS);
 		
-		vp_draw_text(ToDraw, .1f, 5.4, (v4){1.0f, 1.0f, 1.0f, 1.0f}, 0.6f);
+		vp_draw_text(ToDraw, .1f, 5.4, (v4){1.0f, 1.0f, 1.0f, 1.0f}, 0.6f, 0);
 		vp_present();
 		StartCounter = EndCounter;
 	}

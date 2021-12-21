@@ -19,6 +19,8 @@ extern "C"{
 #endif
     
 #ifdef VIPOC_WIN32
+#define VP_NEW_LINE '\r'
+#define VP_NEW_LINE_WIDTH 2
 #ifdef VIPOC_EXPORT
 #define VP_API __declspec(dllexport)
 #else
@@ -27,6 +29,8 @@ extern "C"{
 #endif
     
 #ifdef VIPOC_LINUX
+#define VP_NEW_LINE '\n'
+#define VP_NEW_LINE_WIDTH 1
 #ifdef VIPOC_EXPORT
 #define VP_API __attribute__((visibility("default")))
 #else

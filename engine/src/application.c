@@ -69,8 +69,8 @@ uint64
 vp_random_seed()
 {
 	uint64 seed = 0;
-	__asm__ (
-	"RDSEED %0;"
+	__asm__(
+	"RDRAND %0;"
 	:"=r"(seed)
 	);
 	

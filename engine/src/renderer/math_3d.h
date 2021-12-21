@@ -41,7 +41,7 @@ typedef struct vertex
 	v4 texture;
 	v4 color;
 	v4 normal;
-	m4 transform;
+	v3 world_pos;
 } vertex;
 #pragma pack(pop)
 
@@ -249,11 +249,19 @@ identity()
 	return Result;
 }
 
+
 inline f32
 normalize_between(f32 x, f32 minx, f32 maxx, f32 a, f32 b)
 {
 	f32 Result = ( (b - a) * ( (x-minx) / (maxx-minx) ) + a );
 	return Result;
+}
+
+
+inline bool32
+v3_check_equality(v3 A, v3 B)
+{
+	return (A.x == B.x && A.y == B.y && A.z == B.z);
 }
 
 inline v3
