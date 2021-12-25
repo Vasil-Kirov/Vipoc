@@ -60,6 +60,29 @@ void _vstd_IntToStr(int num, char* arr_to_fill)
 	}
 }
 
+void
+_vstd_FloatToStr(float num, char *arr_to_fill)
+{
+	int array_index = 0;
+	if(num < 0.0f)
+	{
+		arr_to_fill[array_index++] = '-';
+		num *= -1;
+	}
+	int whole_number = num;
+	
+	int decimal_part = (num-(float)whole_number) * 1000000.0f;
+	char whole_number_str[100] = {};
+	_vstd_IntToStr(whole_number, whole_number_str);
+
+	char decimal_part_str[100] = {};
+	_vstd_IntToStr(decimal_part, decimal_part_str);
+	
+	vstd_strcat(arr_to_fill, whole_number_str);
+	vstd_strcat(arr_to_fill, ".");
+	vstd_strcat(arr_to_fill, decimal_part_str);
+}
+
 
 // TODO: test 
 char*

@@ -105,11 +105,3 @@ vp_arena_allocate(uint64 size)
 
 	return ret;
 }
-
-
-// DO NOT USE THIS!
-void
-vp_arena_free_to_chunk(vp_memory mem)
-{
-	memory_arena.end = mem.ptr;
-}

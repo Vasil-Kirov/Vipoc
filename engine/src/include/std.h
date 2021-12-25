@@ -44,7 +44,10 @@ vstd_strcat(char *dst, const char *src);
 
 
 VP_API void
-_vstd_IntToStr(int num, char* arr_to_fill);
+_vstd_IntToStr(int num, char *arr_to_fill);
+
+VP_API void
+_vstd_FloatToStr(float num, char *arr_to_fill);
 
 //@Note: make it so it works with long and chars
 VP_API void

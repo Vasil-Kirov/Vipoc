@@ -13,29 +13,29 @@ extern "C"{
 #define VP_USE_DEFAULT 2147483648U
     
 #ifdef VIPOC_DEBUG
-#define assert(expression) if(!expression) {*(volatile int *)0 = 0;}
+    #define assert(expression) if(!(expression)) {*(volatile int *)0 = 0;}
 #else
-#define assert(expression)
+    #define assert(expression)
 #endif
     
 #ifdef VIPOC_WIN32
-#define VP_NEW_LINE '\r'
-#define VP_NEW_LINE_WIDTH 2
-#ifdef VIPOC_EXPORT
-#define VP_API __declspec(dllexport)
-#else
-#define VP_API __declspec(dllimport)
-#endif
+    #define VP_NEW_LINE '\r'
+    #define VP_NEW_LINE_WIDTH 2
+    #ifdef VIPOC_EXPORT
+        #define VP_API __declspec(dllexport)
+    #else
+        #define VP_API __declspec(dllimport)
+    #endif
 #endif
     
 #ifdef VIPOC_LINUX
-#define VP_NEW_LINE '\n'
-#define VP_NEW_LINE_WIDTH 1
-#ifdef VIPOC_EXPORT
-#define VP_API __attribute__((visibility("default")))
-#else
-#define VP_API
-#endif
+    #define VP_NEW_LINE '\n'
+    #define VP_NEW_LINE_WIDTH 1
+    #ifdef VIPOC_EXPORT
+        #define VP_API __attribute__((visibility("default")))
+    #else
+        #define VP_API
+    #endif
 #endif
     
     

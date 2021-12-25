@@ -28,7 +28,7 @@ HandleInput()
     float CamSpeed = 10.0f;
 	if(vp_is_keydown(VP_KEY_W))
     {
-	    vp_move_camera(VP_UP, CamSpeed);
+		vp_move_camera(VP_UP, CamSpeed);
     }
     if(vp_is_keydown(VP_KEY_S))
     {
@@ -137,13 +137,22 @@ OnKeyDown(vp_keys Key, bool32 IsDown)
 					LockCamera();
 				}
 			}
-			if(Key == VP_KEY_X)
+			else if(Key == VP_KEY_X)
 				vp_toggle_polygons();
 			
-			if(vp_is_keydown(VP_KEY_V))
+			else if(Key == VP_KEY_V)
 			{
 				platform_toggle_vsync(VSyncToggle);
 				VSyncToggle = !VSyncToggle;
+			}
+			else if(Key == VP_KEY_P)
+				vp_toggle_particle_update();
+		}
+		if(vp_is_keydown(VP_KEY_ALT))
+		{
+			if(Key == VP_KEY_ENTER)
+			{
+				platform_switch_fullscreen();
 			}
 		}
 		
@@ -226,6 +235,25 @@ LoadSharable(char *PathToFolder)
 	return Result;
 }
 
+void
+CreateSnowParticles(uint64 *RandomSeed)
+{
+	
+	// 16 : 9
+	// 20 : 20
+	for(int index = 0; index < 20; ++index)
+	{
+		v3 ParticlePosition = {};
+		ParticlePosition.x = vp_random_from_seed(RandomSeed) % 320;
+		ParticlePosition.y = vp_random_from_seed(RandomSeed) % 10000;
+		ParticlePosition.z = vp_random_from_seed(RandomSeed) % 180;
+
+		ParticlePosition.y = normalize_between(vp_random_from_seed(RandomSeed) % 10000, 0, 10000, 100, 150);
+
+		v3 FallingDirection = (v3){0.0f, -1.0f, 0.0f};
+		vp_create_particle(1100, ParticlePosition, FallingDirection, 100.0f, (v4){1.0f, 0.9f, 0.9f, 1.0f});
+	}
+}
 
 int
 main()
@@ -291,6 +319,7 @@ main()
 	memset(Objects, -1, 1024);
 	{
 		char EmptyString[MAX_PATH] = {};
+		Objects[LastObject++] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder, "assets/snow_ball.obj"));
 		Objects[LastObject++] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder, "assets/cube.obj"));
 		Objects[LastObject++] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder, "assets/HumanLowPoly.obj"));
 	}
@@ -329,12 +358,19 @@ main()
 		memcpy(TileMap, tmp, sizeof(tmp));	
 	}
 
+	uint32 ParticleStartTimer = platform_get_ms_since_start();
+
 	LockCamera();
 	int64 PerfFrequency = platform_get_frequency();
 	int64 StartCounter = platform_get_perf_counter();
-
 	while(Running)
 	{
+		if(platform_get_ms_since_start() - ParticleStartTimer > 100)
+		{
+			ParticleStartTimer = platform_get_ms_since_start();
+			if(!vp_is_particle_update_off())
+				CreateSnowParticles(&RandomSeed);
+		}
 		if(LastReloadCounter++ >= 120)
 		{
 			if(Game.DLL.sharable != vp_nullptr) platform_free_sharable(Game.DLL);
@@ -369,7 +405,8 @@ main()
 				float y_bonus = 5;
 				if (TileMap[row][column] == 0)
 				{
-					TileColor = (v4){ 0.5f, 0.5f, 0.5f, 1.0f };	
+//					TileColor = (v4){ 0.5f, 0.5f, 0.5f, 1.0f };	
+					TileColor = (v4){1.0f, 1.0f, 1.0f, 1.0f};
 					y_bonus = 0;
 				}
 				float column_size = 20;
@@ -377,9 +414,9 @@ main()
 				v3 OBJPosition = (v3){column_size * column, (float)YOffsetOfMap[row][column]+y_bonus, row_size * row};
 				if(column == PlayerPosition.x && row == PlayerPosition.y)
 				{
-					vp_object_pushback(Objects[1], (v4){1.0f, 1.0f, 1.0f, 1.0f}, (v3){OBJPosition.x, OBJPosition.y+10, OBJPosition.z}, false);					
+					vp_object_pushback(Objects[2], (v4){0.4f, 0.7f, 1.0f, 1.0f}, (v3){OBJPosition.x, OBJPosition.y+10, OBJPosition.z}, false, true);					
 				}
-				vp_object_pushback(Objects[0], TileColor, OBJPosition, false);
+				vp_object_pushback(Objects[1], TileColor, OBJPosition, false, true);
 			}
 		}
 		
@@ -404,7 +441,6 @@ main()
 		
 		char ToDraw[2048] = {};	
 		vstd_sprintf(ToDraw, "%dms FPS: %d", MSPerFrame, FPS);
-		
 		vp_draw_text(ToDraw, .1f, 5.4, (v4){1.0f, 1.0f, 1.0f, 1.0f}, 0.6f, 0);
 		vp_present();
 		StartCounter = EndCounter;

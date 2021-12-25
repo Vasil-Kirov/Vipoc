@@ -98,7 +98,7 @@ VP_API void
 	vp_toggle_polygons();
 
 VP_API bool32
-	vp_object_pushback(int32 index, v4 color, v3 position, bool32 cachable);
+	vp_object_pushback(int32 index, v4 color, v3 position, bool32 cachable, bool32 affected_by_light);
 
 VP_API int32
 	vp_load_simple_obj(char *path);
@@ -173,6 +173,9 @@ float
 
 vp_2d_render_target
 	normalize_render_target(vp_2d_render_target target);
+
+v3
+normalize_v3(v3 target, float minx, float maxx, float from, float to);
 
 void
 	set_shader_uniform_f(char *str, float to_set);

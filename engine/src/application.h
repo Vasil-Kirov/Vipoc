@@ -44,6 +44,12 @@ vp_handle_messages();
 VP_API void 
 vp_present();
 
+VP_API void
+vp_toggle_particle_update();
+
+VP_API bool32
+vp_is_particle_update_off();
+
 #ifdef __cplusplus
 	}
 #endif

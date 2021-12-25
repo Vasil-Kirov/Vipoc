@@ -42,6 +42,7 @@ typedef struct vertex
 	v4 color;
 	v4 normal;
 	v3 world_pos;
+	float is_affected_by_light;
 } vertex;
 #pragma pack(pop)
 

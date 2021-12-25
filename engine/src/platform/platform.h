@@ -24,6 +24,11 @@ typedef struct platform_sharable
 	void *sharable;
 } platform_sharable;
 
+typedef struct platform_thread
+{
+	void *data;
+} platform_thread;
+
 typedef struct vp_config vp_config;
 
 
@@ -110,6 +115,16 @@ platform_toggle_vsync(bool32 toggle);
 
 VP_API bool32
 platform_copy_file(const char *old_path, const char *new_path);
+
+
+VP_API platform_thread
+platform_create_thread(void *func, void *parameter);
+
+VP_API bool32
+platform_wait_for_thread(platform_thread thread);
+
+VP_API void
+platform_switch_fullscreen();
 
 #ifdef __cplusplus
 	}

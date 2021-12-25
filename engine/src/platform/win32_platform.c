@@ -605,6 +605,58 @@ platform_copy_file(const char *old_path, const char *new_path)
 }
 
 
+platform_thread
+platform_create_thread(void *func, void *parameter)
+{
+	platform_thread thread;
+	thread.data = (void *)CreateThread(vp_nullptr, 0, func, parameter, 0, 0);
+	return thread;
+}
+
+bool32
+platform_wait_for_thread(platform_thread thread)
+{
+	if(thread.data == vp_nullptr) return false;
+
+	DWORD Result = WaitForSingleObject((HANDLE)thread.data, INFINITE);
+	if(Result == WAIT_FAILED || Result == WAIT_ABANDONED) return false;
+	return true;
+}
+
+
+// I trust you Reymond Chen
+void
+platform_switch_fullscreen()
+{
+	WINDOWPLACEMENT window_placement = {};
+	window_placement.length	= sizeof(WINDOWPLACEMENT);
+	window_placement.flags	= WPF_RESTORETOMAXIMIZED;
+	window_placement.showCmd= SW_SHOWMAXIMIZED;
+
+	DWORD dwStyle = GetWindowLong(Win32State->Window, GWL_STYLE);
+	if (dwStyle & WS_OVERLAPPEDWINDOW) {
+		MONITORINFO mi = { sizeof(mi) };
+		if (GetWindowPlacement(Win32State->Window, &window_placement) &&
+			GetMonitorInfo(MonitorFromWindow(Win32State->Window,
+						MONITOR_DEFAULTTOPRIMARY), &mi)) {
+		SetWindowLong(Win32State->Window, GWL_STYLE,
+						dwStyle & ~WS_OVERLAPPEDWINDOW);
+		SetWindowPos(Win32State->Window, HWND_TOP,
+					mi.rcMonitor.left, mi.rcMonitor.top,
+					mi.rcMonitor.right - mi.rcMonitor.left,
+					mi.rcMonitor.bottom - mi.rcMonitor.top,
+					SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+		}
+	} else {
+		SetWindowLong(Win32State->Window, GWL_STYLE, dwStyle | WS_OVERLAPPEDWINDOW);
+		SetWindowPlacement(Win32State->Window, &window_placement);
+		SetWindowPos(Win32State->Window, NULL, 0, 0, 0, 0,
+					SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
+					SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+	}
+}
+
+
 LRESULT CALLBACK WindowProc(
 							HWND   Window,
 							UINT   Message,

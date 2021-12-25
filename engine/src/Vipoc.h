@@ -8,6 +8,7 @@
 #include "input.h"
 #include "log.h"
 #include "renderer/renderer.h"
+#include "renderer/particle.h"
 #include "platform/platform.h"
 #include "application.h"
 

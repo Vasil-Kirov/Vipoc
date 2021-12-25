@@ -5,7 +5,9 @@
 // renderer.h loads vp_memory.h, platform.h and defines.h 
 #include "renderer/renderer.h"
 #include "log.h"
+#include "renderer/particle.h"
 
+internal bool32 is_particle_update_off;
 
 
 typedef struct app_state
@@ -44,24 +46,50 @@ void application_create(vp_game *game)
 		// TODO: Fatal Error
 	}
 	RendererInit();
+	particles_init();
 
 	app.game->vp_on_resize(app.game, app.width, app.height);
 }
 
-bool32 vp_handle_messages()
+void
+vp_toggle_particle_update()
+{
+	is_particle_update_off = !is_particle_update_off;
+}
+
+bool32
+vp_is_particle_update_off()
+{
+	return is_particle_update_off;
+}
+
+bool32
+vp_handle_messages()
 {
 
 	if(!platform_handle_message()) return FALSE;
 	return TRUE;
 }
 
-void vp_present()
+void
+vp_present()
 {
+	platform_thread particle_update = {};
+	if(!is_particle_update_off)
+		particle_update = platform_create_thread(update_particles, vp_nullptr);
+	
+	platform_thread particle_draw 		= platform_create_thread(draw_particles, vp_nullptr);
+	platform_thread particle_rewrite 	= platform_create_thread(rewrite_particle_buffer, vp_nullptr);
+	platform_wait_for_thread(particle_draw);
 	if(!render_update())
 	{
 		VP_ERROR("A failure has occurred with internal rendering!");
 	}
+	platform_wait_for_thread(particle_update);
+	platform_wait_for_thread(particle_rewrite);
+
 //	renderer_buffer_reset();
+
 	vp_free_temp_memory();
 }
 

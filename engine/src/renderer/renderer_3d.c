@@ -5,18 +5,19 @@
 
 #define swapf(a, b) {float tmp = a; a = b; b = tmp;}
 
-#define push_text_verts(target, num1, num2, color_in, pos_in_world, z)																					\
-renderer.text_verts[renderer.last_text_index].position = (v4){target.world_position.x##num1, target.world_position.y##num2, z, 1.0f};	\
-renderer.text_verts[renderer.last_text_index].texture = (v4){target.texture_position.x##num1, target.texture_position.y##num2, 0.0f, 0.0f};			\
-renderer.text_verts[renderer.last_text_index].color = color_in;																						\
+#define push_text_verts(target, num1, num2, color_in, pos_in_world, z)																			\
+renderer.text_verts[renderer.last_text_index].position = (v4){target.world_position.x##num1, target.world_position.y##num2, z, 1.0f};			\
+renderer.text_verts[renderer.last_text_index].texture = (v4){target.texture_position.x##num1, target.texture_position.y##num2, 0.0f, 0.0f};		\
+renderer.text_verts[renderer.last_text_index].color = color_in;																					\
 renderer.text_verts[renderer.last_text_index++].world_pos = pos_in_world
 
-#define push_frame_vert(vert, tex, color_in, normal_in, pos_in_world)							\
+#define push_frame_vert(vert, tex, color_in, normal_in, pos_in_world, affected_by_light)		\
 renderer.frame_verts[renderer.last_frame_vert].position = (v4){vert.x, vert.y, vert.z, 1.0f};	\
 renderer.frame_verts[renderer.last_frame_vert].texture = (v4){tex.x, tex.y,	0.0f, 1.0f};		\
 renderer.frame_verts[renderer.last_frame_vert].color = color_in;								\
 renderer.frame_verts[renderer.last_frame_vert].normal = normal_in;								\
-renderer.frame_verts[renderer.last_frame_vert++].world_pos = pos_in_world
+renderer.frame_verts[renderer.last_frame_vert].world_pos = pos_in_world;						\
+renderer.frame_verts[renderer.last_frame_vert++].is_affected_by_light = affected_by_light
 
 typedef struct gl_state
 {
@@ -50,6 +51,7 @@ typedef struct obj_identifier
 	v3 position;
 	int object_index;
 	v4 color;
+	float affected_by_light;
 } obj_identifier;
 
 typedef struct cached
@@ -84,10 +86,13 @@ internal ascii_char ascii_char_map[256];
 internal delta_time delta;
 internal vp_light light;
 internal cached cache;
-internal obj_identifier to_render_objects[2048];
+internal obj_identifier *to_render_objects;
 internal int last_pushed_object;
 internal ui_targets *to_render_2d;
 internal int last_2d_target;
+
+
+
 
 #define CHECK_GL_ERROR() {int error = glGetError(); if(error != 0) {VP_ERROR("OPENGL ERROR at line %d: %d", __LINE__, error);}}
 #define VERTEX_MEMORY MB(100)
@@ -109,13 +114,13 @@ render_update()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glFrontFace(GL_CW);
 
-
 	float current_frame = SECONDS_SINCE_START();
 	delta.value = current_frame - delta.last_frame;
 	delta.last_frame = current_frame;
 
 	pushed_objects_to_verts();
 	last_pushed_object = 0;
+
 
 	if(renderer.last_frame_vert * sizeof(vertex) > VERTEX_MEMORY) VP_FATAL("VERTECIES OVERFLOW!");
 	if(renderer.last_index * sizeof(unsigned int) > INDEX_MEMORY) VP_FATAL("INDICES OVERFLOW!");
@@ -137,15 +142,18 @@ render_update()
 
 
 	/* Light calculations */
-	
-//	vp_object_pushback(1, (v4){1.0f, 1.0f, 1.0f, 1.0f}, gl_to_meters(light.position));
+	#if 0	
+	vp_object_pushback(1, (v4){1.0f, 1.0f, 1.0f, 1.0f}, gl_to_meters(light.position), true, true);
+	#endif
+
 	v3 light_color = {1.0f, 1.0f, 1.0f};
 //	light_color.x = sin(SECONDS_SINCE_START() * 2.0f);
 //	light_color.y = sin(SECONDS_SINCE_START() * 0.7f);
 //	light_color.z = sin(SECONDS_SINCE_START() * 1.3f);
 	v3 diffuseColor = v3_v3_scale(light_color, (v3){0.5f, 0.5f, 0.5f}); // decrease the influence
 	v3 ambientColor = v3_v3_scale(light_color, (v3){0.2f, 0.2f, 0.2f}); // low influence
- 
+
+	set_shader_uniform_vec3("light.position", light.position);
 	set_shader_uniform_vec3("light.ambient", ambientColor);
 	set_shader_uniform_vec3("light.diffuse", diffuseColor);
 	set_shader_uniform_vec3("light.specular", (v3){1.0f, 1.0f, 1.0f});
@@ -154,12 +162,15 @@ render_update()
 	set_shader_uniform_vec3("material.ambient", (v3){1.0f, 1.0f, 1.0f});
 	set_shader_uniform_vec3("material.diffuse", (v3){1.0f, 0.5f, 0.31f});
 	set_shader_uniform_vec3("material.specular", (v3){0.5f, 0.5f, 0.5f}); // specular lighting doesn't have full effect on this object's material
-	set_shader_uniform_f("material.shininess", 32.0f);
+	
+	set_shader_uniform_f("material.shininess", 12.0f);
+	
+	set_shader_uniform_vec3("view_pos", cm.position);
 
 	
 	
 	
-	int stride = sizeof(v3) + (sizeof(v4) * 4);
+	int stride = sizeof(v3) + (sizeof(v4) * 4) + sizeof(float);
 
 	glBindVertexArray(renderer.vao);
 	
@@ -183,6 +194,9 @@ render_update()
 
 	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)*4));
 	glEnableVertexAttribArray(4);
+	
+	glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)*4 + sizeof(v3)));
+	glEnableVertexAttribArray(5);
 	
 	
 	glUseProgram(renderer.shader_program);
@@ -231,6 +245,8 @@ render_update()
 		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)*4));
 		glEnableVertexAttribArray(4);
 
+		glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)*4 + sizeof(v3)));
+		glEnableVertexAttribArray(5);
 
 		
 		
@@ -266,7 +282,7 @@ check_for_cache(obj_identifier object)
 }
 
 void
-add_verts_from_obj(obj object, v3 position, v4 color)
+add_verts_from_obj(obj object, v3 position, v4 color, bool32 affected_by_light)
 {
 	v3 empty_tex = (v3){-1.0f, -1.0f, -1.0f};
 
@@ -291,7 +307,7 @@ add_verts_from_obj(obj object, v3 position, v4 color)
 		#ifdef VIPOC_DEBUG
 		if ((void *)(renderer.frame_verts + renderer.last_frame_vert) > renderer.frame_verts_end) { VP_FATAL("FRAME BUFFER OVERFLOW!"); }
 		#endif
-		push_frame_vert(object.verts[i], empty_tex, color, normal, position);
+		push_frame_vert(object.verts[i], empty_tex, color, normal, position, affected_by_light);
 	}
 	for(int i = 0; i < object.last_vert_index; ++i)
 	{
@@ -308,7 +324,7 @@ pushed_objects_to_verts()
 	for(int index = 0; index < last_pushed_object; ++index)
 	{
 		if(check_for_cache(to_render_objects[index])) continue;
-		add_verts_from_obj(renderer.objects[to_render_objects[index].object_index], to_render_objects[index].position, to_render_objects[index].color);
+		add_verts_from_obj(renderer.objects[to_render_objects[index].object_index], to_render_objects[index].position, to_render_objects[index].color, to_render_objects[index].affected_by_light);
 	}
 
 }
@@ -341,6 +357,9 @@ vp_move_camera(vp_direction direction, f32 speed)
 	if(cm.is_locked) return;
 	speed *= delta.value;
 	v3 forward = v3_scale(cm.look_dir, speed);
+	v3 up = (v3){0.0f, 1.0f, 0.0f};
+	v3 sideways = v3_cross(cm.look_dir, up);
+	sideways = v3_scale(sideways, speed);
 	switch(direction)
 	{
 		case VP_UP:
@@ -350,6 +369,14 @@ vp_move_camera(vp_direction direction, f32 speed)
 		case VP_DOWN:
 		{
 			cm.position = v3_add(cm.position, forward);
+		}break;
+		case VP_LEFT:
+		{
+			cm.position = v3_add(cm.position, sideways);
+		}break;
+		case VP_RIGHT:
+		{
+			cm.position = v3_sub(cm.position, sideways);
 		}break;
 		default:
 		{
@@ -489,7 +516,7 @@ gl_to_meters(v3 target)
 }
 
 bool32
-vp_object_pushback(int32 index, v4 color, v3 position, bool32 cachable)
+vp_object_pushback(int32 index, v4 color, v3 position, bool32 cachable, bool32 affected_by_light)
 {
 	// 0 0 0 - center of the world
 	// 10 meters = 2 gl (-1 to 1)
@@ -503,8 +530,10 @@ vp_object_pushback(int32 index, v4 color, v3 position, bool32 cachable)
 	}
 	to_render_objects[last_pushed_object].object_index = index;
 	to_render_objects[last_pushed_object].position = position;
-	to_render_objects[last_pushed_object++].color = color;
+	to_render_objects[last_pushed_object].color = color;
+	to_render_objects[last_pushed_object++].affected_by_light = affected_by_light;
 	
+
 	obj_identifier identify = {};
 	identify.object_index = index;
 	identify.position = position;
@@ -512,18 +541,13 @@ vp_object_pushback(int32 index, v4 color, v3 position, bool32 cachable)
 	if(cachable && !check_for_cache(identify))
 	{
 		cache.in[cache.last_cached++] = identify;
-		add_verts_from_obj(renderer.objects[index], position, color);
+		add_verts_from_obj(renderer.objects[index], position, color, affected_by_light);
 		cache.last_cached_vert 	= renderer.last_frame_vert;
 		cache.last_cached_index	= renderer.last_index;
 	}
 	return true;
 }
 
-// TAKE FROM HERE
-#if 0
-	
-	return true;
-#endif
 
 
 // TODO: Optimize
@@ -879,6 +903,9 @@ void RendererInit()
 	vp_memory targets_2d_memory = vp_arena_allocate(KB(100));
 	to_render_2d = targets_2d_memory.ptr;
 
+	vp_memory render_objects_memory = vp_arena_allocate(MB(1));
+	to_render_objects = render_objects_memory.ptr;
+
 	obj_manage.memory = vp_arena_allocate(MB(100));
 	obj_manage.end = (void *)((char *)obj_manage.memory.ptr + MB(100));
 
@@ -969,11 +996,11 @@ void RendererInit()
 	
 	
 	// First free call is redundant but it feels more correct, it will also work if I ever change the free ( probably won't but still )
-	vp_arena_free_to_chunk(fragment_shader_source);
-	vp_arena_free_to_chunk(vertex_shader_source);
+
 	GenGLBuffs();
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	glEnable(GL_MULTISAMPLE);
 	if(glGetError() != 0) VP_ERROR("GL ERROR: %d\n", glGetError());
 	
@@ -986,7 +1013,7 @@ void RendererInit()
 	cm.position = (v3){0.0f, 5.0f, 5.0f};
 	cm.is_locked = false;
 
-	light.position = (v3){-4.0f, 5.0f, 2.0f};
+	light.position = (v3){8.585f, 7.780f, 12.614f};
 	
 }
 
