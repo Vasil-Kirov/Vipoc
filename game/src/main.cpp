@@ -279,23 +279,6 @@ main()
 	PermanentStorage.End = PermanentStorage.Start;
 	TempStorage.End = TempStorage.Start;
     
-	rectangle AtlasSize = {};
-	entire_file AtlasInfoFile = {};
-	AtlasInfoFile.contents = Allocate(MB(1), TempStorage);
-
-	{
-		char AtlasInfoFileLocation[MAX_PATH] = {};
-		vstd_strcat(AtlasInfoFileLocation, PathToFolder);
-		vstd_strcat(AtlasInfoFileLocation, "assets/test_atlas.vat");
-		platform_read_entire_file(AtlasInfoFileLocation, &AtlasInfoFile);
-		AtlasSize = GetAtlasRect(AtlasInfoFile);
-        
-		char AtlasFileLocation[MAX_PATH] = {};
-		vstd_strcat(AtlasFileLocation, PathToFolder);
-		vstd_strcat(AtlasFileLocation, "assets/test.bmp");
-        
-		vp_load_texture(AtlasFileLocation);
-	}
 	entire_file FontInfoFile = {};
 	{
 		FontInfoFile.contents = Allocate(MB(1), TempStorage);
@@ -323,8 +306,6 @@ main()
 		Objects[LastObject++] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder, "assets/cube.obj"));
 		Objects[LastObject++] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder, "assets/HumanLowPoly.obj"));
 	}
-	atlas_member Textures[1024];
-	ParseVATFile(Textures, AtlasInfoFile);
     
 	bool32 Running = true;
     
@@ -416,13 +397,15 @@ main()
 				{
 					vp_object_pushback(Objects[2], (v4){0.4f, 0.7f, 1.0f, 1.0f}, (v3){OBJPosition.x, OBJPosition.y+10, OBJPosition.z}, false, true);					
 				}
-				vp_object_pushback(Objects[1], TileColor, OBJPosition, false, true);
+				vp_object_pushback(Objects[1], TileColor, OBJPosition, true, true);
 			}
 		}
 		
 		if(vp_is_keydown(VP_KEY_R))
 		{
+			#if 0
 			GenerateYOffsetForTileMap(YOffsetOfMap, &RandomSeed);
+			#endif
 		}
 
 		HandleInput();

@@ -323,7 +323,6 @@ pushed_objects_to_verts()
 {
 	for(int index = 0; index < last_pushed_object; ++index)
 	{
-		if(check_for_cache(to_render_objects[index])) continue;
 		add_verts_from_obj(renderer.objects[to_render_objects[index].object_index], to_render_objects[index].position, to_render_objects[index].color, to_render_objects[index].affected_by_light);
 	}
 
@@ -573,7 +572,7 @@ draw_ui_targets()
 {
 	sort_2d_target();
 	v3 I = {0.0f, 0.0f, 0.0f};
-	float base_z = -10.0f;
+//	float base_z = -10.0f;
 	for(int index = 0; index < last_2d_target; ++index)
 	{
 		vp_2d_render_target location = to_render_2d[index].target;
@@ -681,8 +680,8 @@ vp_camera_mouse_callback(double xpos, double ypos)
 	float delta_y = ypos - cm.mouse_y;
 	cm.mouse_x = xpos;
 	cm.mouse_y = ypos;
-	cm.yaw += (delta_x * delta.value);
-	cm.pitch += (delta_y * delta.value);
+	cm.yaw += (delta_x * .02f);
+	cm.pitch += (delta_y * .02f);
 }
 
 
@@ -909,7 +908,8 @@ void RendererInit()
 	obj_manage.memory = vp_arena_allocate(MB(100));
 	obj_manage.end = (void *)((char *)obj_manage.memory.ptr + MB(100));
 
-	
+
+#if VIPOC_DEBUG	
 	vp_memory vertex_shader_source;
 	vertex_shader_source = vp_allocate_temp(MB(1));
 	
@@ -939,6 +939,9 @@ void RendererInit()
 	
 	
 	const char *vertex_source = vertex_code_file.contents;
+#else
+	const char *vertex_source = get_vert_shader_code();
+#endif
 	GLuint vertex_shader;
 	vertex_shader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertex_shader, 1, (const char * const *)&vertex_source, vp_nullptr);
@@ -954,8 +957,11 @@ void RendererInit()
 			VP_FATAL("Failed to compile shader at line %d: %s", __LINE__, info_log);
 		}
 	}
-	
+#if VIPOC_DEBUG
 	const char *fragment_source = fragment_code_file.contents;
+#else
+	const char *fragment_source = get_frag_shader_code();
+#endif
 	GLuint fragment_shader;
 	fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragment_shader, 1, (const char * const *)&fragment_source, vp_nullptr);
