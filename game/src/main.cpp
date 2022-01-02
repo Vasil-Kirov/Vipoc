@@ -54,6 +54,7 @@ StopConsole();
 void
 HandlePlayerMovement(vp_keys Key)
 {
+    if(Console.IsOn) return;
 	if(!IsCameraLocked) return;
 	uint32 PosX = (uint32)PlayerPosition.x;
     uint32 PosY = (uint32)PlayerPosition.y;
@@ -95,7 +96,13 @@ OnKeyDown(vp_keys Key, bool32 IsDown)
 	{
 		if(Console.IsOn)
 		{
-			if(Key == VP_KEY_MINUS) Console.Command[Console.LastChar++] = '-';
+			if(Key == VP_KEY_MINUS)
+            {
+                if(vp_is_keydown(VP_KEY_SHIFT))
+                    Console.Command[Console.LastChar++] = '_';
+                else
+                    Console.Command[Console.LastChar++] = '-';
+            }
 			else if(Key == VP_KEY_BACKSPACE)
 			{
 				if(Console.LastChar > 0) Console.Command[--Console.LastChar] = 0;
@@ -168,8 +175,9 @@ GenerateYOffsetForTileMap(uint32 YOffsetOfMap[TILE_MAP_HEIGHT][TILE_MAP_WIDTH], 
 	{
 		for(int x = 0; x < TILE_MAP_WIDTH; ++x)
 		{
-			YOffsetOfMap[y][x] = vp_random_from_seed(RandomSeed) % 15;
-		}
+			//YOffsetOfMap[y][x] = vp_random_from_seed(RandomSeed) % 15;
+            YOffsetOfMap[y][x] = 1;
+        }
 	} 
 }
 
@@ -221,7 +229,7 @@ LoadSharable(char *PathToFolder)
 	strcpy(TempDLLPath, PathToFolder);
 	vstd_strcat(TempDLLPath, "bin\\hot_reload_temp");
 	vstd_strcat(TempDLLPath, platform_get_sharable_extension());
-
+    
 	if(platform_copy_file(DLLPath, TempDLLPath) == FALSE) VP_ERROR("Failed to copy sharable!");
 	Result.DLL = platform_load_sharable(TempDLLPath);
 	if(Result.DLL.sharable == vp_nullptr)
@@ -247,9 +255,9 @@ CreateSnowParticles(uint64 *RandomSeed)
 		ParticlePosition.x = vp_random_from_seed(RandomSeed) % 320;
 		ParticlePosition.y = vp_random_from_seed(RandomSeed) % 10000;
 		ParticlePosition.z = vp_random_from_seed(RandomSeed) % 180;
-
+        
 		ParticlePosition.y = normalize_between(vp_random_from_seed(RandomSeed) % 10000, 0, 10000, 100, 150);
-
+        
 		v3 FallingDirection = (v3){0.0f, -1.0f, 0.0f};
 		vp_create_particle(1100, ParticlePosition, FallingDirection, 100.0f, (v4){1.0f, 0.9f, 0.9f, 1.0f});
 	}
@@ -296,7 +304,7 @@ main()
 		vp_load_text_atlas(FontFileLocation);
 		
 	}
-
+    
 	int Objects[1024] = {};
 	int LastObject = 0;
 	memset(Objects, -1, 1024);
@@ -338,9 +346,9 @@ main()
 		};
 		memcpy(TileMap, tmp, sizeof(tmp));	
 	}
-
+    
 	uint32 ParticleStartTimer = platform_get_ms_since_start();
-
+    
 	LockCamera();
 	int64 PerfFrequency = platform_get_frequency();
 	int64 StartCounter = platform_get_perf_counter();
@@ -367,14 +375,14 @@ main()
 		}
 		if(Console.IsOn || Console.IsStarting)
 		{
-			vp_draw_rectangle((m2){0, Console.Position, 10, 5.625f}, (v4){0.2f, 0.7f, 0.4f, 0.6f}, 10);
-			vp_draw_rectangle((m2){0, Console.Position + .1f, 10, Console.Position + .3f}, (v4){1.0, 1.0f, 1.0f, 1.0f}, 11);
+			vp_draw_rectangle((m2){0, Console.Position, 10, 5.625f}, (v4){0.2f, 0.7f, 0.4f, 0.6f}, 1);
+			vp_draw_rectangle((m2){0, Console.Position + .2f, 10, Console.Position + .45f}, (v4){1.0, 1.0f, 1.0f, 1.0f}, 2);
 			if(vp_is_keydown(VP_KEY_ENTER))
 			{
 				HandleCommand(Console.Command);
 				StopConsole();
 			}
-			vp_draw_text(Console.Command, 0, Console.Position + .1f, (v4){0.0f, 0.0f, 0.0f, 1.0f}, 1.0f, 12);
+			vp_draw_text(Console.Command, 0, Console.Position + .25f, (v4){0.0f, 0.0f, 0.0f, 1.0f}, 1.0f, 3);
 		}
 		
 		
@@ -386,7 +394,6 @@ main()
 				float y_bonus = 5;
 				if (TileMap[row][column] == 0)
 				{
-//					TileColor = (v4){ 0.5f, 0.5f, 0.5f, 1.0f };	
 					TileColor = (v4){1.0f, 1.0f, 1.0f, 1.0f};
 					y_bonus = 0;
 				}
@@ -403,11 +410,12 @@ main()
 		
 		if(vp_is_keydown(VP_KEY_R))
 		{
-			#if 0
+#if 0
 			GenerateYOffsetForTileMap(YOffsetOfMap, &RandomSeed);
-			#endif
+#endif
 		}
-
+        
+        vp_object_pushback(Objects[1], (v4){1.0f, 0.0f, 1.0f, 1.0f}, (v3){10, 50, 10}, true, true);
 		HandleInput();
         
         

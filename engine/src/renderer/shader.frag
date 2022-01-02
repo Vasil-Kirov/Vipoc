@@ -4,8 +4,8 @@ out vec4 FragColor;
 in vec2     TexCoord;
 in vec3     NormalOut;
 in vec4     ColorOut;
-in vec3     FragPos;
-in float    IsAffectedByLight;
+in vec3	 FragPos;
+in float	IsAffectedByLight;
 
 
 struct Light
@@ -44,7 +44,7 @@ void main()
 	{
 		vec3 ambient = light.ambient * material.ambient;
 
-		// diffuse 
+		// diffuse
 		vec3 norm = normalize(NormalOut);
 		vec3 light_dir = normalize(light.position - FragPos);
 		float diff = max(dot(norm, light_dir), 0.0);
@@ -57,15 +57,17 @@ void main()
 		float spec = pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess);
 		vec3 specular = light.specular * (spec * material.specular);  
 			
-		light_result = ambient + diffuse + specular;
+		light_result = ambient + diffuse;// + diffuse + specular;
 	}
 	
 	if(TexCoord.x < 0)
-	{
-		FragColor = ColorOut * vec4(light_result, 1.0f);
+	{		
+//		FragColor = ColorOut * vec4(light_result, 1.0f);
+		FragColor = vec4(abs(NormalOut), 1.0f);
 	}
 	else
 	{
-		FragColor = (texture(texture1, TexCoord) * ColorOut) * vec4(light_result, 1.0f);
+//		FragColor = (texture(texture1, TexCoord) * ColorOut) * vec4(light_result, 1.0f);
+		FragColor = vec4(abs(NormalOut), 1.0f);
 	}
 }

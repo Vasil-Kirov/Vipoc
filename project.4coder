@@ -8,7 +8,9 @@ patterns = {
 	"*.cpp",
 	"*.bat",
 	"*.sh",
-	"*.4coder"
+	"*.4coder",
+	"*.vert",
+	"*.frag"
 };
 
 blacklist_paterns = {
@@ -27,8 +29,8 @@ command_list = {
 		.footer_panel = true,
 		.save_dirty_files = true,
 		.cursor_at_end = false,
-		.cmd = {{ "build-all.bat", .os = "win"}, 
-				{ "build-all.sh",  .os ="linux"}},
+		.cmd = {{ "build-all.bat debug", .os = "win"}, 
+				{ "build-all.sh debug",  .os ="linux"}},
 	},
 	{
 		.name = "run",
@@ -47,9 +49,18 @@ command_list = {
 		.cmd = {{ "!.bat", .os = "win"}, 
 				{ "!.sh",  .os ="linux"}},
 	},
+	{
+		.name = "fast_build",
+		.out = "*compilation*",
+		.footer_panel = true,
+		.save_dirty_files = true,
+		.cursor_at_end = false,
+		.cmd = {{ "fast_build_engine.bat", .os = "win"}, 
+				{ "fast_build_engine.sh",  .os = "linux"}},
+	},
 };
 
 fkey_command[1] = "build";
 fkey_command[2] = "run";
 fkey_command[3] = "gbuild";
-
+fkey_command[4] = "fast_build";

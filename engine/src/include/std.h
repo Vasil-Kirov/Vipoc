@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "include/defines.h"
+#include "include/Core.h"
 
 
 #define vstd_printf(str, ...) _vstd_Printf(sizeof(str) - 1, str, __VA_ARGS__)
@@ -45,6 +45,9 @@ vstd_strcat(char *dst, const char *src);
 
 VP_API void
 _vstd_IntToStr(int num, char *arr_to_fill);
+
+VP_API void
+_vstd_U64ToStr(uint64 num, char *arr_to_fill);
 
 VP_API void
 _vstd_FloatToStr(float num, char *arr_to_fill);
