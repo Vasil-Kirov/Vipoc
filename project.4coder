@@ -62,5 +62,5 @@ command_list = {
 
 fkey_command[1] = "build";
 fkey_command[2] = "run";
-fkey_command[3] = "gbuild";
-fkey_command[4] = "fast_build";
+fkey_command[3] = "fast_build";
+fkey_command[4] = "gbuild";

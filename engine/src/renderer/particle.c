@@ -72,7 +72,7 @@ rewrite_particle_buffer()
 	}
 	memset(particle_buffer, 0, PARTICLE_BUFFER_MEMORY);
 	memcpy(particle_buffer, temp_buffer, PARTICLE_BUFFER_MEMORY);
-
+    
 	last_particle = temp_buffer_index;	
 	invalid_particle_counter = 0;
 }

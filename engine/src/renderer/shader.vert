@@ -27,7 +27,7 @@ void main()
 	gl_Position = MVP * position;
 
 	TexCoord = vec2(Tex.x, Tex.y);
-	NormalOut = vec3(Normal * Translation);
+	NormalOut = vec3(Normal.x, Normal.y, Normal.z);
 	ColorOut = Color;
 	IsAffectedByLight = InIsAffectedByLight;
 	FragPos = vec3(position.x, position.y, position.z);

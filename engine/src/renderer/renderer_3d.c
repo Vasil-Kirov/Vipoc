@@ -121,11 +121,8 @@ render_update()
 	pushed_objects_to_verts();
 	last_pushed_object = 0;
     
-    char text_to_draw[1024];
-    vsprintf(text_to_draw, "Yaw: %f\nPitch: %f", cm.yaw, cm.pitch);
-    vp_draw_text(text, 5, 5, (v4){1.})
-        
-        if(renderer.last_frame_vert * sizeof(vertex) > VERTEX_MEMORY) VP_FATAL("VERTECIES OVERFLOW!");
+    
+    if(renderer.last_frame_vert * sizeof(vertex) > VERTEX_MEMORY) VP_FATAL("VERTECIES OVERFLOW!");
 	if(renderer.last_index * sizeof(unsigned int) > INDEX_MEMORY) VP_FATAL("INDICES OVERFLOW!");
     
     
@@ -158,7 +155,7 @@ render_update()
 	v3 diffuseColor = v3_v3_scale(light_color, (v3){0.5f, 0.5f, 0.5f}); // decrease the influence
 	v3 ambientColor = v3_v3_scale(light_color, (v3){0.2f, 0.2f, 0.2f}); // low influence
     
-	set_shader_uniform_vec3("light.position", mat4_v3_multiply(light.position));
+	set_shader_uniform_vec3("light.position", light.position);
 	set_shader_uniform_vec3("light.ambient", ambientColor);
 	set_shader_uniform_vec3("light.diffuse", diffuseColor);
 	set_shader_uniform_vec3("light.specular", (v3){1.0f, 1.0f, 1.0f});
@@ -168,7 +165,7 @@ render_update()
 	set_shader_uniform_vec3("material.diffuse", (v3){1.0f, 0.5f, 0.31f});
 	set_shader_uniform_vec3("material.specular", (v3){0.5f, 0.5f, 0.5f}); // specular lighting doesn't have full effect on this object's material
 	
-	set_shader_uniform_f("material.shininess", 12.0f);
+	set_shader_uniform_f("material.shininess", 32.0f);
 	
 	set_shader_uniform_vec3("view_pos", cm.position);
     
@@ -293,27 +290,25 @@ add_verts_from_obj(obj object, v3 position, v4 color, bool32 affected_by_light)
     
 	int index_offset = renderer.last_frame_vert;
 	
-	for(int i = 0; i < object.last_vert; ++i)
+	for(int i = 0; i < object.last_vert_index; ++i)
 	{
-		v4 normal = {0.0f, 0.0f, 0.0f, 1.0f};
+		v3 tmp = object.norms[object.norms_indexes[i]];
+        v4 normal = {tmp.x, tmp.y, tmp.z, 1.0f};
+        v3 tmp2 = object.verts[object.vert_indexes[i]];
+        v4 vert = {tmp2.x, tmp2.y, tmp2.z, 1.0f};
         
 #ifdef VIPOC_DEBUG
 		if ((void *)(renderer.frame_verts + renderer.last_frame_vert) > renderer.frame_verts_end) { VP_FATAL("FRAME BUFFER OVERFLOW!"); }
 #endif
-		push_frame_vert(object.verts[i], empty_tex, color, normal, position, affected_by_light);
+		push_frame_vert(vert, empty_tex, color, normal, position, affected_by_light);
 	}
 	for(int i = 0; i < object.last_vert_index; ++i)
 	{
-        v4 normal = {0.0f, 0.0f, 0.0f, 1.0f};
-        normal.x = object.norms[object.norms_indexes[i]].x;
-        normal.y = object.norms[object.norms_indexes[i]].y;
-        normal.z = object.norms[object.norms_indexes[i]].z;
+        
 #ifdef VIPOC_DEBUG
 		if(renderer.last_index > INDEX_MEMORY * (sizeof(uint32) / sizeof(char))) VP_FATAL("INDEX MEMORY OVERFLOW");
 #endif
-		renderer.indexes[renderer.last_index++] = object.vert_indexes[i]+index_offset;
-        renderer.frame_verts[i + index_offset]
-            .normal = normal;
+		renderer.indexes[renderer.last_index++] = i+index_offset;
     }
 }
 
@@ -704,6 +699,9 @@ vp_camera_mouse_callback(double xpos, double ypos)
 	cm.mouse_y = ypos;
 	cm.yaw += (delta_x * .02f);
 	cm.pitch += (delta_y * .02f);
+    if (cm.pitch > 1.5f) cm.pitch = 1.5f;
+    if (cm.pitch < -1.5f) cm.pitch = -1.5f;
+    
 }
 
 
@@ -844,7 +842,7 @@ vp_load_simple_obj(char *path)
 				new_object.norms[last_norm++].z = catof(at);
 				if((void *)((char *)new_object.norms + last_norm) > norms_memory_end) VP_FATAL("MEMORY OVERFLOW AT LINE: %d", __LINE__);
 			}
-			else
+			else if(*at == ' ')
 			{
 				at++;
 				new_object.verts[last_vert].x = catof(at);
@@ -863,9 +861,9 @@ vp_load_simple_obj(char *path)
 				new_object.vert_indexes[last_vert_index++] = catof(at)-1;
 				if((void *)((char *)new_object.vert_indexes + last_vert_index) > vert_index_memory_end) VP_FATAL("MEMORY OVERFLOW AT LINE: %d", __LINE__);
 				while(*at >= '0' && *at <= '9') at++;
-				
 				if(*at=='/')
 				{
+                    if(*at+1 != '/') at++;
 					ToAndPastC(at, '/');
 					while(*at == '/') at++;
 					new_object.norms_indexes[last_norm_index++] = catof(at)-1;
@@ -1049,7 +1047,7 @@ void RendererInit()
 	cm.position = (v3){0.0f, 5.0f, 5.0f};
 	cm.is_locked = false;
     
-	light.position = (v3){8.585f, 7.780f, 12.614f};
+	light.position = (v3){15.0f, 7.780f, 7.614f};
 	
 }
 

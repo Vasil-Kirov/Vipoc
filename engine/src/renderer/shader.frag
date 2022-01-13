@@ -57,17 +57,17 @@ void main()
 		float spec = pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess);
 		vec3 specular = light.specular * (spec * material.specular);  
 			
-		light_result = ambient + diffuse;// + diffuse + specular;
+		light_result = ambient + diffuse + specular;
 	}
 	
 	if(TexCoord.x < 0)
 	{		
-//		FragColor = ColorOut * vec4(light_result, 1.0f);
-		FragColor = vec4(abs(NormalOut), 1.0f);
+		FragColor = ColorOut * vec4(light_result, 1.0f);
+//		FragColor = vec4(abs(NormalOut), 1.0f);
 	}
 	else
 	{
-//		FragColor = (texture(texture1, TexCoord) * ColorOut) * vec4(light_result, 1.0f);
-		FragColor = vec4(abs(NormalOut), 1.0f);
+		FragColor = (texture(texture1, TexCoord) * ColorOut) * vec4(light_result, 1.0f);
+//		FragColor = vec4(abs(NormalOut), 1.0f);
 	}
 }

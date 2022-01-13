@@ -15,7 +15,7 @@ static bool32 IsCameraLocked;
 void
 LockCamera()
 {
-	vp_lock_camera(3.14f, 1.45f, (v3){16.5f, 11.8f, 5.7f});
+	vp_lock_camera(3.14f, 1.45f, (v3){15.25f, 12.5f, 5.7f});
 	IsCameraLocked = true;
 }
 
@@ -175,8 +175,7 @@ GenerateYOffsetForTileMap(uint32 YOffsetOfMap[TILE_MAP_HEIGHT][TILE_MAP_WIDTH], 
 	{
 		for(int x = 0; x < TILE_MAP_WIDTH; ++x)
 		{
-			//YOffsetOfMap[y][x] = vp_random_from_seed(RandomSeed) % 15;
-            YOffsetOfMap[y][x] = 1;
+			YOffsetOfMap[y][x] = vp_random_from_seed(RandomSeed) % 15;
         }
 	} 
 }
@@ -347,19 +346,21 @@ main()
 		memcpy(TileMap, tmp, sizeof(tmp));	
 	}
     
-	uint32 ParticleStartTimer = platform_get_ms_since_start();
+	//uint32 ParticleStartTimer = platform_get_ms_since_start();
     
 	LockCamera();
 	int64 PerfFrequency = platform_get_frequency();
 	int64 StartCounter = platform_get_perf_counter();
 	while(Running)
 	{
+#if 0
 		if(platform_get_ms_since_start() - ParticleStartTimer > 100)
 		{
 			ParticleStartTimer = platform_get_ms_since_start();
 			if(!vp_is_particle_update_off())
 				CreateSnowParticles(&RandomSeed);
 		}
+#endif
 		if(LastReloadCounter++ >= 120)
 		{
 			if(Game.DLL.sharable != vp_nullptr) platform_free_sharable(Game.DLL);
@@ -385,7 +386,7 @@ main()
 			vp_draw_text(Console.Command, 0, Console.Position + .25f, (v4){0.0f, 0.0f, 0.0f, 1.0f}, 1.0f, 3);
 		}
 		
-		
+        
 		for(int row = 0; row < TILE_MAP_HEIGHT; ++row)
 		{
 			for(int column = 0; column < TILE_MAP_WIDTH; ++column)
@@ -407,7 +408,7 @@ main()
 				vp_object_pushback(Objects[1], TileColor, OBJPosition, true, true);
 			}
 		}
-		
+        
 		if(vp_is_keydown(VP_KEY_R))
 		{
 #if 0
