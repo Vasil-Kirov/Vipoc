@@ -245,7 +245,6 @@ LoadSharable(char *PathToFolder)
 void
 CreateSnowParticles(uint64 *RandomSeed)
 {
-	
 	// 16 : 9
 	// 20 : 20
 	for(int index = 0; index < 20; ++index)
@@ -317,13 +316,16 @@ main()
 	bool32 Running = true;
     
     
-	int LastReloadCounter = 0;
+//	int LastReloadCounter = 0;
 	int FPSReloadCounter = 15;
 	int32 FPS = 0;
 	int32 MSPerFrame = 0;
+	
+	#if 0
 	reloader Game = {};
 	Game = LoadSharable(PathToFolder);
-    
+    #endif
+
 	Free(TempStorage);
 	
 	uint64 RandomSeed = vp_random_seed();
@@ -346,14 +348,14 @@ main()
 		memcpy(TileMap, tmp, sizeof(tmp));	
 	}
     
-	//uint32 ParticleStartTimer = platform_get_ms_since_start();
+	u32 ParticleStartTimer = platform_get_ms_since_start();
     
 	LockCamera();
 	int64 PerfFrequency = platform_get_frequency();
 	int64 StartCounter = platform_get_perf_counter();
 	while(Running)
 	{
-#if 0
+#if 1
 		if(platform_get_ms_since_start() - ParticleStartTimer > 100)
 		{
 			ParticleStartTimer = platform_get_ms_since_start();
@@ -361,13 +363,15 @@ main()
 				CreateSnowParticles(&RandomSeed);
 		}
 #endif
+#if 0
 		if(LastReloadCounter++ >= 120)
 		{
 			if(Game.DLL.sharable != vp_nullptr) platform_free_sharable(Game.DLL);
 			Game = LoadSharable(PathToFolder);
 			LastReloadCounter = 0;
 		}
-        
+#endif
+
 		Running = vp_handle_messages();
         
 		if(Console.IsStarting)

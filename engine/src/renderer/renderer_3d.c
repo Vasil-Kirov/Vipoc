@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "renderer/renderer.h"
 #include "renderer/math_3d.h"
 #include "platform/platform.h"
@@ -110,7 +112,8 @@ draw_ui_targets();
 bool32
 render_update()
 {
-	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+//	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	glClearColor(0.0f, 0.8f, 0.9f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glFrontFace(GL_CW);
     
@@ -121,7 +124,7 @@ render_update()
 	pushed_objects_to_verts();
 	last_pushed_object = 0;
     
-    
+    START_DTIMER();
     if(renderer.last_frame_vert * sizeof(vertex) > VERTEX_MEMORY) VP_FATAL("VERTECIES OVERFLOW!");
 	if(renderer.last_index * sizeof(unsigned int) > INDEX_MEMORY) VP_FATAL("INDICES OVERFLOW!");
     
@@ -208,7 +211,9 @@ render_update()
 	// TEXT RENDERING
 	if(last_2d_target > 0)
 	{
+		STOP_DTIMER();
 		draw_ui_targets();
+		START_DTIMER();
 		last_2d_target = 0;
         
 		/* Undoing the light for Text and UI */
@@ -266,26 +271,35 @@ render_update()
 	
 	renderer.last_frame_vert = cache.last_cached_vert;
 	renderer.last_index = cache.last_cached_index;
+	STOP_DTIMER();
 	platform_swap_buffers();
+	
 	return true;	
 }
 
 bool32
 check_for_cache(obj_identifier object)
 {
+	START_DTIMER();
 	for(int index = 0; index < cache.last_cached; ++index)
 	{
 		if(object.object_index == cache.in[index].object_index)
 		{
-			if(v3_check_equality(object.position, cache.in[index].position)) return true;
+			if(v3_check_equality(object.position, cache.in[index].position))
+			{
+				STOP_DTIMER();
+				return true;
+			}
 		}
 	}
+	STOP_DTIMER();
 	return false;
 }
 
 void
 add_verts_from_obj(obj object, v3 position, v4 color, bool32 affected_by_light)
 {
+//	START_DTIMER();
 	v3 empty_tex = (v3){-1.0f, -1.0f, -1.0f};
     
 	int index_offset = renderer.last_frame_vert;
@@ -310,6 +324,7 @@ add_verts_from_obj(obj object, v3 position, v4 color, bool32 affected_by_light)
 #endif
 		renderer.indexes[renderer.last_index++] = i+index_offset;
     }
+//	STOP_DTIMER();
 }
 
 void
@@ -519,6 +534,7 @@ gl_to_meters(v3 target)
 bool32
 vp_object_pushback(int32 index, v4 color, v3 position, bool32 cachable, bool32 affected_by_light)
 {
+	START_DTIMER();
 	// 0 0 0 - center of the world
 	// 10 meters = 2 gl (-1 to 1)
 	position = normalize_v3(position, -10000, 10000, -1000, 1000);
@@ -547,14 +563,22 @@ vp_object_pushback(int32 index, v4 color, v3 position, bool32 cachable, bool32 a
 		cache.last_cached_index	= renderer.last_index;
 	}
 	return true;
+	STOP_DTIMER();
 }
 
 
 
-// TODO: Optimize
+int
+compare_targets(void const* a, void const* b)
+{
+	return( ((ui_targets *)a)->target.layer_id - ((ui_targets *)b)->target.layer_id );
+}
+
 void
 sort_2d_target()
 {
+	START_DTIMER();
+	#if 0
 	for(int i = 0; i < last_2d_target; ++i)
 	{
 		for(int j = 0; j < last_2d_target; ++j)
@@ -567,12 +591,20 @@ sort_2d_target()
 			}
 		}
 	}
+	#else
+		qsort(to_render_2d, last_2d_target, sizeof(ui_targets), compare_targets);
+	#endif
+	STOP_DTIMER();
 }
 
 void
 draw_ui_targets()
 {
 	sort_2d_target();
+	
+	START_DTIMER();
+
+
 	v3 I = {0.0f, 0.0f, 0.0f};
     float base_z = 0.0f;
 	for(int index = 0; index < last_2d_target; ++index)
@@ -598,12 +630,15 @@ draw_ui_targets()
 		// Bottom Right
 		push_text_verts(location, 2, 1, color, I, z);
 	}
+	STOP_DTIMER();
 }
 
 /* location in meters 0 - 10 = -1 - 1 */ 
 void
 vp_draw_rectangle(m2 position, v4 color, int layer_id)
 {
+	START_DTIMER();
+
 	vp_2d_render_target location = {};
 	location.texture_position = (m2){-1.0f, -1.0f, -1.0f, -1.0f};
 	location.layer_id = layer_id;
@@ -617,12 +652,16 @@ vp_draw_rectangle(m2 position, v4 color, int layer_id)
 	
 	to_render_2d[last_2d_target].target = location;
 	to_render_2d[last_2d_target++].color = color;
+
+	STOP_DTIMER();
 }
 
 
 void
 vp_draw_text(char *text, float x, float y, v4 color, float scaler, int layer_id)
 {
+	START_DTIMER();
+
 	x = normalize_between(x, 0, 10, 0, platform_get_width());
 	y = normalize_between(y, 0, 5.625f, 0, platform_get_height());
 	int space_from_last_char = 0;
@@ -686,6 +725,8 @@ vp_draw_text(char *text, float x, float y, v4 color, float scaler, int layer_id)
 			space_from_last_char = 0;
 		} 
 	}
+
+	STOP_DTIMER();
 }
 
 // PLACEHOLDER:
@@ -708,7 +749,6 @@ vp_camera_mouse_callback(double xpos, double ypos)
 void
 vp_load_text_atlas(char *path)
 {
-	
 	vp_texture result = {};
 	if (strstr(path, ".bmp") != vp_nullptr)
 	{

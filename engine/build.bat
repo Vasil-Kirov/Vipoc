@@ -10,7 +10,7 @@ FOR /R %%f in (*.c) do (
 )
 
 IF [%1] == [] (
-	SET CompilerFlags=-O0 -shared -Wvarargs -Wall -DVIPOC_DEBUG
+	SET CompilerFlags=-O1 -shared -Wvarargs -Wall -DVIPOC_DEBUG
 ) ELSE IF [%1] == [release] (
 	ECHO -------- RELEASE --------
 	SET CompilerFlags=-O3 -shared -Wvarargs -Wall -Werror

@@ -74,13 +74,18 @@ vp_handle_messages()
 void
 vp_present()
 {
+	vp_start_debug_timer("Particles", STRHASH("Particles"));
 	platform_thread particle_update = {};
-	if(!is_particle_update_off)
-		particle_update = platform_create_thread(update_particles, vp_nullptr);
 	
+	if(!is_particle_update_off)
+		particle_update 				= platform_create_thread(update_particles, vp_nullptr);
 	platform_thread particle_draw 		= platform_create_thread(draw_particles, vp_nullptr);
 	platform_thread particle_rewrite 	= platform_create_thread(rewrite_particle_buffer, vp_nullptr);
+	
+	vp_stop_debug_timer(STRHASH("Particles"));
 	platform_wait_for_thread(particle_draw);
+	vp_draw_diagrams();
+	
 	if(!render_update())
 	{
 		VP_ERROR("A failure has occurred with internal rendering!");
@@ -91,6 +96,7 @@ vp_present()
 //	renderer_buffer_reset();
 
 	vp_free_temp_memory();
+	vp_reset_debug_timers();
 }
 
 uint64

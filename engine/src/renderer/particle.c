@@ -44,6 +44,7 @@ update_particles()
 void
 draw_particles()
 {
+	START_DTIMER();
 	if(vp_is_particle_update_off()) ms_last_frame = platform_get_ms_since_start();
 	for(int index = 0; index < last_particle; ++index)
 	{
@@ -53,6 +54,7 @@ draw_particles()
 			vp_object_pushback(0, to_push.color, to_push.position, false, false);
 		}
 	}
+	STOP_DTIMER();
 }
 
 void

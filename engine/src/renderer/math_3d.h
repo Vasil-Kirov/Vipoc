@@ -258,6 +258,13 @@ normalize_between(f32 x, f32 minx, f32 maxx, f32 a, f32 b)
 	return Result;
 }
 
+inline f64
+double_normalize_between(f64 x, f64 minx, f64 maxx, f64 a, f64 b)
+{
+	f64 Result = ( (b - a) * ( (x-minx) / (maxx-minx) ) + a );
+	return Result;
+}
+
 
 inline bool32
 v3_check_equality(v3 A, v3 B)
