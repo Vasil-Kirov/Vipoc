@@ -63,6 +63,7 @@ PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays = NULL;
 /* Added by me */
 PFNGLVERTEXATTRIBDIVISORARBPROC glVertexAttribDivisor = NULL;
 PFNGLUNIFORM3FPROC glUniform3f = NULL;
+PFNGLUNIFORM4FPROC glUniform4f = NULL;
 
 #ifdef VIPOC_WIN32
     PFNGLACTIVETEXTUREPROC glActiveTexture = NULL;
@@ -134,7 +135,8 @@ void LoadGLExtensions()
 
         /* Added by me */
         glVertexAttribDivisor = (PFNGLVERTEXATTRIBDIVISORPROC)wglGetProcAddress("glVertexAttribDivisor");
-        glUniform3f = (PFNGLUNIFORM3FPROC)wglGetProcAddress("glUniform3f");
+	    glUniform3f = (PFNGLUNIFORM3FPROC)wglGetProcAddress("glUniform3f");
+	    glUniform4f = (PFNGLUNIFORM4FPROC)wglGetProcAddress("glUniform4f");
 
     #endif
 }

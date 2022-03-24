@@ -5,6 +5,8 @@
 void
 DrawChessBoard(i32 CubeIndex)
 {
+
+#if 0	
 	if(CubeIndex < 0)
 	{
 		VP_ERROR("Invalid cube index: ", CubeIndex);
@@ -19,7 +21,9 @@ DrawChessBoard(i32 CubeIndex)
 			// else Color = 0x232323FF;
 			else Color = 0x66433BFF;
 			v3 SquarePosition = {X*20.0f, 0.0f, Y*20.0f};
-			vp_object_pushback(CubeIndex, Color, SquarePosition, true, true);
+			//vp_object_pushback(CubeIndex, Color, SquarePosition, true, true);
 		}
 	}
+	#endif
+
 }

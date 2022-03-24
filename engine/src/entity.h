@@ -5,6 +5,7 @@
 
 #include <include/Core.h>
 #include <renderer/math_3d.h>
+#include <renderer/renderer.h>
 
 #define MAX_ENTITIES 4096
 
@@ -13,7 +14,7 @@ typedef void (*entity_update)();
 typedef struct
 {
 	u32 id;
-	u32 model_index;
+	vp_mesh_identifier mesh_iden;
 	f32 speed;
 	b32 valid;
 	u32 color;
@@ -24,7 +25,7 @@ typedef struct
 
 
 VP_API int
-vp_create_entity(u32 model_index, v3 world_position, f32 speed, u32 color, entity_update update_func);
+vp_create_entity(vp_mesh_identifier mesh_iden, v3 world_position, f32 speed, u32 color, entity_update update_func);
 
 VP_API void
 vp_move_entity(i32 index, v3 new_pos);

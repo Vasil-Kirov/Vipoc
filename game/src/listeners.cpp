@@ -82,7 +82,7 @@ OnMouse(vp_buttons Button, bool32 IsDown, i32 X, i32 Y)
 	{
 		if(Button == VP_MOUSE_BUTTON_RIGHT)
 		{
-			vp_cast_ray(X, Y);
+			//vp_cast_ray(X, Y);
 		}
 	}
 }

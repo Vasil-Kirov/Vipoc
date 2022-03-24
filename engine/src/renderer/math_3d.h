@@ -84,10 +84,6 @@ typedef struct vp_light
     v3 specular;
 } vp_light;
 
-
-inline void
-set_shader_uniform_mat4(char *str, m4 mat);
-
 inline double
 DegToRad(f32 degrees)
 {

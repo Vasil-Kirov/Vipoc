@@ -1,6 +1,7 @@
 #pragma once
 #include <include/defines.h>
 
+// NOTE(Vasko): FUNNCTION NAMES CANNOT BE LONGER THAN 33 CHARACTERS
 #define START_DTIMER() 	vp_start_debug_timer(__func__, STRHASH(__FUNCTION__))
 #define STOP_DTIMER()	vp_stop_debug_timer(STRHASH(__FUNCTION__))
 

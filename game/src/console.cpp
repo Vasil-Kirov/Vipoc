@@ -56,7 +56,7 @@ HandleCommand(char *Command)
 	VP_INFO("Command: %s", Command);
 	if(memcmp(Command, (void *)"move_piece", sizeof("move_piece")) == 0)
 	{
-		vp_move_static_entity(3, (v3){ 35, 35, 35 });
+		vp_move_entity(3, (v3){ 35, 35, 35 });
 	}
 }
 

@@ -67,7 +67,7 @@ vp_is_particle_update_off()
 bool32
 vp_handle_messages()
 {
-	
+	vp_clear_screen();
 	if(!platform_handle_message()) return FALSE;
 	return TRUE;
 }

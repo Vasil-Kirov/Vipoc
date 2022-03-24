@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <Vipoc.h>
+#include <string.h>
 
 struct console
 {
@@ -140,7 +141,7 @@ GetAtlasRect(entire_file File)
 	At++;
 	while(true)
 	{
-		if(*At == VP_NEW_LINE) break;
+		if(strcmp((const char *)At, VP_NEW_LINE) == 0) break;
 		if(*At == 'w')
 		{
 			At++;

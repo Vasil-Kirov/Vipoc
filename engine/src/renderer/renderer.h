@@ -104,7 +104,7 @@ extern "C"{
 	
 	typedef struct mesh_identifier
 	{
-		i32 vbo_offest;
+		i32 element_count;
 		i32 ebo_offset;
 	} vp_mesh_identifier;
 	
@@ -170,14 +170,14 @@ extern "C"{
     VP_API void
         vp_lock_camera(float yaw, float pitch, v3 xyz);
     
-    void
-		calculate_and_set_uniforms_for_3d_drawing();
+    m4
+		calculate_3d_uniforms();
 	
 	void
 		set_uniforms_for_ui();
 	
 	void
-		make_draw_call(u32 offset, u32 num_of_elements);
+		make_draw_call(size_t offset, u32 num_of_elements);
 	
     void
         vp_update_mouse_pos(double xpos, double ypos);
@@ -206,11 +206,20 @@ extern "C"{
     v3
         normalize_v3(v3 target, float minx, float maxx, float from, float to);
     
+	v4
+		normalize_v4(v4 target, float minx, float maxx, float from, float to);
+	
     void
         set_shader_uniform_f(char *str, float to_set);
     
     void
         set_shader_uniform_vec3(char *str, v3 vector);
+    
+	void
+		set_shader_uniform_vec4(char *str, v4 vector);
+	
+	void
+        set_shader_uniform_mat4(char *str, m4 mat);
     
     v3
         gl_to_meters(v3 target);

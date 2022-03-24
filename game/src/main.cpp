@@ -111,8 +111,8 @@ main()
 	}
     
 	// NOTE(Vasko): Since the enum starts from 1 we need to +1 the last piece
-	int Cube;
-	int Pieces[W_QUEEN + 1] = {};
+	vp_mesh_identifier Cube;
+	vp_mesh_identifier Pieces[W_QUEEN + 1] = {};
 	{
 		char EmptyString[MAX_PATH] = {};
 		Cube = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder, "assets/cube.obj"));
@@ -122,7 +122,6 @@ main()
 		Pieces[W_BISHOP] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder, "assets/Bishop.obj"));
 		Pieces[W_KING] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder, "assets/King.obj"));
 		Pieces[W_QUEEN] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder, "assets/Queen.obj"));
-		
 	}
     
 	
@@ -172,7 +171,7 @@ main()
 			if(Piece & 0xF000) Color = 0x2E2E2EFF;
 			v3 Position = {X * 20.0f, 10.0f, Y * 20.0f};
 			
-			PieceIDs[X][Y] = vp_create_entity(Piece & 0x000F, Position, 0, Color, (entity_update)vp_nullptr, true);
+			PieceIDs[X][Y] = vp_create_entity(Pieces[Piece & 0x000F], Position, 0, Color, (entity_update)vp_nullptr);
 		}
 	}
 	
@@ -203,8 +202,7 @@ main()
 			vp_draw_text(Console.Command, 0, Console.Position + .25f, 0x000000FF, 1.0f, 3);
 		}
 		
-		vp_object_pushback(Cube, 0x00FFFF, (v3){0, 40, 0}, false, false);
-		DrawChessBoard(Cube);
+		//DrawChessBoard(Cube);
 		
 		HandleInput();
         

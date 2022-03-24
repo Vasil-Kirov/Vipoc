@@ -10,8 +10,6 @@
 #define swapv3(a, b) { v3 reserved_variable_name = a; a = b; b = reserved_variable_name; }
 
 
-#define MAX_OBJS 1024
-
 typedef struct gl_state
 {
 	GLuint shader_program;
@@ -99,11 +97,10 @@ vp_clear_screen()
 	glFrontFace(GL_CW);
 }
 
-void
-calculate_and_set_uniforms_for_3d_drawing()
+m4
+calculate_3d_uniforms()
 {
-	int calc_hash = STRHASH("Calculations");
-	vp_start_debug_timer("Calculations", calc_hash);
+	START_DTIMER();
 	
 	GLint uniform_location = glGetUniformLocation(renderer.shader_program, "texture1");
 	glUniform1i(uniform_location, 0);
@@ -115,9 +112,6 @@ calculate_and_set_uniforms_for_3d_drawing()
 	matrices.view = calculate_view_matrix(&cm);
 	
 	m4 MVP = mat4_multiply_multiple(3, matrices.project, matrices.view, matrices.world);
-	MVP = transpose(MVP);
-	
-	set_shader_uniform_mat4("MVP", MVP);
 	
 	/* Light calculations */
 	v3 light_color = {1.0f, 1.0f, 1.0f};
@@ -141,9 +135,12 @@ calculate_and_set_uniforms_for_3d_drawing()
 	
 	set_shader_uniform_vec3("view_pos", cm.position);
 	
+	int is_3d_location = glGetUniformLocation(renderer.shader_program, "Is3D");
+	glUniform1i(is_3d_location, 1);
 	
-	vp_stop_debug_timer(calc_hash);
 	
+	STOP_DTIMER();
+	return MVP;
 }
 
 void
@@ -164,17 +161,20 @@ set_uniforms_for_ui()
 	GLint uniform_location = glGetUniformLocation(renderer.shader_program, "texture1");
 	glUniform1i(uniform_location, 1);
 	
+	int is_3d_location = glGetUniformLocation(renderer.shader_program, "Is3D");
+	glUniform1i(is_3d_location, 0);
 }
 
 void
-make_draw_call(u32 offset, u32 num_of_elements)
+make_draw_call(size_t offset, u32 num_of_elements)
 {
+	START_DTIMER();
 	glBindVertexArray(renderer.vao);
 	
 	glBindBuffer(GL_ARRAY_BUFFER, renderer.vbo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer.ebo);
 	
-	u32 stride = sizeof(f32) * ( 3 + 2 + 4 + 3 );
+	u32 stride = sizeof(f32) * ( 3 + 2 + 3 );
 	
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)(0));
 	glEnableVertexAttribArray(0);
@@ -182,20 +182,15 @@ make_draw_call(u32 offset, u32 num_of_elements)
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)));
 	glEnableVertexAttribArray(1);
 	
-	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)*2));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)*2));
 	glEnableVertexAttribArray(2);
-    
-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)*3));
-	glEnableVertexAttribArray(3);
     
 	
 	glUseProgram(renderer.shader_program);
 	glBindVertexArray(renderer.vao);
 	
-	u32 draw_call_hash = STRHASH("Draw Call");
-	vp_start_debug_timer("Draw Call", draw_call_hash);
-	glDrawElements(GL_TRIANGLES, num_of_elements, GL_UNSIGNED_INT, (void *)(offset * sizeof(GLuint)));
-	vp_stop_debug_timer(draw_call_hash);
+	glDrawElements(GL_TRIANGLES, num_of_elements, GL_UNSIGNED_INT, (void *)(offset));
+	STOP_DTIMER();
 }
 
 void
@@ -286,6 +281,16 @@ set_shader_uniform_vec3(char *str, v3 vector)
 }
 
 void
+set_shader_uniform_vec4(char *str, v4 vector)
+{
+	GLint location = glGetUniformLocation(renderer.shader_program, str);
+	if(glGetError() != 0)
+		CHECK_GL_ERROR();
+	glUniform4f(location, vector.x, vector.y, vector.z, vector.w);
+    CHECK_GL_ERROR();
+}
+
+void
 set_shader_uniform_f(char *str, float to_set)
 {
 	GLint location = glGetUniformLocation(renderer.shader_program, str);
@@ -361,7 +366,19 @@ normalize_v3(v3 target, float minx, float maxx, float from, float to)
 	return result;
 }
 
+v4
+normalize_v4(v4 target, float minx, float maxx, float from, float to)
+{	
+	v4 result = {};
+	result.x = normalize_between(target.x, minx, maxx, from, to);
+	result.y = normalize_between(target.y, minx, maxx, from, to);
+	result.z = normalize_between(target.z, minx, maxx, from, to);
+	result.w = normalize_between(target.w, minx, maxx, from, to);
+	return result;
+}
 
+
+#if 0
 void
 vp_cast_ray(i32 x, i32 y)
 {
@@ -391,6 +408,7 @@ vp_cast_ray(i32 x, i32 y)
 	
 	VP_INFO("entity id: %d", entity);
 }
+#endif
 
 
 bool32
@@ -482,6 +500,8 @@ draw_ui_targets()
 void
 vp_draw_rectangle(m2 position, v4 color, int layer_id)
 {
+
+#if 0	
 	START_DTIMER();
 	
 	vp_2d_render_target location = {};
@@ -499,12 +519,16 @@ vp_draw_rectangle(m2 position, v4 color, int layer_id)
 	to_render_2d[last_2d_target++].color = color;
 	
 	STOP_DTIMER();
+	#endif
+
 }
 
 
 void
 vp_draw_text(char *text, float x, float y, u32 in_color, float scaler, int layer_id)
 {
+	// TODO(Vasko): Rewrite this
+#if 0
 	START_DTIMER();
 	
 	v4 color = {};
@@ -580,6 +604,7 @@ vp_draw_text(char *text, float x, float y, u32 in_color, float scaler, int layer
 	}
 	
 	STOP_DTIMER();
+#endif
 }
 
 // PLACEHOLDER:
@@ -772,7 +797,7 @@ vp_load_simple_obj(char *path)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer.ebo);
 	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, ebo_used_offset, sizeof(u32) * last_index, indexes);
 	
-	vp_mesh_identifier result = {.vbo_offest = vbo_used_offset, .ebo_offset = ebo_used_offset};
+	vp_mesh_identifier result = {.element_count = last_index, .ebo_offset = ebo_used_offset};
 	
 	ebo_used_offset += last_index * sizeof(u32);
 	vbo_used_offset += last_vert  * sizeof(mesh_vertex);
@@ -863,7 +888,7 @@ void RendererInit()
 		if(!success)
 		{
 			glGetShaderInfoLog(vertex_shader, 512, NULL, info_log);
-			VP_FATAL("Failed to compile shader at line %d: %s", __LINE__, info_log);
+			VP_FATAL("Failed to compile vertex shader:\n%s", info_log);
 		}
 	}
 #if VIPOC_DEBUG
@@ -883,7 +908,7 @@ void RendererInit()
 		if(!success)
 		{
 			glGetShaderInfoLog(fragment_shader, 512, NULL, info_log);
-			VP_FATAL("Failed to compile shader at line %d: %s", __LINE__, info_log);
+			VP_FATAL("Failed to compile fragment shader:\n%s", info_log);
 		}
 	}
 	

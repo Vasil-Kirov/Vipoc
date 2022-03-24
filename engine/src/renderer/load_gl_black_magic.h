@@ -84,7 +84,8 @@ extern PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays;
 
 /* Added by me */
 extern PFNGLUNIFORM3FPROC glUniform3f;
-
+extern PFNGLUNIFORM4FPROC glUniform4f;
+	
 #ifdef VIPOC_WIN32
 extern PFNGLACTIVETEXTUREPROC glActiveTexture;
 extern PFNGLGENERATEMIPMAPPROC glGenerateMipmap;

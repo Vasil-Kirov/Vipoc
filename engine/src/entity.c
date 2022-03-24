@@ -7,13 +7,13 @@
 internal vp_entity entities[MAX_ENTITIES];
 
 int
-vp_create_entity(u32 model_index, v3 world_position, f32 speed, u32 color, entity_update update_func)
+vp_create_entity(vp_mesh_identifier mesh_iden, v3 world_position, f32 speed, u32 color, entity_update update_func)
 {
 	v3 h1 = world_position;
 	v3 h2 = v3_f32_add(world_position, 20);
 	m3 hitbox = { .m = {h1.x, h1.y, h1.z, h2.x, h2.y, h2.z} };
 	
-	vp_entity new_entity = {.model_index = model_index, .position = world_position, .color = color, .update = update_func, .valid = true, .hitbox = hitbox};
+	vp_entity new_entity = {.mesh_iden = mesh_iden, .position = world_position, .color = color, .update = update_func, .valid = true, .hitbox = hitbox};
 	
 	for(i32 index = 0; index < MAX_ENTITIES; ++index)
 	{
@@ -155,6 +155,8 @@ vp_move_entity(i32 index, v3 dir)
 void
 update_entities()
 {
+	m4 BaseTransformations = calculate_3d_uniforms();
+	
 	for(i32 index = 0; index < MAX_ENTITIES; ++index)
 	{
 		vp_entity entity = entities[index];
@@ -165,6 +167,19 @@ update_entities()
 		if(entity.update)
 			entity.update();
 		
-		vp_object_pushback(entity.model_index, entity.color, entity.position, false, true);
+		u32 int_color = entity.color;
+		v4 color = {(int_color >> 24) & 0xFF, (int_color >> 16) & 0xFF,
+			(int_color >> 8) & 0xFF, (int_color >> 0) & 0xFF};
+		
+		color = normalize_v4(color, 0, 255, 0, 1);
+		
+		m4 Translate = create_mat4(1, 0, 0, entity.position.x,
+								   0, 1, 0, entity.position.y,
+								   0, 0, 1, entity.position.z,
+								   0, 0, 0, 1);
+		m4 MVP = mat4_multiply(BaseTransformations, Translate);
+		set_shader_uniform_mat4("MVP", transpose(MVP));
+		set_shader_uniform_vec4("Color", color);
+		make_draw_call(entity.mesh_iden.ebo_offset, entity.mesh_iden.element_count);
 	}
 }

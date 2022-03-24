@@ -1,6 +1,8 @@
 #include "renderer/particle.h"
 #include "application.h"
 
+// TODO(Vasko): rewrite this
+
 internal particle *particle_buffer;
 internal uint32 last_particle;
 internal uint32 ms_last_frame;
@@ -51,8 +53,8 @@ draw_particles()
 		if(particle_buffer[index].is_valid)
 		{
 			// TODO(Vasko): CHANGE THE COLOR TO to_push.color
-			particle to_push = particle_buffer[index];
-			vp_object_pushback(0, 0xFFFFFFFF, to_push.position, false, false);
+			//particle to_push = particle_buffer[index];
+			//vp_object_pushback(0, 0xFFFFFFFF, to_push.position, false, false);
 		}
 	}
 	STOP_DTIMER();
