@@ -24,12 +24,12 @@ u64
 vp_debug_timer()
 {
 #if defined(VIPOC_DEBUG)
-
-	#if defined(__clang__) || defined(__GNUC__)
-		return __builtin_ia32_rdtsc();
-	#else
-		return __rdtsc();
-	#endif
+	
+#if defined(__clang__) || defined(__GNUC__)
+	return __builtin_ia32_rdtsc();
+#else
+	return __rdtsc();
+#endif
 #else
 	return 0;
 #endif
@@ -97,27 +97,27 @@ vp_draw_diagrams()
 	{
 		total_timer += debug.draw_timers[index].value;
 	}
-
+	
 	f32 diagram_height = (5.0f * 0.25f)/debug.number_of_diagrams;
 	f32 diagram_width = 5.0f;
-
+	
 	vp_draw_rectangle((m2){0, 0, diagram_width, 5.0f*.25f}, (v4){0.7f, 0.1f, 0.1f, 0.3f}, 0);
-
+	
 	int number_of_drawn = 0;
 	for(int index = 0; index < MAX_TIMERS; ++index)
 	{
 		if(debug.draw_timers[index].id == 0) continue;
 		else number_of_drawn++;
-
+		
 		m2 location = {};
 		location.y1 = diagram_height * (number_of_drawn-1);
 		location.y2 = diagram_height * (number_of_drawn);
 		location.x2 = double_normalize_between((f64)debug.draw_timers[index].value, 0.0f, (f64)total_timer, 0.0f, diagram_width);
 		char text_to_draw[1024] = {};
 		vstd_sprintf(text_to_draw, "%s %llu clock cycles", debug.draw_timers[index].name, debug.draw_timers[index].value);
-
+		
 		vp_draw_rectangle(location, (v4){0.0f, 0.3f, 0.7f, 1.0f}, 1);
-		vp_draw_text(text_to_draw, location.x1+0.1f, location.y1+diagram_height/4.0f, (v4){1.0f, 1.0f, 1.0f, 1.0f}, 0.5f, 2);
+		vp_draw_text(text_to_draw, location.x1+0.1f, location.y1+diagram_height/4.0f, 0xFFFFFFFF, 0.5f, 2);
 		debug.draw_timers[index].id		= 0;
 		debug.draw_timers[index].value 	= 0;
 		debug.draw_timers[index].name	= 0;

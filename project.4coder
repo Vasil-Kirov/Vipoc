@@ -58,9 +58,18 @@ command_list = {
 		.cmd = {{ "fast_build_engine.bat", .os = "win"}, 
 				{ "fast_build_engine.sh",  .os = "linux"}},
 	},
+	{
+		.name = "devenv",
+		.out = "",
+		.footer_panel = false,
+		.save_dirty_files = false,
+		.cursor_at_end = false,
+		.cmd = { { "devenv bin\game.exe", .os = "win"} }
+	},
 };
 
 fkey_command[1] = "build";
 fkey_command[2] = "run";
 fkey_command[3] = "fast_build";
 fkey_command[4] = "gbuild";
+fkey_command[10] = "devenv";

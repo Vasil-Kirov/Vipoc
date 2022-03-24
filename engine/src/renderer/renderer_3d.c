@@ -4,22 +4,13 @@
 #include "renderer/math_3d.h"
 #include "platform/platform.h"
 #include "input.h"
+#include "entity.h"
 
-#define swapf(a, b) {float tmp = a; a = b; b = tmp;}
+#define swapf(a, b) { float reserved_variable_name = a; a = b; b = reserved_variable_name; }
+#define swapv3(a, b) { v3 reserved_variable_name = a; a = b; b = reserved_variable_name; }
 
-#define push_text_verts(target, num1, num2, color_in, pos_in_world, z)																			\
-renderer.text_verts[renderer.last_text_index].position = (v4){target.world_position.x##num1, target.world_position.y##num2, z, 1.0f};			\
-renderer.text_verts[renderer.last_text_index].texture = (v4){target.texture_position.x##num1, target.texture_position.y##num2, 0.0f, 0.0f};		\
-renderer.text_verts[renderer.last_text_index].color = color_in;																					\
-renderer.text_verts[renderer.last_text_index++].world_pos = pos_in_world
 
-#define push_frame_vert(vert, tex, color_in, normal_in, pos_in_world, affected_by_light)		\
-renderer.frame_verts[renderer.last_frame_vert].position = (v4){vert.x, vert.y, vert.z, 1.0f};	\
-renderer.frame_verts[renderer.last_frame_vert].texture = (v4){tex.x, tex.y,	0.0f, 1.0f};		\
-renderer.frame_verts[renderer.last_frame_vert].color = color_in;								\
-renderer.frame_verts[renderer.last_frame_vert].normal = normal_in;								\
-renderer.frame_verts[renderer.last_frame_vert].world_pos = pos_in_world;						\
-renderer.frame_verts[renderer.last_frame_vert++].is_affected_by_light = affected_by_light
+#define MAX_OBJS 1024
 
 typedef struct gl_state
 {
@@ -27,42 +18,10 @@ typedef struct gl_state
 	GLuint vao;
 	GLuint vbo;
 	GLuint ebo;
+	GLuint text_vbo;
 	atlas texture_atlas;
 	atlas text_atlas;
-	vertex *frame_verts;
-	uint32 last_frame_vert;
-	void *frame_verts_end;
-	vertex *text_verts;
-	uint32 last_text_index;
-	uint32 *indexes;
-	uint32 last_index;
-	obj objects[1024];
-	uint32 last_object;
 } gl_state;
-
-typedef struct objects_memory
-{
-	vp_memory memory;
-	void *start;
-	void *end;
-	uint64 allocate_from;
-} objects_memory;
-
-typedef struct obj_identifier
-{
-	v3 position;
-	int object_index;
-	v4 color;
-	float affected_by_light;
-} obj_identifier;
-
-typedef struct cached
-{
-	obj_identifier in[1024];
-	int last_cached;
-	int last_cached_vert;
-	int last_cached_index;
-} cached;
 
 typedef struct transformation
 {
@@ -79,19 +38,22 @@ typedef struct ui_targets
 	v4 color;
 } ui_targets;
 
+typedef struct
+{
+	v3 pos;
+	b32 is_valid;
+} positions;
 
-internal objects_memory obj_manage;
 internal gl_state renderer;
 internal transformation matrices;
 internal camera cm;
 internal ascii_char ascii_char_map[256];
 internal delta_time delta;
 internal vp_light light;
-internal cached cache;
-internal obj_identifier *to_render_objects;
-internal int last_pushed_object;
 internal ui_targets *to_render_2d;
 internal int last_2d_target;
+internal i32 ebo_used_offset = 0;
+internal i32 vbo_used_offset = 0;
 
 
 
@@ -112,45 +74,52 @@ draw_ui_targets();
 bool32
 render_update()
 {
-//	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-	glClearColor(0.0f, 0.8f, 0.9f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glFrontFace(GL_CW);
-    
 	float current_frame = SECONDS_SINCE_START();
 	delta.value = current_frame - delta.last_frame;
 	delta.last_frame = current_frame;
     
-	pushed_objects_to_verts();
-	last_pushed_object = 0;
-    
-    START_DTIMER();
-    if(renderer.last_frame_vert * sizeof(vertex) > VERTEX_MEMORY) VP_FATAL("VERTECIES OVERFLOW!");
-	if(renderer.last_index * sizeof(unsigned int) > INDEX_MEMORY) VP_FATAL("INDICES OVERFLOW!");
-    
-    
+	if(ebo_used_offset > INDEX_MEMORY * .75f)
+		VP_FATAL("INDEX MEMORY OVERFLOW: %d bytes used", ebo_used_offset);
+	
+	if(vbo_used_offset > VERTEX_MEMORY * .75f)
+		VP_FATAL("VERTEX MEMORY OVERFLOW: %d bytes used", vbo_used_offset);
+	
+	platform_swap_buffers();
+	
+	
+	return true;	
+}
+
+void
+vp_clear_screen()
+{
+	//	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	glClearColor(0.0f, 0.8f, 0.9f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glFrontFace(GL_CW);
+}
+
+void
+calculate_and_set_uniforms_for_3d_drawing()
+{
+	int calc_hash = STRHASH("Calculations");
+	vp_start_debug_timer("Calculations", calc_hash);
+	
 	GLint uniform_location = glGetUniformLocation(renderer.shader_program, "texture1");
 	glUniform1i(uniform_location, 0);
     
 	matrices.world = identity();
     
 	matrices.project = projection((float)platform_get_width() / (float)platform_get_height(), 90.0f);
-    
+	
 	matrices.view = calculate_view_matrix(&cm);
-    
+	
 	m4 MVP = mat4_multiply_multiple(3, matrices.project, matrices.view, matrices.world);
 	MVP = transpose(MVP);
-    
+	
 	set_shader_uniform_mat4("MVP", MVP);
-    
-    
+	
 	/* Light calculations */
-#if 0	
-	vp_object_pushback(1, (v4){1.0f, 1.0f, 1.0f, 1.0f}, gl_to_meters(light.position), true, true);
-#endif
-    
-    
-    
 	v3 light_color = {1.0f, 1.0f, 1.0f};
     //	light_color.x = sin(SECONDS_SINCE_START() * 2.0f);
     //	light_color.y = sin(SECONDS_SINCE_START() * 0.7f);
@@ -165,176 +134,68 @@ render_update()
     
 	// material properties
 	set_shader_uniform_vec3("material.ambient", (v3){1.0f, 1.0f, 1.0f});
-	set_shader_uniform_vec3("material.diffuse", (v3){1.0f, 0.5f, 0.31f});
+	set_shader_uniform_vec3("material.diffuse", (v3){0.8f, 0.8f, 0.8f});
 	set_shader_uniform_vec3("material.specular", (v3){0.5f, 0.5f, 0.5f}); // specular lighting doesn't have full effect on this object's material
 	
 	set_shader_uniform_f("material.shininess", 32.0f);
 	
 	set_shader_uniform_vec3("view_pos", cm.position);
-    
 	
 	
+	vp_stop_debug_timer(calc_hash);
 	
-	int stride = sizeof(v3) + (sizeof(v4) * 4) + sizeof(float);
-    
+}
+
+void
+set_uniforms_for_ui()
+{
+	
+	/* Undoing the light for Text and UI */
+	set_shader_uniform_vec3("light.ambient", (v3){1.0f, 1.0f, 1.0f});
+	set_shader_uniform_vec3("light.diffuse", (v3){1.0f, 1.0f, 1.0f});
+	set_shader_uniform_vec3("material.ambient", (v3){1.0f, 1.0f, 1.0f});
+	set_shader_uniform_vec3("material.diffuse", (v3){1.0f, 1.0f, 1.0f});
+	set_shader_uniform_vec3("material.specular", (v3){1.0f, 1.0f, 1.0f});
+	set_shader_uniform_f("material.shininess", 1.0f);
+	
+	m4 I = identity();
+	set_shader_uniform_mat4("MVP", I);
+	
+	GLint uniform_location = glGetUniformLocation(renderer.shader_program, "texture1");
+	glUniform1i(uniform_location, 1);
+	
+}
+
+void
+make_draw_call(u32 offset, u32 num_of_elements)
+{
 	glBindVertexArray(renderer.vao);
 	
 	glBindBuffer(GL_ARRAY_BUFFER, renderer.vbo);
-	glBufferData(GL_ARRAY_BUFFER, renderer.last_frame_vert * sizeof(vertex), renderer.frame_verts, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer.ebo);
 	
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer.ebo);		
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, renderer.last_index * sizeof(uint32), renderer.indexes, GL_STATIC_DRAW);
+	u32 stride = sizeof(f32) * ( 3 + 2 + 4 + 3 );
 	
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, stride, (void*)(0));
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)(0));
 	glEnableVertexAttribArray(0);
 	
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)));
 	glEnableVertexAttribArray(1);
 	
 	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)*2));
 	glEnableVertexAttribArray(2);
     
-	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)*3));
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)*3));
 	glEnableVertexAttribArray(3);
     
-	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)*4));
-	glEnableVertexAttribArray(4);
-	
-	glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)*4 + sizeof(v3)));
-	glEnableVertexAttribArray(5);
-	
 	
 	glUseProgram(renderer.shader_program);
 	glBindVertexArray(renderer.vao);
-	glDrawElements(GL_TRIANGLES, renderer.last_index, GL_UNSIGNED_INT, vp_nullptr);
 	
-	// TEXT RENDERING
-	if(last_2d_target > 0)
-	{
-		STOP_DTIMER();
-		draw_ui_targets();
-		START_DTIMER();
-		last_2d_target = 0;
-        
-		/* Undoing the light for Text and UI */
-		set_shader_uniform_vec3("light.ambient", (v3){1.0f, 1.0f, 1.0f});
-		set_shader_uniform_vec3("light.diffuse", (v3){1.0f, 1.0f, 1.0f});
-		set_shader_uniform_vec3("material.ambient", (v3){1.0f, 1.0f, 1.0f});
-		set_shader_uniform_vec3("material.diffuse", (v3){1.0f, 1.0f, 1.0f});
-		set_shader_uniform_vec3("material.specular", (v3){1.0f, 1.0f, 1.0f}); // specular lighting doesn't have full effect on this object's material
-		set_shader_uniform_f("material.shininess", 1.0f);
-        
-        
-		m4 I = identity();
-		set_shader_uniform_mat4("MVP", I);
-		
-		GLint uniform_location = glGetUniformLocation(renderer.shader_program, "texture1");
-		glUniform1i(uniform_location, 1);
-		
-		glBindVertexArray(renderer.vao);
-		
-		glBindBuffer(GL_ARRAY_BUFFER, renderer.vbo);
-		glBufferData(GL_ARRAY_BUFFER, renderer.last_text_index * sizeof(vertex), renderer.text_verts, GL_STATIC_DRAW);
-		
-		
-		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, stride, (void*)(0));
-		glEnableVertexAttribArray(0);
-		
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)));
-		glEnableVertexAttribArray(1);
-		
-		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)*2));
-		glEnableVertexAttribArray(2);
-        
-		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)*3));
-		glEnableVertexAttribArray(3);
-		
-		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)*4));
-		glEnableVertexAttribArray(4);
-        
-		glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)*4 + sizeof(v3)));
-		glEnableVertexAttribArray(5);
-        
-		
-		
-		/* NOTE: If you add another one it needs to calculate that the last is an m4 not a v4 */
-        
-        
-		glUseProgram(renderer.shader_program);
-		glBindVertexArray(renderer.vao);
-		
-		glDrawArrays(GL_TRIANGLES, 0, renderer.last_text_index);
-		
-		renderer.last_text_index = 0;
-	}
-	
-	
-	renderer.last_frame_vert = cache.last_cached_vert;
-	renderer.last_index = cache.last_cached_index;
-	STOP_DTIMER();
-	platform_swap_buffers();
-	
-	return true;	
-}
-
-bool32
-check_for_cache(obj_identifier object)
-{
-	START_DTIMER();
-	for(int index = 0; index < cache.last_cached; ++index)
-	{
-		if(object.object_index == cache.in[index].object_index)
-		{
-			if(v3_check_equality(object.position, cache.in[index].position))
-			{
-				STOP_DTIMER();
-				return true;
-			}
-		}
-	}
-	STOP_DTIMER();
-	return false;
-}
-
-void
-add_verts_from_obj(obj object, v3 position, v4 color, bool32 affected_by_light)
-{
-//	START_DTIMER();
-	v3 empty_tex = (v3){-1.0f, -1.0f, -1.0f};
-    
-	int index_offset = renderer.last_frame_vert;
-	
-	for(int i = 0; i < object.last_vert_index; ++i)
-	{
-		v3 tmp = object.norms[object.norms_indexes[i]];
-        v4 normal = {tmp.x, tmp.y, tmp.z, 1.0f};
-        v3 tmp2 = object.verts[object.vert_indexes[i]];
-        v4 vert = {tmp2.x, tmp2.y, tmp2.z, 1.0f};
-        
-#ifdef VIPOC_DEBUG
-		if ((void *)(renderer.frame_verts + renderer.last_frame_vert) > renderer.frame_verts_end) { VP_FATAL("FRAME BUFFER OVERFLOW!"); }
-#endif
-		push_frame_vert(vert, empty_tex, color, normal, position, affected_by_light);
-	}
-	for(int i = 0; i < object.last_vert_index; ++i)
-	{
-        
-#ifdef VIPOC_DEBUG
-		if(renderer.last_index > INDEX_MEMORY * (sizeof(uint32) / sizeof(char))) VP_FATAL("INDEX MEMORY OVERFLOW");
-#endif
-		renderer.indexes[renderer.last_index++] = i+index_offset;
-    }
-//	STOP_DTIMER();
-}
-
-void
-pushed_objects_to_verts()
-{
-	for(int index = 0; index < last_pushed_object; ++index)
-	{
-		add_verts_from_obj(renderer.objects[to_render_objects[index].object_index], to_render_objects[index].position, to_render_objects[index].color, to_render_objects[index].affected_by_light);
-	}
-    
+	u32 draw_call_hash = STRHASH("Draw Call");
+	vp_start_debug_timer("Draw Call", draw_call_hash);
+	glDrawElements(GL_TRIANGLES, num_of_elements, GL_UNSIGNED_INT, (void *)(offset * sizeof(GLuint)));
+	vp_stop_debug_timer(draw_call_hash);
 }
 
 void
@@ -500,6 +361,38 @@ normalize_v3(v3 target, float minx, float maxx, float from, float to)
 	return result;
 }
 
+
+void
+vp_cast_ray(i32 x, i32 y)
+{
+	f32 xf = normalize_coordinate(x, 0, platform_get_width());
+	f32 yf = normalize_coordinate(y, 0, platform_get_height());
+	f32 zf = 0.0f;
+	glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &zf);
+	CHECK_GL_ERROR();
+	
+	m4 proj = projection((float)platform_get_width() / (float)platform_get_height(), 90.0f);
+	m4 view = calculate_view_matrix(&cm);
+	
+	m4 inv_vp = identity();
+	if(!inverse_matrix(mat4_multiply(proj, view), &inv_vp))
+	{
+		VP_ERROR("Failed to calculate inverse matrix");
+		return;
+	}
+    
+	v4 screen_pos = {-xf, yf, zf, 1.0f};
+    v4 world_pos = mat4_v4_multiply(transpose(inv_vp), screen_pos);
+	
+    v3 dir = v3_normalize((v3){world_pos.x, world_pos.y, world_pos.z});
+	
+	v3 start_pos = {cm.position.x, cm.position.y, cm.position.z};
+	int entity = check_if_ray_collides_with_entity(v3_scale(start_pos, 10.0f), dir);
+	
+	VP_INFO("entity id: %d", entity);
+}
+
+
 bool32
 check_cw_culling(v3 points[3])
 {
@@ -531,43 +424,6 @@ gl_to_meters(v3 target)
 	return result;
 }
 
-bool32
-vp_object_pushback(int32 index, v4 color, v3 position, bool32 cachable, bool32 affected_by_light)
-{
-	START_DTIMER();
-	// 0 0 0 - center of the world
-	// 10 meters = 2 gl (-1 to 1)
-	position = normalize_v3(position, -10000, 10000, -1000, 1000);
-    
-    
-	if(index < 0 || index >= renderer.last_object)
-	{
-		VP_ERROR("INVALID OBJECT INDEX!");
-		return false;
-	}
-	to_render_objects[last_pushed_object].object_index = index;
-	to_render_objects[last_pushed_object].position = position;
-	to_render_objects[last_pushed_object].color = color;
-	to_render_objects[last_pushed_object++].affected_by_light = affected_by_light;
-	
-    
-	obj_identifier identify = {};
-	identify.object_index = index;
-	identify.position = position;
-	identify.color = color;
-	if(cachable && !check_for_cache(identify))
-	{
-		cache.in[cache.last_cached++] = identify;
-		add_verts_from_obj(renderer.objects[index], position, color, affected_by_light);
-		cache.last_cached_vert 	= renderer.last_frame_vert;
-		cache.last_cached_index	= renderer.last_index;
-	}
-	return true;
-	STOP_DTIMER();
-}
-
-
-
 int
 compare_targets(void const* a, void const* b)
 {
@@ -578,22 +434,7 @@ void
 sort_2d_target()
 {
 	START_DTIMER();
-	#if 0
-	for(int i = 0; i < last_2d_target; ++i)
-	{
-		for(int j = 0; j < last_2d_target; ++j)
-		{
-			if(to_render_2d[i].target.layer_id < to_render_2d[j].target.layer_id)
-			{
-				ui_targets tmp = to_render_2d[i];
-				to_render_2d[i] = to_render_2d[j];
-				to_render_2d[j] = tmp;
-			}
-		}
-	}
-	#else
-		qsort(to_render_2d, last_2d_target, sizeof(ui_targets), compare_targets);
-	#endif
+	qsort(to_render_2d, last_2d_target, sizeof(ui_targets), compare_targets);
 	STOP_DTIMER();
 }
 
@@ -603,8 +444,9 @@ draw_ui_targets()
 	sort_2d_target();
 	
 	START_DTIMER();
+	
 
-
+#if 0	
 	v3 I = {0.0f, 0.0f, 0.0f};
     float base_z = 0.0f;
 	for(int index = 0; index < last_2d_target; ++index)
@@ -614,6 +456,7 @@ draw_ui_targets()
 		v4 color = to_render_2d[index].color;
 		
 		float z = base_z - (float)(to_render_2d[index].target.layer_id/100.0f);
+		
 		// Top Left
 		push_text_verts(location, 2, 1, color, I, z);
 		// Top Right
@@ -630,6 +473,8 @@ draw_ui_targets()
 		// Bottom Right
 		push_text_verts(location, 2, 1, color, I, z);
 	}
+#endif
+
 	STOP_DTIMER();
 }
 
@@ -638,7 +483,7 @@ void
 vp_draw_rectangle(m2 position, v4 color, int layer_id)
 {
 	START_DTIMER();
-
+	
 	vp_2d_render_target location = {};
 	location.texture_position = (m2){-1.0f, -1.0f, -1.0f, -1.0f};
 	location.layer_id = layer_id;
@@ -652,16 +497,24 @@ vp_draw_rectangle(m2 position, v4 color, int layer_id)
 	
 	to_render_2d[last_2d_target].target = location;
 	to_render_2d[last_2d_target++].color = color;
-
+	
 	STOP_DTIMER();
 }
 
 
 void
-vp_draw_text(char *text, float x, float y, v4 color, float scaler, int layer_id)
+vp_draw_text(char *text, float x, float y, u32 in_color, float scaler, int layer_id)
 {
 	START_DTIMER();
-
+	
+	v4 color = {};
+	
+	// RGBA
+	color.x = normalize_between((in_color >> 24) & 0xFF, 0, 255, -1, 1);
+	color.y = normalize_between((in_color >> 16) & 0xFF, 0, 255, -1, 1);
+	color.z = normalize_between((in_color >> 8)  & 0xFF, 0, 255, -1, 1);
+	color.w = normalize_between((in_color >> 0)  & 0xFF, 0, 255, -1, 1);
+	
 	x = normalize_between(x, 0, 10, 0, platform_get_width());
 	y = normalize_between(y, 0, 5.625f, 0, platform_get_height());
 	int space_from_last_char = 0;
@@ -725,7 +578,7 @@ vp_draw_text(char *text, float x, float y, v4 color, float scaler, int layer_id)
 			space_from_last_char = 0;
 		} 
 	}
-
+	
 	STOP_DTIMER();
 }
 
@@ -827,45 +680,33 @@ vp_parse_font_fnt(entire_file file)
 
 
 
-void *
-obj_allocate_memory_for(void **something, uint64 size_to_allocate)
-{
-	*something = ((char *)obj_manage.memory.ptr + obj_manage.allocate_from);
-	void *memory_end = (char *)*something + size_to_allocate;
-	if(memory_end > obj_manage.end) VP_FATAL("OBJECT MEMORY OVERFLOW");
-	obj_manage.allocate_from += size_to_allocate;
-	*(float *)(*something + (size_to_allocate-4)) = OBJ_FIELD_END;
-	return memory_end;
-}
 
 #define catof(str) atof((const char *)str)
 #define ToAndPastC(at, chr) at = strchr(at, (int)chr); at++
 
 
-int32
+
+vp_mesh_identifier
 vp_load_simple_obj(char *path)
 {
 	entire_file obj_file = {};
-	vp_memory obj_file_memory = vp_allocate_temp(platform_get_size_of_file(path));
-	obj_file.contents = obj_file_memory.ptr;
-	if(!platform_read_entire_file(path, &obj_file)) return -1;
+	obj_file.contents = vp_allocate_temp(platform_get_size_of_file(path)).ptr;
+	if(!platform_read_entire_file(path, &obj_file)) VP_FATAL("MISSING FILE %s", path);
+	int size = obj_file.size;
 	
-	uint64 size_to_allocate = (obj_file.size + KB(10));
-	size_to_allocate /= 2;
-	obj new_object = {}; 
-	void *vert_memory_end 			= obj_allocate_memory_for((void **)&new_object.verts, size_to_allocate);
-	void *vert_index_memory_end 	= obj_allocate_memory_for((void **)&new_object.vert_indexes, size_to_allocate*10);
-	void *norms_memory_end 			= obj_allocate_memory_for((void **)&new_object.norms, size_to_allocate);
-	void *norms_index_memory_end 	= obj_allocate_memory_for((void **)&new_object.norms_indexes, size_to_allocate);
-    
-    
-    
+	// TODO: Change this when implementing dynamic arrays
+	mesh_vertex *mesh_info = vp_allocate_temp(4096 * sizeof(mesh_vertex)).ptr;
+	u32 last_vert = 0;
+	u32 last_norm = 0;
+	
+	u32 *indexes = vp_allocate_temp(4096 * sizeof(u32)).ptr;
+	u32 last_index = 0;
+	
+	u32 *norm_indexes = vp_allocate_temp(4096 * sizeof(u32)).ptr;
+	u32 last_norm_index = 0;
+	
+	v3 *normals = vp_allocate_temp(4096 * sizeof(v3)).ptr;
 	char *at = (char *)obj_file.contents;
-	int64 size = obj_file.size;
-	uint64 last_vert = 0;
-	uint64 last_vert_index = 0;
-	uint64 last_norm = 0;
-	uint64 last_norm_index = 0;
 	while(size > 0)
 	{
 		char *start_at = at;
@@ -875,22 +716,22 @@ vp_load_simple_obj(char *path)
 			if(*at == 'n')
 			{
 				at+=2;
-				new_object.norms[last_norm].x = catof(at);
+				normals[last_norm].x = catof(at);
 				ToAndPastC(at, ' ');
-				new_object.norms[last_norm].y = catof(at);
+				normals[last_norm].y = catof(at);
 				ToAndPastC(at, ' ');
-				new_object.norms[last_norm++].z = catof(at);
-				if((void *)((char *)new_object.norms + last_norm) > norms_memory_end) VP_FATAL("MEMORY OVERFLOW AT LINE: %d", __LINE__);
+				normals[last_norm].z = catof(at);
+				last_norm++;
 			}
 			else if(*at == ' ')
 			{
 				at++;
-				new_object.verts[last_vert].x = catof(at);
+				mesh_info[last_vert].position.x = catof(at);
 				ToAndPastC(at, ' ');
-				new_object.verts[last_vert].y = catof(at);
+				mesh_info[last_vert].position.y = catof(at);
 				ToAndPastC(at, ' ');
-				new_object.verts[last_vert++].z = catof(at);
-				if((void *)((char *)new_object.verts + last_vert) > vert_memory_end) VP_FATAL("MEMORY OVERFLOW AT LINE: %d", __LINE__);
+				mesh_info[last_vert].position.z = catof(at);
+				last_vert++;
 			}
 		}
 		else if(*at == 'f')
@@ -898,19 +739,19 @@ vp_load_simple_obj(char *path)
 			at+=2;
 			while(true)
 			{
-				new_object.vert_indexes[last_vert_index++] = catof(at)-1;
-				if((void *)((char *)new_object.vert_indexes + last_vert_index) > vert_index_memory_end) VP_FATAL("MEMORY OVERFLOW AT LINE: %d", __LINE__);
+				indexes[last_index++] = catof(at)-1;
+				
 				while(*at >= '0' && *at <= '9') at++;
+				
 				if(*at=='/')
 				{
                     if(*at+1 != '/') at++;
 					ToAndPastC(at, '/');
 					while(*at == '/') at++;
-					new_object.norms_indexes[last_norm_index++] = catof(at)-1;
-					if((void *)((char *)new_object.norms_indexes + last_norm_index) > norms_index_memory_end) VP_FATAL("MEMORY OVERFLOW AT LINE: %d", __LINE__);
+					norm_indexes[last_norm_index++] = catof(at)-1;
 				}
 				while(*at >= '0' && *at <= '9') at++;
-				if(*at == '\n' || *at == VP_NEW_LINE) break;
+				if(*at == '\n' || *at == VP_NEW_LINE[0]) break;
 				at++;
 			}
 		}
@@ -918,16 +759,25 @@ vp_load_simple_obj(char *path)
 		ToAndPast(at, "\n");
 		size -= (at - start_at); 
 	}
-	new_object.verts[last_vert].x = OBJ_FIELD_END;
-	new_object.norms[last_norm].x = OBJ_FIELD_END;
-	new_object.vert_indexes[last_vert_index] = INT32_MAX;
-	new_object.norms_indexes[last_norm_index] = INT32_MAX;
-    
-	new_object.last_vert = last_vert;
-	new_object.last_vert_index = last_vert_index;
-    
-	renderer.objects[renderer.last_object] = new_object;
-	return renderer.last_object++;
+	
+	for(i32 i = 0; i < last_norm_index; ++i)
+	{
+		mesh_info[indexes[i]].normal = normals[norm_indexes[i]];
+	}
+	
+	
+	glBindBuffer(GL_ARRAY_BUFFER, renderer.vbo);
+	glBufferSubData(GL_ARRAY_BUFFER, vbo_used_offset, sizeof(mesh_vertex) * last_vert, mesh_info);
+	
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer.ebo);
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, ebo_used_offset, sizeof(u32) * last_index, indexes);
+	
+	vp_mesh_identifier result = {.vbo_offest = vbo_used_offset, .ebo_offset = ebo_used_offset};
+	
+	ebo_used_offset += last_index * sizeof(u32);
+	vbo_used_offset += last_vert  * sizeof(mesh_vertex);
+	
+	return result;
 }
 
 void
@@ -957,26 +807,16 @@ vp_load_texture(char *path)
 void RendererInit()
 {
 	LoadGLExtensions();
+	GenGLBuffs();
 	
-	renderer.frame_verts = (vertex *)platform_allocate_memory_chunk(VERTEX_MEMORY);
+	GLenum usage = GL_STATIC_DRAW;
 	
-	renderer.frame_verts_end = (void *)((char *)renderer.frame_verts + VERTEX_MEMORY);
+	glBindBuffer(GL_ARRAY_BUFFER, renderer.vbo);
+	glBufferData(GL_ARRAY_BUFFER, VERTEX_MEMORY, vp_nullptr, usage);
 	
-	vp_memory text_vert_memory = vp_arena_allocate(MB(1));
-	renderer.text_verts = (vertex *)text_vert_memory.ptr;
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer.ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, INDEX_MEMORY, vp_nullptr, usage);
 	
-	vp_memory indexes_memory = vp_arena_allocate(INDEX_MEMORY);
-	renderer.indexes = (uint32 *)indexes_memory.ptr;
-    
-	vp_memory targets_2d_memory = vp_arena_allocate(KB(100));
-	to_render_2d = targets_2d_memory.ptr;
-    
-	vp_memory render_objects_memory = vp_arena_allocate(MB(1));
-	to_render_objects = render_objects_memory.ptr;
-    
-	obj_manage.memory = vp_arena_allocate(MB(100));
-	obj_manage.end = (void *)((char *)obj_manage.memory.ptr + MB(100));
-    
     
 #if VIPOC_DEBUG	
 	vp_memory vertex_shader_source;
@@ -1072,7 +912,6 @@ void RendererInit()
 	
 	// First free call is redundant but it feels more correct, it will also work if I ever change the free ( probably won't but still )
     
-	GenGLBuffs();
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
@@ -1104,4 +943,14 @@ GenGLBuffs()
 	glGenVertexArrays(1, &(renderer.vao));
 	glGenBuffers(1, &(renderer.vbo));
 	glGenBuffers(1, &(renderer.ebo));
+	glGenBuffers(1, &(renderer.text_vbo));
+	
+	
+	glBindBuffer(GL_ARRAY_BUFFER, renderer.vbo);
+	glBufferData(GL_ARRAY_BUFFER, VERTEX_MEMORY, vp_nullptr, GL_STREAM_DRAW );
+	CHECK_GL_ERROR();
+	
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer.ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, INDEX_MEMORY, vp_nullptr, GL_STREAM_DRAW );
+	CHECK_GL_ERROR();
 }

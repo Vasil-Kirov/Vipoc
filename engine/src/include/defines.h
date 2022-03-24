@@ -13,29 +13,29 @@ extern "C"{
 #define VP_USE_DEFAULT 2147483648U
 	
 #ifdef VIPOC_DEBUG
-	#define assert(expression) if(!(expression)) {*(volatile int *)0 = 0;}
+#define assert(expression) if(!(expression)) {*(volatile int *)0 = 0;}
 #else
-	#define assert(expression)
+#define assert(expression)
 #endif
 	
 #ifdef VIPOC_WIN32
-	#define VP_NEW_LINE '\r'
-	#define VP_NEW_LINE_WIDTH 2
-	#ifdef VIPOC_EXPORT
-		#define VP_API __declspec(dllexport)
-	#else
-		#define VP_API __declspec(dllimport)
-	#endif
+#define VP_NEW_LINE "\r\n"
+#define VP_NEW_LINE_WIDTH 2
+#ifdef VIPOC_EXPORT
+#define VP_API __declspec(dllexport)
+#else
+#define VP_API __declspec(dllimport)
+#endif
 #endif
 	
 #ifdef VIPOC_LINUX
-	#define VP_NEW_LINE '\n'
-	#define VP_NEW_LINE_WIDTH 1
-	#ifdef VIPOC_EXPORT
-		#define VP_API __attribute__((visibility("default")))
-	#else
-		#define VP_API
-	#endif
+#define VP_NEW_LINE "\n"
+#define VP_NEW_LINE_WIDTH 1
+#ifdef VIPOC_EXPORT
+#define VP_API __attribute__((visibility("default")))
+#else
+#define VP_API
+#endif
 #endif
 	
 	
@@ -62,8 +62,8 @@ extern "C"{
 	typedef int16_t int16;
 	typedef int32_t int32;
 	typedef int64_t int64;
-
-
+	
+	
     typedef uint8_t u8;
     typedef uint16_t u16;
     typedef uint32_t u32;
@@ -73,14 +73,15 @@ extern "C"{
     typedef int16_t i16;
     typedef int32_t i32;
     typedef int64_t i64;
-
+	
 	typedef bool32 b32;
-
+	
 	typedef float f32;
 	typedef double f64;
 	
 	
 	
+#define v_swapf(a, b) {f32 tmp_var_name_dont_use_this_pls = b; b = a; a = tmp_var_name_dont_use_this_pls;}
 #define _KB(b) (b << 10)
 #define _MB(b) (b << 20)
 #define _GB(b) (b << 30)
@@ -119,8 +120,8 @@ extern "C"{
 #endif
 	
 	// --- VIPOC COMMON HEADERS SECTION ---
-
-	#include <debug.h>
+	
+#include <debug.h>
 	
 #ifdef __cplusplus
 }

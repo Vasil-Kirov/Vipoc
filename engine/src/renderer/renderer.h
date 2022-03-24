@@ -102,14 +102,23 @@ extern "C"{
 		VP_RIGHT=3
 	} vp_direction;
 	
-    
+	typedef struct mesh_identifier
+	{
+		i32 vbo_offest;
+		i32 ebo_offset;
+	} vp_mesh_identifier;
+	
+	
+    VP_API void
+		vp_clear_screen();
+	
+	VP_API void
+		vp_cast_ray(i32 x, i32 y);
+	
     VP_API void
         vp_toggle_polygons();
-    
-    VP_API bool32
-        vp_object_pushback(int32 index, v4 color, v3 position, bool32 cachable, bool32 affected_by_light);
-    
-    VP_API int32
+	
+    VP_API vp_mesh_identifier
         vp_load_simple_obj(char *path);
     
     VP_API float
@@ -123,12 +132,12 @@ extern "C"{
     
     VP_API void
         vp_parse_font_xml(entire_file file);
-    
+	
     VP_API void
         vp_load_text_atlas(char *path);
     
     VP_API void
-        vp_draw_text(char *text, float x, float y, v4 color, float scaler, int layer_id);
+        vp_draw_text(char *text, float x, float y, u32 in_color, float scaler, int layer_id);
     
     VP_API void
         vp_load_texture(char *path);
@@ -161,19 +170,30 @@ extern "C"{
     VP_API void
         vp_lock_camera(float yaw, float pitch, v3 xyz);
     
-    
+    void
+		calculate_and_set_uniforms_for_3d_drawing();
+	
+	void
+		set_uniforms_for_ui();
+	
+	void
+		make_draw_call(u32 offset, u32 num_of_elements);
+	
     void
         vp_update_mouse_pos(double xpos, double ypos);
     
     void
         renderer_buffer_reset();
     
-    void
+	void
+		update_cache();
+	
+	void
         RendererInit();
     
     void
         GenGLBuffs();
-    
+	
     bool32
         render_update();
     

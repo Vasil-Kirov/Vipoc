@@ -31,6 +31,10 @@ typedef struct m2
 	f32 x2;
 	f32 y2;
 } m2;
+typedef struct m3
+{
+	f32 m[6];
+} m3;
 typedef struct m4
 {
 	f32 m[4][4];
@@ -44,6 +48,12 @@ typedef struct vertex
 	v3 world_pos;
 	float is_affected_by_light;
 } vertex;
+typedef struct mesh_vertex
+{
+	v3 position;
+	v2 texture;
+	v3 normal;
+} mesh_vertex;
 #pragma pack(pop)
 
 typedef struct quaternion
@@ -68,7 +78,7 @@ typedef struct camera
 typedef struct vp_light
 {
 	v3 position;
-
+	
     v3 ambient;
     v3 diffuse;
     v3 specular;
@@ -122,8 +132,8 @@ y_rotation(f32 Angle)
 inline m4
 z_rotation(f32 Angle)
 {
-	f32 c = cos(Angle);
-	f32 s = sin(Angle);
+	f32 c = cosf(Angle);
+	f32 s = sinf(Angle);
 	m4 R =
 	{
 		{{c,-s, 0, 0},
@@ -154,7 +164,7 @@ projection(f32 WidthOverHeight, f32 FOV)
 	f32 Near = 1.0f;
 	f32 Far = 100.0f;
 	
-	f32 f = 1.0f/(f32)tan(DegToRad(FOV / 2.0f));
+	f32 f = 1.0f/tanf(DegToRad(FOV / 2.0f));
 	f32 fn = 1.0f / (Near - Far);
 	
 	
@@ -209,6 +219,7 @@ mat4_multiply_multiple(int number, m4 A, m4 B, ...)
 	return Result;
 }
 
+// NOTE(Vasko): I wrote this comment bellow a couple of months ago and I don't know what it means 
 /* REQUIRES TRANSPOSED MATRIX!!! */
 inline v3
 mat4_v3_multiply(m4 A, v3 B)
@@ -222,6 +233,20 @@ mat4_v3_multiply(m4 A, v3 B)
 	
 	return Ret;
 }
+
+inline v4
+mat4_v4_multiply(m4 A, v4 B)
+{
+	v4 Ret;
+	
+	Ret.x = B.x * A.m[0][0] + B.y * A.m[1][0] + B.z * A.m[2][0] + B.w * A.m[3][0];
+	Ret.y = B.x * A.m[0][1] + B.y * A.m[1][1] + B.z * A.m[2][1] + B.w * A.m[3][1];
+	Ret.z = B.x * A.m[0][2] + B.y * A.m[1][2] + B.z * A.m[2][2] + B.w * A.m[3][2];
+	Ret.w = B.x * A.m[0][3] + B.y * A.m[1][3] + B.z * A.m[2][3] + B.w * A.m[3][3];
+	
+	return Ret;
+}
+
 
 inline m4
 create_mat4(
@@ -265,6 +290,23 @@ double_normalize_between(f64 x, f64 minx, f64 maxx, f64 a, f64 b)
 	return Result;
 }
 
+inline float
+get_distance_3d(v3 pa, v3 pb)
+{
+	f32 maxx, minx;
+	if(pa.x > pb.x) { maxx = pa.x; minx = pb.x; }
+	else { maxx = pb.x; minx = pa.x; }
+	
+	f32 maxy, miny;
+	if(pa.y > pb.y) { maxy = pa.y; miny = pb.y; }
+	else { maxy = pb.y; miny = pa.y; }
+	
+	f32 a = maxx - minx;
+	f32 b = maxy - miny;
+	f32 c = sqrtf(a * a + b * b);
+	
+	return c;
+}
 
 inline bool32
 v3_check_equality(v3 A, v3 B)
@@ -333,6 +375,16 @@ v3_scale(v3 A, f32 B)
 	return R;
 }
 
+inline v3
+v3_f32_add(v3 A, f32 B)
+{
+	v3 R = {};
+	R.x = A.x + B;
+	R.y = A.y + B;
+	R.z = A.z + B;
+	return R;
+}
+
 inline v3 
 v3_negate(v3 A)
 {
@@ -357,19 +409,19 @@ point_at(v3 pos, v3 target, v3 up)
 {
 	v3 new_forward = v3_sub(target, pos);
 	new_forward = v3_normalize(new_forward);
-
+	
 	v3 a = v3_scale(new_forward, v3_dot(up, new_forward));
 	v3 new_up = v3_sub(up, a);
 	new_up = v3_normalize(new_up);
-
+	
 	v3 new_right = v3_cross(new_up, new_forward);
-
+	
 	m4 matrix = create_mat4(
-		new_right.x, 	new_right.y, 	new_right.z, 	0.0f,
-		new_up.x,		new_up.y,		new_up.z,		0.0f,
-		new_forward.x,	new_forward.y,	new_forward.z,	0.0f,
-		pos.x,			pos.y,			pos.z,			0.0f
-	);
+							new_right.x, 	new_right.y, 	new_right.z, 	0.0f,
+							new_up.x,		new_up.y,		new_up.z,		0.0f,
+							new_forward.x,	new_forward.y,	new_forward.z,	0.0f,
+							pos.x,			pos.y,			pos.z,			0.0f
+							);
 	return matrix;
 }
 
@@ -378,12 +430,12 @@ inline m4
 translate(v3 position)
 {
 	return 	create_mat4(
-			1.0f, 0.0f, 0.0f, position.x,
-			0.0f, 1.0f, 0.0f, position.y,
-			0.0f, 0.0f, 1.0f, position.z,
-			0.0f, 0.0f, 0.0f, 1.0f
-			);
-
+						1.0f, 0.0f, 0.0f, position.x,
+						0.0f, 1.0f, 0.0f, position.y,
+						0.0f, 0.0f, 1.0f, position.z,
+						0.0f, 0.0f, 0.0f, 1.0f
+						);
+	
 }
 
 /* I have no idea what this does so it' just copied */
@@ -401,7 +453,6 @@ quick_inverse(m4 m)
 	return matrix;
 }
 
-
 /* Calculates the view matrix and gives it back in column-major order */
 inline m4
 calculate_view_matrix(camera *cm)
@@ -417,4 +468,142 @@ calculate_view_matrix(camera *cm)
 	
 	m4 camera = point_at(cm->position, target, up);
 	return transpose(quick_inverse(camera));
+}
+
+inline b32
+inverse_matrix(m4 input, m4 *output)
+{
+	double det, inv[16];
+    float *m = &(input.m[0][0]);
+	
+	inv[0] = m[5]  * m[10] * m[15] - 
+		m[5]  * m[11] * m[14] - 
+		m[9]  * m[6]  * m[15] + 
+		m[9]  * m[7]  * m[14] +
+		m[13] * m[6]  * m[11] - 
+		m[13] * m[7]  * m[10];
+	
+    inv[4] = -m[4]  * m[10] * m[15] + 
+		m[4]  * m[11] * m[14] + 
+		m[8]  * m[6]  * m[15] - 
+		m[8]  * m[7]  * m[14] - 
+		m[12] * m[6]  * m[11] + 
+		m[12] * m[7]  * m[10];
+	
+    inv[8] = m[4]  * m[9] * m[15] - 
+		m[4]  * m[11] * m[13] - 
+		m[8]  * m[5] * m[15] + 
+		m[8]  * m[7] * m[13] + 
+		m[12] * m[5] * m[11] - 
+		m[12] * m[7] * m[9];
+	
+    inv[12] = -m[4]  * m[9] * m[14] + 
+		m[4]  * m[10] * m[13] +
+		m[8]  * m[5] * m[14] - 
+		m[8]  * m[6] * m[13] - 
+		m[12] * m[5] * m[10] + 
+		m[12] * m[6] * m[9];
+	
+    inv[1] = -m[1]  * m[10] * m[15] + 
+		m[1]  * m[11] * m[14] + 
+		m[9]  * m[2] * m[15] - 
+		m[9]  * m[3] * m[14] - 
+		m[13] * m[2] * m[11] + 
+		m[13] * m[3] * m[10];
+	
+    inv[5] = m[0]  * m[10] * m[15] - 
+		m[0]  * m[11] * m[14] - 
+		m[8]  * m[2] * m[15] + 
+		m[8]  * m[3] * m[14] + 
+		m[12] * m[2] * m[11] - 
+		m[12] * m[3] * m[10];
+	
+    inv[9] = -m[0]  * m[9] * m[15] + 
+		m[0]  * m[11] * m[13] + 
+		m[8]  * m[1] * m[15] - 
+		m[8]  * m[3] * m[13] - 
+		m[12] * m[1] * m[11] + 
+		m[12] * m[3] * m[9];
+	
+    inv[13] = m[0]  * m[9] * m[14] - 
+		m[0]  * m[10] * m[13] - 
+		m[8]  * m[1] * m[14] + 
+		m[8]  * m[2] * m[13] + 
+		m[12] * m[1] * m[10] - 
+		m[12] * m[2] * m[9];
+	
+    inv[2] = m[1]  * m[6] * m[15] - 
+		m[1]  * m[7] * m[14] - 
+		m[5]  * m[2] * m[15] + 
+		m[5]  * m[3] * m[14] + 
+		m[13] * m[2] * m[7] - 
+		m[13] * m[3] * m[6];
+	
+    inv[6] = -m[0]  * m[6] * m[15] + 
+		m[0]  * m[7] * m[14] + 
+		m[4]  * m[2] * m[15] - 
+		m[4]  * m[3] * m[14] - 
+		m[12] * m[2] * m[7] + 
+		m[12] * m[3] * m[6];
+	
+    inv[10] = m[0]  * m[5] * m[15] - 
+		m[0]  * m[7] * m[13] - 
+		m[4]  * m[1] * m[15] + 
+		m[4]  * m[3] * m[13] + 
+		m[12] * m[1] * m[7] - 
+		m[12] * m[3] * m[5];
+	
+    inv[14] = -m[0]  * m[5] * m[14] + 
+		m[0]  * m[6] * m[13] + 
+		m[4]  * m[1] * m[14] - 
+		m[4]  * m[2] * m[13] - 
+		m[12] * m[1] * m[6] + 
+		m[12] * m[2] * m[5];
+	
+    inv[3] = -m[1] * m[6] * m[11] + 
+		m[1] * m[7] * m[10] + 
+		m[5] * m[2] * m[11] - 
+		m[5] * m[3] * m[10] - 
+		m[9] * m[2] * m[7] + 
+		m[9] * m[3] * m[6];
+	
+    inv[7] = m[0] * m[6] * m[11] - 
+		m[0] * m[7] * m[10] - 
+		m[4] * m[2] * m[11] + 
+		m[4] * m[3] * m[10] + 
+		m[8] * m[2] * m[7] - 
+		m[8] * m[3] * m[6];
+	
+    inv[11] = -m[0] * m[5] * m[11] + 
+		m[0] * m[7] * m[9] + 
+		m[4] * m[1] * m[11] - 
+		m[4] * m[3] * m[9] - 
+		m[8] * m[1] * m[7] + 
+		m[8] * m[3] * m[5];
+	
+    inv[15] = m[0] * m[5] * m[10] - 
+		m[0] * m[6] * m[9] - 
+		m[4] * m[1] * m[10] + 
+		m[4] * m[2] * m[9] + 
+		m[8] * m[1] * m[6] - 
+		m[8] * m[2] * m[5];
+	
+    det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
+	
+    if (det == 0)
+        return false;
+	
+    det = 1.0 / det;
+	
+	int iterator = 0;
+    for (int x = 0; x < 4; x++)
+	{
+		for(int y = 0; y < 4; y++)
+		{
+			output->m[x][y] = inv[iterator] * det;
+			iterator++;
+		}
+	}
+    return true;
+	
 }

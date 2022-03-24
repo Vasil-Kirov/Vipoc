@@ -85,6 +85,25 @@ typedef struct hot_render_target
     int LayerID;
 } hot_render_target;
 
+typedef enum
+{
+	W_PAWN   = 0x0001,
+	W_ROOK   = 0x0002,
+	W_KNIGHT = 0x0003,
+	W_BISHOP = 0x0004,
+	W_KING   = 0x0005,
+	W_QUEEN  = 0x0006,
+	
+	B_PAWN   = 0xF001,
+	B_ROOK   = 0xF002,
+	B_KNIGHT = 0xF003,
+	B_BISHOP = 0xF004,
+	B_KING   = 0xF005,
+	B_QUEEN  = 0xF006,
+	
+	NONE
+} pieces;
+
 #define GAME_UPDATE_AND_RENDER(name) int name(atlas_member *Members, vp_game Game, float PlayerX, float PlayerY, rectangle AtlasSize, vp_2d_render_target *Targets, int XOffset, int YOffset)
 typedef GAME_UPDATE_AND_RENDER(game_update_and_render);
 GAME_UPDATE_AND_RENDER(GameUpdateAndRenderStub)
@@ -108,6 +127,9 @@ OutputPathFromSource(char *EmptyString, char *SourcePath, const char *ToAdd)
 	vstd_strcat(EmptyString, ToAdd);
 	return EmptyString;
 }
+
+void
+SetConfigRes(int Width, int Height);
 
 rectangle
 GetAtlasRect(entire_file File)
@@ -139,7 +161,7 @@ ToNextLine(unsigned char *At)
 {
 	while(*At!='\n') At++;
 	At++;
-
+	
 	return At;
 }
 

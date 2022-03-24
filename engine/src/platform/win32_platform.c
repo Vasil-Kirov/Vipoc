@@ -43,8 +43,8 @@ wglChoosePixelFormatARB_type *wglChoosePixelFormatARB;
 #define WGL_TYPE_RGBA_ARB                         0x202B
 
 
-typedef void (*vp_on_button_down)(vp_keys key, bool32 is_down);
-
+typedef void (*vp_on_keyboard_key)(vp_keys key, bool32 is_down);
+typedef void (*vp_on_mouse_button)(vp_buttons button, bool32 is_down, i32 x, i32 y);
 
 typedef struct win32_state
 {
@@ -65,7 +65,8 @@ internal win32_state *Win32State;
 internal vp_memory raw_input_memory;
 internal uint32 ms_at_start;
 internal cursor mouse; 
-internal vp_on_button_down button_callback;
+internal vp_on_keyboard_key key_callback;
+internal vp_on_mouse_button button_callback;
 
 LRESULT CALLBACK
 WindowProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
@@ -80,7 +81,8 @@ platform_init(vp_config game, platform_state *pstate)
 	int y = game.y; 
 	int w = game.w; 
 	int h = game.h;
-	button_callback = game.vp_on_key_down;
+	key_callback = game.vp_on_keyboard_key;
+	button_callback = game.vp_on_mouse_button;
 	pstate->state = platform_allocate_memory_chunk(sizeof(win32_state));
 	Win32State = (win32_state *)pstate->state; 
 	Win32State->w = game.w;
@@ -304,6 +306,23 @@ void platform_exit(bool32 is_error)
 	ExitProcess(is_error);
 }
 
+b32
+platform_key_to_char(vp_keys key, char *out)
+{
+	WORD output;
+	b32 *input_array = get_input_array();
+	BYTE key_states[256];
+	for(i32 index = 0; index < 256; ++index) { if(input_array[index]) key_states[index] = 0x80; }
+	
+	b32 Result = (ToAscii(key, 0, key_states, &output, 0) == 1);
+	if(Result)
+	{
+		out[0] = ((char *)&output)[0];
+	}
+	return Result;
+	
+}
+
 bool32
 platform_write_file(void *data, int bytes_to_write, const char *path)
 {
@@ -347,53 +366,68 @@ HandleRawInput(RAWINPUT *raw_input)
             bool32 is_down = ((flags & RI_KEY_BREAK) == 0);
             
             input_keyboard_key(raw_input->data.keyboard.VKey, is_down);
-            if(button_callback != vp_nullptr) button_callback(raw_input->data.keyboard.VKey, is_down);
+            if(key_callback != vp_nullptr) key_callback(raw_input->data.keyboard.VKey, is_down);
         } break;
         case RIM_TYPEMOUSE:
         {
+			POINT Pos;
+			GetCursorPos(&Pos);
+			int x = Pos.x;
+			int y = Pos.y;
+			
             unsigned short flag = raw_input->data.mouse.usButtonFlags;
             switch(flag)
             {
                 case RI_MOUSE_LEFT_BUTTON_DOWN:
                 {
                     input_mouse_button(VP_MOUSE_BUTTON_LEFT, true);
+					if(button_callback) button_callback(VP_MOUSE_BUTTON_LEFT, true, x, y);
                 } break;
                 case RI_MOUSE_RIGHT_BUTTON_DOWN:
                 {
                     input_mouse_button(VP_MOUSE_BUTTON_RIGHT, true);
-                } break;
+					if(button_callback) button_callback(VP_MOUSE_BUTTON_RIGHT, true, x, y);
+				} break;
                 
                 case RI_MOUSE_MIDDLE_BUTTON_DOWN:
                 {
                     input_mouse_button(VP_MOUSE_BUTTON_MIDDLE, true);
+					if(button_callback) button_callback(VP_MOUSE_BUTTON_MIDDLE, true, x, y);
                 } break;
                 case RI_MOUSE_BUTTON_4_DOWN:
                 {
                     input_mouse_button(VP_MOUSE_BUTTON_XBUTTON1, true);
+					if(button_callback) button_callback(VP_MOUSE_BUTTON_MIDDLE, true, x, y);
                 } break;
                 case RI_MOUSE_BUTTON_5_DOWN:
                 {
                     input_mouse_button(VP_MOUSE_BUTTON_XBUTTON2, true);
+					if(button_callback) button_callback(VP_MOUSE_BUTTON_MIDDLE, true, x, y);
                 } break;
                 case RI_MOUSE_LEFT_BUTTON_UP:
                 {
                     input_mouse_button(VP_MOUSE_BUTTON_LEFT, false);
+					if(button_callback) button_callback(VP_MOUSE_BUTTON_MIDDLE, false, x, y);
                 } break;
                 case RI_MOUSE_RIGHT_BUTTON_UP:
                 {
                     input_mouse_button(VP_MOUSE_BUTTON_RIGHT, false);
+					if(button_callback) button_callback(VP_MOUSE_BUTTON_MIDDLE, false, x, y);
                 } break;
                 case RI_MOUSE_MIDDLE_BUTTON_UP:
                 {
                     input_mouse_button(VP_MOUSE_BUTTON_MIDDLE, false);
+					if(button_callback) button_callback(VP_MOUSE_BUTTON_MIDDLE, false, x, y);
                 } break;
                 case RI_MOUSE_BUTTON_4_UP:
                 {
                     input_mouse_button(VP_MOUSE_BUTTON_XBUTTON1, false);
-                } break;
+					if(button_callback) button_callback(VP_MOUSE_BUTTON_XBUTTON1, false, x, y);
+				} break;
                 case RI_MOUSE_BUTTON_5_UP:
                 {
                     input_mouse_button(VP_MOUSE_BUTTON_XBUTTON2, false);
+					if(button_callback) button_callback(VP_MOUSE_BUTTON_XBUTTON2, false, x, y);
                 } break;
                 default:
                 {
@@ -408,7 +442,6 @@ HandleRawInput(RAWINPUT *raw_input)
         
     }
 };
-
 
 /* Microsoft are the devil incarnate */ 
 void

@@ -4,7 +4,8 @@ extern "C"{
     
 #pragma once
 #include "include/defines.h"
-    
+#include <input.h>
+	
 #if defined VIPOC_LINUX
 #define TRUE 	1
 #define FALSE 	0
@@ -48,6 +49,8 @@ extern "C"{
     void
         platform_output_string(char *str, uint8 color);
     
+	VP_API b32
+		platform_key_to_char(vp_keys key, char *out);
     
     void
         platform_allocate_console();

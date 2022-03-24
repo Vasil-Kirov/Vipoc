@@ -12,6 +12,7 @@ typedef struct vp_mouse
 internal bool32 input_list[256];
 internal vp_mouse mouse;
 
+b32 *get_input_array() { return input_list; }
 
 bool32 vp_is_keydown(keys key)
 {

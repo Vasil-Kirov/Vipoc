@@ -3,9 +3,7 @@ out vec4 FragColor;
 
 in vec2     TexCoord;
 in vec3     NormalOut;
-in vec4     ColorOut;
 in vec3	 FragPos;
-in float	IsAffectedByLight;
 
 
 struct Light
@@ -17,7 +15,8 @@ struct Light
 	vec3 specular;
 };
 
-struct Material {
+struct Material
+{
 	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
@@ -26,24 +25,28 @@ struct Material {
 
 
 uniform sampler2D texture1;
+
 uniform vec3 view_pos;
 uniform Light light;
 uniform Material material;
 
+uniform bool Is3D;
+uniform vec4 Color;
 
 
 void main()
 {
 	vec3 light_result = vec3(1.0);
 	
-	if(IsAffectedByLight == 0.0)
+	if(!Is3D)
 	{
 		light_result = vec3(1.0, 1.0, 1.0);
 	}
 	else
 	{
+		// ambient
 		vec3 ambient = light.ambient * material.ambient;
-
+		
 		// diffuse
 		vec3 norm = normalize(NormalOut);
 		vec3 light_dir = normalize(light.position - FragPos);
@@ -62,12 +65,13 @@ void main()
 	
 	if(TexCoord.x < 0)
 	{		
-		FragColor = ColorOut * vec4(light_result, 1.0f);
-//		FragColor = vec4(abs(NormalOut), 1.0f);
+		FragColor = Color * vec4(light_result, 1.0f);
 	}
 	else
 	{
-		FragColor = (texture(texture1, TexCoord) * ColorOut) * vec4(light_result, 1.0f);
-//		FragColor = vec4(abs(NormalOut), 1.0f);
+		FragColor = (texture(texture1, TexCoord) * Color) * vec4(light_result, 1.0f);
 	}
+	
+	// FragColor = vec4(abs(NormalOut), 1.0f);
+	
 }

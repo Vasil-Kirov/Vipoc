@@ -6,6 +6,7 @@
 #include "renderer/renderer.h"
 #include "log.h"
 #include "renderer/particle.h"
+#include "entity.h"
 
 internal bool32 is_particle_update_off;
 
@@ -47,7 +48,7 @@ void application_create(vp_game *game)
 	}
 	RendererInit();
 	particles_init();
-
+	
 	app.game->vp_on_resize(app.game, app.width, app.height);
 }
 
@@ -66,7 +67,7 @@ vp_is_particle_update_off()
 bool32
 vp_handle_messages()
 {
-
+	
 	if(!platform_handle_message()) return FALSE;
 	return TRUE;
 }
@@ -74,27 +75,33 @@ vp_handle_messages()
 void
 vp_present()
 {
+#if 0
 	vp_start_debug_timer("Particles", STRHASH("Particles"));
 	platform_thread particle_update = {};
 	
 	if(!is_particle_update_off)
-		particle_update 				= platform_create_thread(update_particles, vp_nullptr);
+		particle_update   				= platform_create_thread(update_particles, vp_nullptr);
 	platform_thread particle_draw 		= platform_create_thread(draw_particles, vp_nullptr);
-	platform_thread particle_rewrite 	= platform_create_thread(rewrite_particle_buffer, vp_nullptr);
+	platform_thread particle_rewrite  	= platform_create_thread(rewrite_particle_buffer, vp_nullptr);
 	
 	vp_stop_debug_timer(STRHASH("Particles"));
+	
 	platform_wait_for_thread(particle_draw);
+	platform_wait_for_thread(particle_update);
+	platform_wait_for_thread(particle_rewrite);
+	
+#endif
+	update_entities();
 	vp_draw_diagrams();
 	
 	if(!render_update())
 	{
 		VP_ERROR("A failure has occurred with internal rendering!");
 	}
-	platform_wait_for_thread(particle_update);
-	platform_wait_for_thread(particle_rewrite);
-
-//	renderer_buffer_reset();
-
+	
+	
+	//	renderer_buffer_reset();
+	
 	vp_free_temp_memory();
 	vp_reset_debug_timers();
 }
@@ -104,9 +111,9 @@ vp_random_seed()
 {
 	uint64 seed = 0;
 	__asm__(
-	"RDRAND %0;"
-	:"=r"(seed)
-	);
+			"RDRAND %0;"
+			:"=r"(seed)
+			);
 	
 	return seed;
 }
