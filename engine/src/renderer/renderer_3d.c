@@ -48,8 +48,6 @@ internal camera cm;
 internal ascii_char ascii_char_map[256];
 internal delta_time delta;
 internal vp_light light;
-internal ui_targets *to_render_2d;
-internal int last_2d_target;
 internal i32 ebo_used_offset = 0;
 internal i32 vbo_used_offset = 0;
 
@@ -57,8 +55,10 @@ internal i32 vbo_used_offset = 0;
 
 
 #define CHECK_GL_ERROR() {int error = glGetError(); if(error != 0) {VP_ERROR("OPENGL ERROR at line %d: %d", __LINE__, error);}}
-#define VERTEX_MEMORY MB(100)
-#define INDEX_MEMORY MB(10)
+#define VERTEX_MEMORY MB(108)
+#define INDEX_MEMORY MB(9)
+#define QUICK_DRAW_VBO_OFFSET MB(72)    // NOTE(Vasko): Multiple of 36
+#define QUICK_DRAW_EBO_OFFSET 7200000   // NOTE(Vasko): Multiple of 36
 
 
 void
@@ -67,24 +67,25 @@ pushed_objects_to_verts();
 void
 draw_ui_targets();
 
-#define SECONDS_SINCE_START() (float)platform_get_ms_since_start() / 1000.0f
+#define SECONDS_SINCE_START() ((float)platform_get_ms_since_start() / 1000.0f)
 // JUMP HERE FOR MAIN CODE
 bool32
 render_update()
 {
+	START_DTIMER();
 	float current_frame = SECONDS_SINCE_START();
 	delta.value = current_frame - delta.last_frame;
 	delta.last_frame = current_frame;
     
-	if(ebo_used_offset > INDEX_MEMORY * .75f)
-		VP_FATAL("INDEX MEMORY OVERFLOW: %d bytes used", ebo_used_offset);
-	
-	if(vbo_used_offset > VERTEX_MEMORY * .75f)
+	if(vbo_used_offset > QUICK_DRAW_VBO_OFFSET)
 		VP_FATAL("VERTEX MEMORY OVERFLOW: %d bytes used", vbo_used_offset);
+	
+	if(ebo_used_offset > QUICK_DRAW_EBO_OFFSET)
+		VP_FATAL("INDEX MEMORY OVERFLOW: %d bytes used", ebo_used_offset);
 	
 	platform_swap_buffers();
 	
-	
+	STOP_DTIMER();
 	return true;	
 }
 
@@ -94,7 +95,6 @@ vp_clear_screen()
 	//	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClearColor(0.0f, 0.8f, 0.9f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glFrontFace(GL_CW);
 }
 
 m4
@@ -115,11 +115,13 @@ calculate_3d_uniforms()
 	
 	/* Light calculations */
 	v3 light_color = {1.0f, 1.0f, 1.0f};
-    //	light_color.x = sin(SECONDS_SINCE_START() * 2.0f);
-    //	light_color.y = sin(SECONDS_SINCE_START() * 0.7f);
-    //	light_color.z = sin(SECONDS_SINCE_START() * 1.3f);
+	
+	//light_color.x = sin(SECONDS_SINCE_START() * 2.0f);
+	//light_color.y = sin(SECONDS_SINCE_START() * 0.7f);
+	//light_color.z = sin(SECONDS_SINCE_START() * 1.3f);
+	
 	v3 diffuseColor = v3_v3_scale(light_color, (v3){0.5f, 0.5f, 0.5f}); // decrease the influence
-	v3 ambientColor = v3_v3_scale(light_color, (v3){0.2f, 0.2f, 0.2f}); // low influence
+	v3 ambientColor = v3_v3_scale(light_color, (v3){0.35f, 0.35f, 0.35f});
     
 	set_shader_uniform_vec3("light.position", light.position);
 	set_shader_uniform_vec3("light.ambient", ambientColor);
@@ -158,7 +160,7 @@ set_uniforms_for_ui()
 	m4 I = identity();
 	set_shader_uniform_mat4("MVP", I);
 	
-	GLint uniform_location = glGetUniformLocation(renderer.shader_program, "texture1");
+	GLint uniform_location = glGetUniformLocation(renderer.shader_program, "texture2d");
 	glUniform1i(uniform_location, 1);
 	
 	int is_3d_location = glGetUniformLocation(renderer.shader_program, "Is3D");
@@ -174,21 +176,19 @@ make_draw_call(size_t offset, u32 num_of_elements)
 	glBindBuffer(GL_ARRAY_BUFFER, renderer.vbo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer.ebo);
 	
-	u32 stride = sizeof(f32) * ( 3 + 2 + 3 );
+	u32 stride = sizeof(f32) * ( 3 + 3 + 3 );
 	
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)(0));
 	glEnableVertexAttribArray(0);
 	
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v3)));
 	glEnableVertexAttribArray(1);
 	
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v4)*2));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(v3) + sizeof(v2)));
 	glEnableVertexAttribArray(2);
     
 	
 	glUseProgram(renderer.shader_program);
-	glBindVertexArray(renderer.vao);
-	
 	glDrawElements(GL_TRIANGLES, num_of_elements, GL_UNSIGNED_INT, (void *)(offset));
 	STOP_DTIMER();
 }
@@ -449,59 +449,87 @@ compare_targets(void const* a, void const* b)
 }
 
 void
-sort_2d_target()
+sort_2d_target(vp_2d_render_target *targets, int size)
 {
 	START_DTIMER();
-	qsort(to_render_2d, last_2d_target, sizeof(ui_targets), compare_targets);
+	qsort(targets, size, sizeof(ui_targets), compare_targets);
 	STOP_DTIMER();
 }
 
-void
-draw_ui_targets()
-{
-	sort_2d_target();
-	
-	START_DTIMER();
-	
 
-#if 0	
-	v3 I = {0.0f, 0.0f, 0.0f};
-    float base_z = 0.0f;
-	for(int index = 0; index < last_2d_target; ++index)
+
+vp_mesh_identifier
+render_targets_to_gl_buffers(vp_2d_render_target *targets, int size)
+{
+	START_DTIMER();
+	float base_z = 0.0f;
+	
+	mesh_vertex verts[size*6];
+	memset(verts, 0, size*6*sizeof(mesh_vertex));
+	
+	int last_vert = 0;
+	
+	for(int index = 0; index < size; ++index)
 	{
         base_z += .000001f;
-		vp_2d_render_target location = to_render_2d[index].target;
-		v4 color = to_render_2d[index].color;
+		vp_2d_render_target target = targets[index];
 		
-		float z = base_z - (float)(to_render_2d[index].target.layer_id/100.0f);
+		float z = base_z - (float)(target.layer_id/100.0f);
+		m2 pos = target.world_position;
+		m2 tex = target.texture_position;
 		
-		// Top Left
-		push_text_verts(location, 2, 1, color, I, z);
-		// Top Right
-		push_text_verts(location, 1, 2, color, I, z);
-		// Bottom left
-		push_text_verts(location, 1, 1, color, I, z);
-        
-		// Right triangle
-        
-		// Top Right
-		push_text_verts(location, 2, 2, color, I, z);
-		// Bottom Left
-		push_text_verts(location, 1, 2, color, I, z);
-		// Bottom Right
-		push_text_verts(location, 2, 1, color, I, z);
+		verts[last_vert].position = (v3){pos.x2, pos.y1, z};
+		verts[last_vert].texture  = (v3){tex.x2, tex.y1, z};
+		last_vert++;
+		
+		verts[last_vert].position = (v3){pos.x1, pos.y2, z};
+		verts[last_vert].texture  = (v3){tex.x1, tex.y2, z};
+		last_vert++;
+		
+		verts[last_vert].position = (v3){pos.x1, pos.y1, z};
+		verts[last_vert].texture  = (v3){tex.x1, tex.y1, z};
+		last_vert++;
+		
+		
+		verts[last_vert].position = (v3){pos.x2, pos.y2, z};
+		verts[last_vert].texture  = (v3){tex.x2, tex.y2, z};
+		last_vert++;
+		
+		verts[last_vert].position = (v3){pos.x1, pos.y2, z};
+		verts[last_vert].texture  = (v3){tex.x1, tex.y2, z};
+		last_vert++;
+		
+		verts[last_vert].position = (v3){pos.x2, pos.y1, z};
+		verts[last_vert].texture  = (v3){tex.x2, tex.y1, z};
+		last_vert++;
 	}
-#endif
+	
 
+	
+	u32 indexes[last_vert];
+	for(i32 i = 0; i < last_vert; ++i)
+	{
+		indexes[i] = i + (QUICK_DRAW_VBO_OFFSET / sizeof(mesh_vertex));
+	}
+	
+	
+	glBindBuffer(GL_ARRAY_BUFFER, renderer.vbo);
+	glBufferSubData(GL_ARRAY_BUFFER, QUICK_DRAW_VBO_OFFSET, sizeof(mesh_vertex) * last_vert, verts);
+	assert(glGetError() == 0);
+	
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer.ebo);
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, QUICK_DRAW_EBO_OFFSET, sizeof(u32) * last_vert, indexes);
+	assert(glGetError() == 0);
+	
 	STOP_DTIMER();
+	return (vp_mesh_identifier){.element_count = last_vert, .ebo_offset = QUICK_DRAW_EBO_OFFSET};
 }
 
 /* location in meters 0 - 10 = -1 - 1 */ 
 void
 vp_draw_rectangle(m2 position, v4 color, int layer_id)
 {
-
-#if 0	
+	
 	START_DTIMER();
 	
 	vp_2d_render_target location = {};
@@ -515,20 +543,18 @@ vp_draw_rectangle(m2 position, v4 color, int layer_id)
 	location.world_position.y1 = normalize_between(location.world_position.y1, 0, 5.625f, -1, 1);
 	location.world_position.y2 = normalize_between(location.world_position.y2, 0, 5.625f, -1, 1);
 	
-	to_render_2d[last_2d_target].target = location;
-	to_render_2d[last_2d_target++].color = color;
-	
+	vp_mesh_identifier info = render_targets_to_gl_buffers(&location, 1);
+	set_uniforms_for_ui();
+	set_shader_uniform_vec4("Color", color);
+	make_draw_call(info.ebo_offset, info.element_count);
 	STOP_DTIMER();
-	#endif
 
 }
-
 
 void
 vp_draw_text(char *text, float x, float y, u32 in_color, float scaler, int layer_id)
 {
-	// TODO(Vasko): Rewrite this
-#if 0
+	
 	START_DTIMER();
 	
 	v4 color = {};
@@ -543,7 +569,12 @@ vp_draw_text(char *text, float x, float y, u32 in_color, float scaler, int layer
 	y = normalize_between(y, 0, 5.625f, 0, platform_get_height());
 	int space_from_last_char = 0;
 	int vert_from_last_char = 0;
-	for(int index = 0; text[index] != '\0'; ++index)
+	
+	int size = vstd_strlen(text) + 1;
+	vp_2d_render_target character_verts[size];
+	int last_character = 0;
+	
+	for(int index = 0; index < size; ++index)
 	{
 		int char_width = ascii_char_map[(int)text[index]].rect.x2 - ascii_char_map[(int)text[index]].rect.x1;
 		int char_height = ascii_char_map[(int)text[index]].rect.y2 - ascii_char_map[(int)text[index]].rect.y1;
@@ -592,8 +623,7 @@ vp_draw_text(char *text, float x, float y, u32 in_color, float scaler, int layer
 			target.texture_position.y2 = -1;
 		}
         
-		to_render_2d[last_2d_target].target = target;
-		to_render_2d[last_2d_target++].color = color;
+		character_verts[last_character++] = target;
 		
 		space_from_last_char += ascii_char_map[(int)text[index]].advance_x * scaler;
 		if(text[index] == '\n')
@@ -603,8 +633,12 @@ vp_draw_text(char *text, float x, float y, u32 in_color, float scaler, int layer
 		} 
 	}
 	
+	vp_mesh_identifier info = render_targets_to_gl_buffers(character_verts, last_character);
+	set_uniforms_for_ui();
+	set_shader_uniform_vec4("Color", color);
+	make_draw_call(info.ebo_offset, info.element_count);
+	
 	STOP_DTIMER();
-#endif
 }
 
 // PLACEHOLDER:
@@ -711,26 +745,35 @@ vp_parse_font_fnt(entire_file file)
 
 
 
+#define MAGIC_FLOAT -47213.4576
 vp_mesh_identifier
 vp_load_simple_obj(char *path)
 {
+	u32 first_vert_offset = vbo_used_offset / sizeof(mesh_vertex);
+	
 	entire_file obj_file = {};
 	obj_file.contents = vp_allocate_temp(platform_get_size_of_file(path)).ptr;
 	if(!platform_read_entire_file(path, &obj_file)) VP_FATAL("MISSING FILE %s", path);
 	int size = obj_file.size;
 	
+#define MAX_VERTS (obj_file.size / sizeof(v3))
+#define MAX_INDEXES MAX_VERTS
+#define MAX_NORM_INDEXES MAX_INDEXES
+#define MAX_NORMS MAX_VERTS
+	
 	// TODO: Change this when implementing dynamic arrays
-	mesh_vertex *mesh_info = vp_allocate_temp(4096 * sizeof(mesh_vertex)).ptr;
+	v3 *mesh_verts = vp_allocate_temp(size).ptr;
+	
 	u32 last_vert = 0;
 	u32 last_norm = 0;
 	
-	u32 *indexes = vp_allocate_temp(4096 * sizeof(u32)).ptr;
+	u32 *indexes = vp_allocate_temp(MAX_INDEXES * sizeof(u32)).ptr;
 	u32 last_index = 0;
 	
-	u32 *norm_indexes = vp_allocate_temp(4096 * sizeof(u32)).ptr;
+	u32 *norm_indexes = vp_allocate_temp(MAX_NORM_INDEXES * sizeof(u32)).ptr;
 	u32 last_norm_index = 0;
 	
-	v3 *normals = vp_allocate_temp(4096 * sizeof(v3)).ptr;
+	v3 *normals = vp_allocate_temp(MAX_NORMS * sizeof(f32)).ptr;
 	char *at = (char *)obj_file.contents;
 	while(size > 0)
 	{
@@ -751,12 +794,12 @@ vp_load_simple_obj(char *path)
 			else if(*at == ' ')
 			{
 				at++;
-				mesh_info[last_vert].position.x = catof(at);
+				mesh_verts[last_vert].x = catof(at);
 				ToAndPastC(at, ' ');
-				mesh_info[last_vert].position.y = catof(at);
+				mesh_verts[last_vert].y = catof(at);
 				ToAndPastC(at, ' ');
-				mesh_info[last_vert].position.z = catof(at);
-				last_vert++;
+				mesh_verts[last_vert].z = catof(at);
+				last_vert++;	
 			}
 		}
 		else if(*at == 'f')
@@ -764,7 +807,7 @@ vp_load_simple_obj(char *path)
 			at+=2;
 			while(true)
 			{
-				indexes[last_index++] = catof(at)-1;
+				indexes[last_index++] = catof(at) - 1;
 				
 				while(*at >= '0' && *at <= '9') at++;
 				
@@ -773,7 +816,7 @@ vp_load_simple_obj(char *path)
                     if(*at+1 != '/') at++;
 					ToAndPastC(at, '/');
 					while(*at == '/') at++;
-					norm_indexes[last_norm_index++] = catof(at)-1;
+					norm_indexes[last_norm_index++] = catof(at) - 1;
 				}
 				while(*at >= '0' && *at <= '9') at++;
 				if(*at == '\n' || *at == VP_NEW_LINE[0]) break;
@@ -785,23 +828,45 @@ vp_load_simple_obj(char *path)
 		size -= (at - start_at); 
 	}
 	
-	for(i32 i = 0; i < last_norm_index; ++i)
+	mesh_vertex *verts = vp_allocate_temp(last_index * sizeof(mesh_vertex)).ptr;
+	memset(verts, 0, last_index * sizeof(mesh_vertex));
+	for(i32 i = 0; i < last_index; i++)
 	{
-		mesh_info[indexes[i]].normal = normals[norm_indexes[i]];
+		v3 normal = normals[norm_indexes[i]];	
+		v3 vert = mesh_verts[indexes[i]];
+		
+		// TODO(Vasko): texture support
+		v3 no_texture = {-1, -1, -1};
+		
+		verts[i].position = vert;
+		verts[i].normal = normal;
+		verts[i].texture = no_texture;
 	}
 	
+	u32 *fin_indexes = vp_allocate_temp(last_index * sizeof(u32)).ptr;
+	memset(fin_indexes, 0, last_index * sizeof(u32));
+	for(i32 i = 0; i < last_index; ++i)
+	{
+		fin_indexes[i] = i + first_vert_offset;
+	}
+	
+	if(last_index > MAX_INDEXES) { VP_ERROR("Indexes in obj file exceed maximum"); assert(false); }
+	if(last_norm_index > MAX_NORM_INDEXES) { VP_ERROR("Norm indexes in obj file exceed maximum"); assert(false); }
+	if(last_norm > MAX_NORMS) { VP_ERROR("Norms in obj file exceed maximum"); assert(false); }
+	if(last_vert > MAX_VERTS) { VP_ERROR("Verts in obj file exceed maximum"); assert(false); }
 	
 	glBindBuffer(GL_ARRAY_BUFFER, renderer.vbo);
-	glBufferSubData(GL_ARRAY_BUFFER, vbo_used_offset, sizeof(mesh_vertex) * last_vert, mesh_info);
+	glBufferSubData(GL_ARRAY_BUFFER, vbo_used_offset, sizeof(mesh_vertex) * last_index, verts);
 	
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer.ebo);
-	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, ebo_used_offset, sizeof(u32) * last_index, indexes);
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, ebo_used_offset, sizeof(u32) * last_index, fin_indexes);
 	
 	vp_mesh_identifier result = {.element_count = last_index, .ebo_offset = ebo_used_offset};
 	
 	ebo_used_offset += last_index * sizeof(u32);
-	vbo_used_offset += last_vert  * sizeof(mesh_vertex);
+	vbo_used_offset += last_index * sizeof(mesh_vertex);
 	
+	vp_free_temp_memory();
 	return result;
 }
 
@@ -944,14 +1009,15 @@ void RendererInit()
 	if(glGetError() != 0) VP_ERROR("GL ERROR: %d\n", glGetError());
 	
 	glEnable(GL_DEPTH_TEST);
+	
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CCW);
-	glCullFace(GL_FRONT);
-    
+	glCullFace(GL_BACK);
+	
 	cm.position = (v3){0.0f, 5.0f, 5.0f};
 	cm.is_locked = false;
     
-	light.position = (v3){15.0f, 7.780f, 7.614f};
+	light.position = (v3){0.0f, 5.000f, 0.0f};
 	
 }
 

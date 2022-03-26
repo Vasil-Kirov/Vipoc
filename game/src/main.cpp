@@ -115,13 +115,20 @@ main()
 	vp_mesh_identifier Pieces[W_QUEEN + 1] = {};
 	{
 		char EmptyString[MAX_PATH] = {};
-		Cube = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder, "assets/cube.obj"));
-		Pieces[W_PAWN] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder, "assets/Pawn.obj"));
-		Pieces[W_ROOK] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder, "assets/Rook.obj"));
-		Pieces[W_KNIGHT] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder, "assets/Knight.obj"));
-		Pieces[W_BISHOP] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder, "assets/Bishop.obj"));
-		Pieces[W_KING] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder, "assets/King.obj"));
-		Pieces[W_QUEEN] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder, "assets/Queen.obj"));
+		Cube = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder,
+													   "assets/cube.obj"));
+		Pieces[W_PAWN] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder,
+																 "assets/Pawn.obj"));
+		Pieces[W_ROOK] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder,
+																 "assets/Rook.obj"));
+		Pieces[W_KNIGHT] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder,
+																   "assets/Knight.obj"));
+		Pieces[W_BISHOP] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder,
+																   "assets/Bishop.obj"));
+		Pieces[W_KING] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder,
+																 "assets/King.obj"));
+		Pieces[W_QUEEN] = vp_load_simple_obj(OutputPathFromSource(EmptyString, PathToFolder,
+																  "assets/Queen.obj"));
 	}
     
 	
@@ -157,25 +164,29 @@ main()
 		memcpy(Board, tmp, sizeof(tmp));	
 	}
 	
+	u32 BrownSquare = 0x8b4a29FF;
+	u32 WhiteSquare = 0xdbbc90FF;
+	
 	int PieceIDs[8][8] = {};
 	memset(PieceIDs, -1, 8*8);
-	
 	for(int Y = 0; Y < TILE_MAP_HEIGHT; ++Y)
 	{
 		for(int X = 0; X < TILE_MAP_WIDTH; ++X)
 		{
+			v3 CubePosition = {(f32)X*2.0f, 0.0f, (f32)Y*2.0f};
+			vp_create_entity(Cube, CubePosition, 0,
+							 (X + Y) % 2 == 0 ? WhiteSquare : BrownSquare, (entity_update)vp_nullptr);
+			
 			u32 Piece = Board[Y][X];
 			if(Piece == NONE) continue;
 			
 			u32 Color = 0xFFFFFFFF;
 			if(Piece & 0xF000) Color = 0x2E2E2EFF;
-			v3 Position = {X * 20.0f, 10.0f, Y * 20.0f};
+			v3 Position = {(f32)X*2.0f, 1.0f, (f32)Y*2.0f};
 			
 			PieceIDs[X][Y] = vp_create_entity(Pieces[Piece & 0x000F], Position, 0, Color, (entity_update)vp_nullptr);
 		}
 	}
-	
-	
 	
 	u32 ParticleStartTimer = platform_get_ms_since_start();
     
@@ -202,10 +213,9 @@ main()
 			vp_draw_text(Console.Command, 0, Console.Position + .25f, 0x000000FF, 1.0f, 3);
 		}
 		
+		//CubePosition(Cube);
 		//DrawChessBoard(Cube);
-		
 		HandleInput();
-        
         
 		/* END OF CODE! ONLY PERFORMANCE CALCULATIONS AFTER THIS LABEL */
 		int64 EndCounter = platform_get_perf_counter();

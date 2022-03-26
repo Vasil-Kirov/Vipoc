@@ -1,3 +1,11 @@
+## idk
+*.vs
+*.o
+*.obj
+*.exe
+*.sln
+*.pdb
+
 ## Text file
 *.txt
 

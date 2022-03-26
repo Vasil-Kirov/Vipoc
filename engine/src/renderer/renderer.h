@@ -93,6 +93,11 @@ extern "C"{
 		float last_frame;
 	} delta_time;
 	
+	typedef struct vp_mesh_identifier
+	{
+		u32 element_count;
+		u32 ebo_offset;
+	} vp_mesh_identifier;
 	
 	typedef enum vp_direction
 	{
@@ -102,42 +107,24 @@ extern "C"{
 		VP_RIGHT=3
 	} vp_direction;
 	
-	typedef struct mesh_identifier
-	{
-		i32 element_count;
-		i32 ebo_offset;
-	} vp_mesh_identifier;
-	
-	
-    VP_API void
-		vp_clear_screen();
-	
-	VP_API void
-		vp_cast_ray(i32 x, i32 y);
-	
+    
     VP_API void
         vp_toggle_polygons();
-	
-    VP_API vp_mesh_identifier
-        vp_load_simple_obj(char *path);
+    
+	VP_API vp_mesh_identifier
+		vp_load_simple_obj(char *path);
     
     VP_API float
         vp_get_dtime();
     
     VP_API void
-        vp_draw_cube(v3 position, v4 color);
-    
-    VP_API void
         vp_parse_font_fnt(entire_file file);
     
-    VP_API void
-        vp_parse_font_xml(entire_file file);
-	
     VP_API void
         vp_load_text_atlas(char *path);
     
     VP_API void
-        vp_draw_text(char *text, float x, float y, u32 in_color, float scaler, int layer_id);
+        vp_draw_text(char *text, float x, float y, u32 color, float scaler, int layer_id);
     
     VP_API void
         vp_load_texture(char *path);
@@ -148,20 +135,10 @@ extern "C"{
     VP_API void
         vp_unlock_camera();
     
-    VP_API void
-        vp_set_directional_light(v3 direction);
-    
-    // Position = world position, Tex_Location = location in atlas
-    // values must be between -1 and 1
-    // function shouldn't be called before vp_load_texture
-    VP_API void
-        vp_render_pushback(vp_2d_render_target target);
     
     VP_API void
         vp_camera_mouse_callback(double xpos, double ypos);
     
-    VP_API void
-        vp_force_2d(bool32 on);
     
     /* location in meters 0 - 10 = -1 - 1 */
     VP_API void
@@ -169,16 +146,16 @@ extern "C"{
 	
     VP_API void
         vp_lock_camera(float yaw, float pitch, v3 xyz);
-    
-    m4
-		calculate_3d_uniforms();
-	
-	void
-		set_uniforms_for_ui();
 	
 	void
 		make_draw_call(size_t offset, u32 num_of_elements);
 	
+	m4
+		calculate_3d_uniforms();
+	
+	v4
+		normalize_v4(v4 target, float minx, float maxx, float from, float to);
+    
     void
         vp_update_mouse_pos(double xpos, double ypos);
     
@@ -186,14 +163,14 @@ extern "C"{
         renderer_buffer_reset();
     
 	void
-		update_cache();
+		vp_clear_screen();
 	
-	void
+    void
         RendererInit();
     
     void
         GenGLBuffs();
-	
+    
     bool32
         render_update();
     
@@ -206,9 +183,6 @@ extern "C"{
     v3
         normalize_v3(v3 target, float minx, float maxx, float from, float to);
     
-	v4
-		normalize_v4(v4 target, float minx, float maxx, float from, float to);
-	
     void
         set_shader_uniform_f(char *str, float to_set);
     
@@ -219,8 +193,8 @@ extern "C"{
 		set_shader_uniform_vec4(char *str, v4 vector);
 	
 	void
-        set_shader_uniform_mat4(char *str, m4 mat);
-    
+		set_shader_uniform_mat4(char *str, m4 mat);
+	
     v3
         gl_to_meters(v3 target);
 	

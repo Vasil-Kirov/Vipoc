@@ -1,7 +1,7 @@
 #version 330 core
 out vec4 FragColor;
 
-in vec2     TexCoord;
+in vec3     TexCoord;
 in vec3     NormalOut;
 in vec3	 FragPos;
 
@@ -24,7 +24,8 @@ struct Material
 }; 
 
 
-uniform sampler2D texture1;
+uniform sampler2D texture2d;
+uniform sampler3D texture3d;
 
 uniform vec3 view_pos;
 uniform Light light;
@@ -38,9 +39,12 @@ void main()
 {
 	vec3 light_result = vec3(1.0);
 	
+	vec4 texture_color; 
+	
 	if(!Is3D)
 	{
 		light_result = vec3(1.0, 1.0, 1.0);
+		texture_color = texture(texture2d, vec2(TexCoord));
 	}
 	else
 	{
@@ -61,17 +65,19 @@ void main()
 		vec3 specular = light.specular * (spec * material.specular);  
 			
 		light_result = ambient + diffuse + specular;
+		texture_color = texture(texture3d, TexCoord);
 	}
 	
 	if(TexCoord.x < 0)
-	{		
+	{
 		FragColor = Color * vec4(light_result, 1.0f);
 	}
 	else
 	{
-		FragColor = (texture(texture1, TexCoord) * Color) * vec4(light_result, 1.0f);
+		FragColor = (texture_color * Color) * vec4(light_result, 1.0f);
 	}
 	
-	// FragColor = vec4(abs(NormalOut), 1.0f);
+	 //FragColor = vec4(light_result, 1);
+	 //FragColor = vec4(abs(NormalOut), 1.0f);
 	
 }

@@ -51,7 +51,7 @@ typedef struct vertex
 typedef struct mesh_vertex
 {
 	v3 position;
-	v2 texture;
+	v3 texture;
 	v3 normal;
 } mesh_vertex;
 #pragma pack(pop)
