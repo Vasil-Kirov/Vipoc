@@ -148,7 +148,7 @@ main()
 	Free(TempStorage);
 	
 	
-	uint64 RandomSeed = vp_random_seed();
+	//uint64 RandomSeed = vp_random_seed();
 	{
 		uint32 tmp[TILE_MAP_HEIGHT][TILE_MAP_WIDTH] =
 		{
@@ -188,7 +188,7 @@ main()
 		}
 	}
 	
-	u32 ParticleStartTimer = platform_get_ms_since_start();
+	//u32 ParticleStartTimer = platform_get_ms_since_start();
     
 	LockCamera();
 	int64 PerfFrequency = platform_get_frequency();
@@ -230,7 +230,7 @@ main()
 		
 		char ToDraw[2048] = {};	
 		vstd_sprintf(ToDraw, "%dms FPS: %d", MSPerFrame, FPS);
-		vp_draw_text(ToDraw, .1f, 5.4, 0xFFFFFFFF, 0.6f, 0);
+		vp_draw_text(ToDraw, .1f, 5.4, 0xFFFFFFFF, 0.6f, 1);
 		vp_present();
 		StartCounter = EndCounter;
 	}

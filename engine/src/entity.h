@@ -30,6 +30,9 @@ vp_create_entity(vp_mesh_identifier mesh_iden, v3 world_position, f32 speed, u32
 VP_API void
 vp_move_entity(i32 index, v3 new_pos);
 
+void
+change_entity_color(int index, u32 new_color);
+
 int
 check_if_ray_collides_with_entity(v3 point, v3 dir);
 

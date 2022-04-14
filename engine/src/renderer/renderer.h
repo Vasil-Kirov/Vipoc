@@ -147,6 +147,9 @@ extern "C"{
     VP_API void
         vp_lock_camera(float yaw, float pitch, v3 xyz);
 	
+	VP_API void
+		vp_cast_ray(i32 x, i32 y);
+	
 	void
 		make_draw_call(size_t offset, u32 num_of_elements);
 	
@@ -170,8 +173,8 @@ extern "C"{
     
     void
         GenGLBuffs();
-    
-    bool32
+	
+    void
         render_update();
     
     float

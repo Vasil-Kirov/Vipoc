@@ -69,10 +69,14 @@ draw_ui_targets();
 
 #define SECONDS_SINCE_START() ((float)platform_get_ms_since_start() / 1000.0f)
 // JUMP HERE FOR MAIN CODE
-bool32
+void
 render_update()
 {
-	START_DTIMER();
+	char CameraPosition[2048] = {};
+	vstd_sprintf(CameraPosition, "X: %f, Y: %f, Z: %f", cm.position.x, cm.position.y, cm.position.z);
+	vp_draw_text(CameraPosition, 4.0f, 3.7f, 0xFFFFFFFF, .6f, 1);
+	
+	
 	float current_frame = SECONDS_SINCE_START();
 	delta.value = current_frame - delta.last_frame;
 	delta.last_frame = current_frame;
@@ -83,10 +87,9 @@ render_update()
 	if(ebo_used_offset > QUICK_DRAW_EBO_OFFSET)
 		VP_FATAL("INDEX MEMORY OVERFLOW: %d bytes used", ebo_used_offset);
 	
-	platform_swap_buffers();
 	
-	STOP_DTIMER();
-	return true;	
+	
+	platform_swap_buffers();
 }
 
 void
@@ -140,6 +143,7 @@ calculate_3d_uniforms()
 	int is_3d_location = glGetUniformLocation(renderer.shader_program, "Is3D");
 	glUniform1i(is_3d_location, 1);
 	
+	glEnable(GL_DEPTH_TEST);
 	
 	STOP_DTIMER();
 	return MVP;
@@ -165,6 +169,8 @@ set_uniforms_for_ui()
 	
 	int is_3d_location = glGetUniformLocation(renderer.shader_program, "Is3D");
 	glUniform1i(is_3d_location, 0);
+	
+	glDisable(GL_DEPTH_TEST);
 }
 
 void
@@ -368,7 +374,7 @@ normalize_v3(v3 target, float minx, float maxx, float from, float to)
 
 v4
 normalize_v4(v4 target, float minx, float maxx, float from, float to)
-{	
+{
 	v4 result = {};
 	result.x = normalize_between(target.x, minx, maxx, from, to);
 	result.y = normalize_between(target.y, minx, maxx, from, to);
@@ -378,37 +384,59 @@ normalize_v4(v4 target, float minx, float maxx, float from, float to)
 }
 
 
-#if 0
 void
 vp_cast_ray(i32 x, i32 y)
 {
+	y = platform_get_height() - y;
 	f32 xf = normalize_coordinate(x, 0, platform_get_width());
 	f32 yf = normalize_coordinate(y, 0, platform_get_height());
-	f32 zf = 0.0f;
-	glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &zf);
+	f32 zf = -1;
+	
+	//glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &zf);
 	CHECK_GL_ERROR();
 	
 	m4 proj = projection((float)platform_get_width() / (float)platform_get_height(), 90.0f);
 	m4 view = calculate_view_matrix(&cm);
 	
-	m4 inv_vp = identity();
-	if(!inverse_matrix(mat4_multiply(proj, view), &inv_vp))
+	m4 inv_proj = good_inverse_m4(proj);
+	m4 inv_view = good_inverse_m4(view);
+	
+	inv_proj = identity();
+	inv_view = identity();
+	
+	if(!inverse_matrix(proj, &inv_proj))
 	{
 		VP_ERROR("Failed to calculate inverse matrix");
 		return;
 	}
-    
-	v4 screen_pos = {-xf, yf, zf, 1.0f};
-    v4 world_pos = mat4_v4_multiply(transpose(inv_vp), screen_pos);
 	
+	if(!inverse_matrix(view, &inv_view))
+	{
+		VP_ERROR("Failed to calculate inverse matrix");
+		return;
+	}
+	
+	m4 identity_proj = mat4_multiply(proj, inv_proj);
+	m4 identity_view = mat4_multiply(view, inv_view);
+	v4 screen_pos = {xf, yf, zf, 1.0f};
+	
+	v4 eye_pos = mat4_v4_multiply(inv_proj, screen_pos);
+	eye_pos = (v4){.x = eye_pos.x, .y = eye_pos.y, .z = zf, .w = 1.0f};
+    
+	v4 world_pos = mat4_v4_multiply(inv_view, eye_pos);
     v3 dir = v3_normalize((v3){world_pos.x, world_pos.y, world_pos.z});
 	
+	VP_WARN("Dir: %f %f %f", dir.x, dir.y, dir.z);
+	
 	v3 start_pos = {cm.position.x, cm.position.y, cm.position.z};
-	int entity = check_if_ray_collides_with_entity(v3_scale(start_pos, 10.0f), dir);
+	int entity = check_if_ray_collides_with_entity(start_pos, dir);
+	if(entity == -1) return;
+	
+	change_entity_color(entity, 0xFF0000FF);
+	
 	
 	VP_INFO("entity id: %d", entity);
 }
-#endif
 
 
 bool32

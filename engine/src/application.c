@@ -93,12 +93,7 @@ vp_present()
 #endif
 	update_entities();
 	vp_draw_diagrams();
-	
-	if(!render_update())
-	{
-		VP_ERROR("A failure has occurred with internal rendering!");
-	}
-	
+	render_update();
 	
 	//	renderer_buffer_reset();
 	

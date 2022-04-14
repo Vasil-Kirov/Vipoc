@@ -10,7 +10,7 @@ int
 vp_create_entity(vp_mesh_identifier mesh_iden, v3 world_position, f32 speed, u32 color, entity_update update_func)
 {
 	v3 h1 = world_position;
-	v3 h2 = v3_f32_add(world_position, 20);
+	v3 h2 = v3_f32_add(world_position, 3);
 	m3 hitbox = { .m = {h1.x, h1.y, h1.z, h2.x, h2.y, h2.z} };
 	
 	vp_entity new_entity = {.mesh_iden = mesh_iden, .position = world_position, .color = color, .update = update_func, .valid = true, .hitbox = hitbox};
@@ -89,49 +89,37 @@ calculate_ray_box_intersection(v3 ray_origin, v3 dir, m3 box)
     return true; 
 }
 
-#if 0
+void
+change_entity_color(int index, u32 new_color)
+{
+	if(index < 0 || index > MAX_ENTITIES || !entities[index].valid)
+	{
+		VP_ERROR("Tried to change the color of invalid entity %d", index);
+		return;
+	}
+	entities[index].color = new_color;
+}
+
 int
 check_if_ray_collides_with_entity(v3 point, v3 dir)
 {
 	size_t entities_size = sizeof(vp_entity) * MAX_ENTITIES;
 	sorting_point = point;
 	
-	vp_entity *sorted_static_entities = vp_allocate_temp(entities_size).ptr;
-	memcpy(sorted_static_entities, static_entities, entities_size);
-	qsort(sorted_static_entities, MAX_ENTITIES, sizeof(vp_entity), sort_z);
-	
-	vp_entity *sorted_dynamic_entities = vp_allocate_temp(entities_size).ptr;
-	memcpy(sorted_dynamic_entities, dynamic_entities, entities_size);
-	qsort(sorted_dynamic_entities, MAX_ENTITIES, sizeof(vp_entity), sort_z);
+	vp_entity *sorted_entities = vp_allocate_temp(entities_size).ptr;
+	memcpy(sorted_entities, entities, entities_size);
+	//qsort(sorted_entities, MAX_ENTITIES, sizeof(vp_entity), sort_z);
 	
 	for(i32 index = 0; index < MAX_ENTITIES; ++index)
 	{
-		if(!sorted_static_entities[index].valid) continue;
-		if(calculate_ray_box_intersection(point, dir, sorted_static_entities[index].hitbox))
+		if(!sorted_entities[index].valid) continue;
+		if(calculate_ray_box_intersection(point, dir, sorted_entities[index].hitbox))
 		{
-			static_entities[sorted_static_entities[index].id].color = 0x800080;
-			for(i32 index = 0; index < MAX_ENTITIES; ++index)
-			{
-				if(!static_entities[index].valid) continue;
-				
-				vp_entity entity = static_entities[index];
-				vp_object_pushback(entity.model_index, entity.color, entity.position, true, true);
-			}
-			return sorted_static_entities[index].id;
-		}
-	}
-	
-	for(i32 index = 0; index < MAX_ENTITIES; ++index)
-	{
-		if(!sorted_dynamic_entities[index].valid) continue;
-		if(calculate_ray_box_intersection(point, dir, sorted_dynamic_entities[index].hitbox))
-		{
-			return sorted_dynamic_entities[index].id;
+			return sorted_entities[index].id;
 		}
 	}
 	return -1;
 }
-#endif
 
 void
 vp_move_entity(i32 index, v3 dir)

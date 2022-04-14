@@ -1,6 +1,6 @@
  game
 
- Timestamp is 623f615a (Sat Mar 26 20:54:18 2022)
+ Timestamp is 624a0077 (Sun Apr  3 23:15:51 2022)
 
  Preferred load address is 0000000140000000
 
@@ -40,75 +40,75 @@
  0003:00000f40 00000230H .data$rs                DATA
  0003:00001170 00002691H .bss                    DATA
  0004:00000000 00005034H .pdata                  DATA
- 0005:00000000 00000528H .idata$5                DATA
- 0005:00000528 00000028H .idata$2                DATA
- 0005:00000550 00000018H .idata$3                DATA
- 0005:00000568 00000528H .idata$4                DATA
- 0005:00000a90 00000b58H .idata$6                DATA
+ 0005:00000000 00000520H .idata$5                DATA
+ 0005:00000520 00000028H .idata$2                DATA
+ 0005:00000548 00000018H .idata$3                DATA
+ 0005:00000560 00000520H .idata$4                DATA
+ 0005:00000a80 00000b33H .idata$6                DATA
  0006:00000000 00000163H .00cfg                  DATA
  0007:00000000 00000232H _RDATA                  DATA
 
   Address         Publics by Value              Rva+Base               Lib:Object
 
  0000:00000000       ___safe_se_handler_table   0000000000000000     <absolute>
- 0000:00000000       __guard_eh_cont_table      0000000000000000     <absolute>
- 0000:00000000       __arm64x_redirection_metadata 0000000000000000     <absolute>
+ 0000:00000000       __dynamic_value_reloc_table 0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_count      0000000000000000     <absolute>
+ 0000:00000000       __enclave_config           0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_table      0000000000000000     <absolute>
  0000:00000000       __x64_code_ranges_to_entry_points_count 0000000000000000     <absolute>
+ 0000:00000000       __guard_check_icall_a64n_fptr 0000000000000000     <absolute>
+ 0000:00000000       __volatile_metadata        0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_count      0000000000000000     <absolute>
  0000:00000000       __hybrid_code_map          0000000000000000     <absolute>
  0000:00000000       __arm64x_extra_rfe_table   0000000000000000     <absolute>
- 0000:00000000       __guard_longjmp_table      0000000000000000     <absolute>
- 0000:00000000       __arm64x_redirection_metadata_count 0000000000000000     <absolute>
- 0000:00000000       __arm64x_extra_rfe_table_size 0000000000000000     <absolute>
- 0000:00000000       __dynamic_value_reloc_table 0000000000000000     <absolute>
- 0000:00000000       __guard_check_icall_a64n_fptr 0000000000000000     <absolute>
- 0000:00000000       __guard_eh_cont_count      0000000000000000     <absolute>
- 0000:00000000       __guard_fids_count         0000000000000000     <absolute>
- 0000:00000000       __guard_iat_count          0000000000000000     <absolute>
- 0000:00000000       __guard_fids_table         0000000000000000     <absolute>
- 0000:00000000       __enclave_config           0000000000000000     <absolute>
- 0000:00000000       __AbsoluteZero             0000000000000000     <absolute>
- 0000:00000000       __arm64x_native_entrypoint 0000000000000000     <absolute>
- 0000:00000000       ___safe_se_handler_count   0000000000000000     <absolute>
- 0000:00000000       __guard_iat_table          0000000000000000     <absolute>
- 0000:00000000       __hybrid_auxiliary_iat_copy 0000000000000000     <absolute>
- 0000:00000000       __guard_longjmp_count      0000000000000000     <absolute>
- 0000:00000000       __hybrid_code_map_count    0000000000000000     <absolute>
- 0000:00000000       __volatile_metadata        0000000000000000     <absolute>
- 0000:00000000       __x64_code_ranges_to_entry_points 0000000000000000     <absolute>
  0000:00000000       __hybrid_auxiliary_iat     0000000000000000     <absolute>
+ 0000:00000000       __hybrid_code_map_count    0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata 0000000000000000     <absolute>
+ 0000:00000000       __arm64x_native_entrypoint 0000000000000000     <absolute>
+ 0000:00000000       __guard_iat_count          0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_table      0000000000000000     <absolute>
+ 0000:00000000       __guard_fids_count         0000000000000000     <absolute>
+ 0000:00000000       __arm64x_extra_rfe_table_size 0000000000000000     <absolute>
+ 0000:00000000       __x64_code_ranges_to_entry_points 0000000000000000     <absolute>
+ 0000:00000000       __guard_iat_table          0000000000000000     <absolute>
+ 0000:00000000       __AbsoluteZero             0000000000000000     <absolute>
+ 0000:00000000       ___safe_se_handler_count   0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_iat_copy 0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata_count 0000000000000000     <absolute>
+ 0000:00000000       __guard_fids_table         0000000000000000     <absolute>
  0000:00000100       __guard_flags              0000000000000100     <absolute>
  0000:00000000       __ImageBase                0000000140000000     <linker-defined>
- 0001:00005fb0       ??H@YA?AUm2@@U0@Uv2@@@Z    0000000140006fb0 f   main-1397b6.o
- 0001:00006040       ??Y@YAAEAUm2@@AEAU0@Uv2@@@Z 0000000140007040 f   main-1397b6.o
- 0001:000060b0       ??D@YA?AUv2@@U0@M@Z        00000001400070b0 f   main-1397b6.o
- 0001:00006100       ??D@YA?AUv2@@MU0@@Z        0000000140007100 f   main-1397b6.o
- 0001:00006140       ??H@YA?AUv2@@U0@0@Z        0000000140007140 f   main-1397b6.o
- 0001:00006190       ??X@YAAEAUv2@@AEAU0@M@Z    0000000140007190 f   main-1397b6.o
- 0001:000061e0       ?GameUpdateAndRenderStub@@YAHPEAUatlas_member@@Uvp_game@@MMUrectangle@@PEAUvp_2d_render_target@@HH@Z 00000001400071e0 f   main-1397b6.o
- 0001:00006210       ?GetAtlasRect@@YA?AUrectangle@@Uentire_file@@@Z 0000000140007210 f   main-1397b6.o
- 0001:00006310       ?ToNextLine@@YAPEAEPEAE@Z  0000000140007310 f   main-1397b6.o
- 0001:00006350       ?ParseVATFile@@YAXPEAUatlas_member@@Uentire_file@@@Z 0000000140007350 f   main-1397b6.o
- 0001:00006540       ?DrawChessBoard@@YAXH@Z    0000000140007540 f   main-1397b6.o
- 0001:00006550       ?OnKey@@YAXW4keys@@H@Z     0000000140007550 f   main-1397b6.o
- 0001:000066d0       ?ConsoleIsOn@@YAHXZ        00000001400076d0 f   main-1397b6.o
- 0001:000066e0       ?ConsoleDeleteChar@@YAXXZ  00000001400076e0 f   main-1397b6.o
- 0001:00006710       ?ConsoleAddChar@@YAXD@Z    0000000140007710 f   main-1397b6.o
- 0001:00006780       ?StopConsole@@YAXXZ        0000000140007780 f   main-1397b6.o
- 0001:000067d0       ?StartConsole@@YAXXZ       00000001400077d0 f   main-1397b6.o
- 0001:000067f0       ?LockCamera@@YAXXZ         00000001400077f0 f   main-1397b6.o
- 0001:00006850       ?OnResize@@YAHPEAUvp_game@@HH@Z 0000000140007850 f   main-1397b6.o
- 0001:000068b0       ?SetConfigRes@@YAXHH@Z     00000001400078b0 f   main-1397b6.o
- 0001:000068d0       ?OnMouse@@YAXW4buttons@@HHH@Z 00000001400078d0 f   main-1397b6.o
- 0001:00006910       ?HandleInput@@YAXXZ        0000000140007910 f   main-1397b6.o
- 0001:000069d0       ?ToggleCameraLock@@YAXH@Z  00000001400079d0 f   main-1397b6.o
- 0001:000069f0       ?CameraLockedIsLocked@@YAHXZ 00000001400079f0 f   main-1397b6.o
- 0001:00006a00       ?HandleConsoleProgression@@YAXXZ 0000000140007a00 f   main-1397b6.o
- 0001:00006a60       ?HandleCommand@@YAXPEAD@Z  0000000140007a60 f   main-1397b6.o
- 0001:00006af0       ?LoadSharable@@YA?AUreloader@@PEAD@Z 0000000140007af0 f   main-1397b6.o
- 0001:00006ce0       ?CreateSnowParticles@@YAXPEA_K@Z 0000000140007ce0 f   main-1397b6.o
- 0001:00006f00       main                       0000000140007f00 f   main-1397b6.o
- 0001:00008050       normalize_between          0000000140009050 f i main-1397b6.o
- 0001:000080d0       ?OutputPathFromSource@@YAPEADPEAD0PEBD@Z 00000001400090d0 f i main-1397b6.o
+ 0001:00005fb0       ??H@YA?AUm2@@U0@Uv2@@@Z    0000000140006fb0 f   main-0692f9.o
+ 0001:00006040       ??Y@YAAEAUm2@@AEAU0@Uv2@@@Z 0000000140007040 f   main-0692f9.o
+ 0001:000060b0       ??D@YA?AUv2@@U0@M@Z        00000001400070b0 f   main-0692f9.o
+ 0001:00006100       ??D@YA?AUv2@@MU0@@Z        0000000140007100 f   main-0692f9.o
+ 0001:00006140       ??H@YA?AUv2@@U0@0@Z        0000000140007140 f   main-0692f9.o
+ 0001:00006190       ??X@YAAEAUv2@@AEAU0@M@Z    0000000140007190 f   main-0692f9.o
+ 0001:000061e0       ?GameUpdateAndRenderStub@@YAHPEAUatlas_member@@Uvp_game@@MMUrectangle@@PEAUvp_2d_render_target@@HH@Z 00000001400071e0 f   main-0692f9.o
+ 0001:00006210       ?GetAtlasRect@@YA?AUrectangle@@Uentire_file@@@Z 0000000140007210 f   main-0692f9.o
+ 0001:00006310       ?ToNextLine@@YAPEAEPEAE@Z  0000000140007310 f   main-0692f9.o
+ 0001:00006350       ?ParseVATFile@@YAXPEAUatlas_member@@Uentire_file@@@Z 0000000140007350 f   main-0692f9.o
+ 0001:00006540       ?DrawChessBoard@@YAXH@Z    0000000140007540 f   main-0692f9.o
+ 0001:00006550       ?OnKey@@YAXW4keys@@H@Z     0000000140007550 f   main-0692f9.o
+ 0001:000066d0       ?ConsoleIsOn@@YAHXZ        00000001400076d0 f   main-0692f9.o
+ 0001:000066e0       ?ConsoleDeleteChar@@YAXXZ  00000001400076e0 f   main-0692f9.o
+ 0001:00006710       ?ConsoleAddChar@@YAXD@Z    0000000140007710 f   main-0692f9.o
+ 0001:00006780       ?StopConsole@@YAXXZ        0000000140007780 f   main-0692f9.o
+ 0001:000067d0       ?StartConsole@@YAXXZ       00000001400077d0 f   main-0692f9.o
+ 0001:000067f0       ?LockCamera@@YAXXZ         00000001400077f0 f   main-0692f9.o
+ 0001:00006850       ?OnResize@@YAHPEAUvp_game@@HH@Z 0000000140007850 f   main-0692f9.o
+ 0001:000068b0       ?SetConfigRes@@YAXHH@Z     00000001400078b0 f   main-0692f9.o
+ 0001:000068d0       ?OnMouse@@YAXW4buttons@@HHH@Z 00000001400078d0 f   main-0692f9.o
+ 0001:00006920       ?HandleInput@@YAXXZ        0000000140007920 f   main-0692f9.o
+ 0001:000069e0       ?ToggleCameraLock@@YAXH@Z  00000001400079e0 f   main-0692f9.o
+ 0001:00006a00       ?CameraLockedIsLocked@@YAHXZ 0000000140007a00 f   main-0692f9.o
+ 0001:00006a10       ?HandleConsoleProgression@@YAXXZ 0000000140007a10 f   main-0692f9.o
+ 0001:00006a70       ?HandleCommand@@YAXPEAD@Z  0000000140007a70 f   main-0692f9.o
+ 0001:00006b00       ?LoadSharable@@YA?AUreloader@@PEAD@Z 0000000140007b00 f   main-0692f9.o
+ 0001:00006cf0       ?CreateSnowParticles@@YAXPEA_K@Z 0000000140007cf0 f   main-0692f9.o
+ 0001:00006f10       main                       0000000140007f10 f   main-0692f9.o
+ 0001:00008040       normalize_between          0000000140009040 f i main-0692f9.o
+ 0001:000080c0       ?OutputPathFromSource@@YAPEADPEAD0PEBD@Z 00000001400090c0 f i main-0692f9.o
  0001:0000a920       platform_key_to_char       000000014000b920 f   Vipoc:Vipoc.dll
  0001:0000a926       vp_is_keydown              000000014000b926 f   Vipoc:Vipoc.dll
  0001:0000a92c       vp_unlock_camera           000000014000b92c f   Vipoc:Vipoc.dll
@@ -117,34 +117,33 @@
  0001:0000a93e       vp_toggle_particle_update  000000014000b93e f   Vipoc:Vipoc.dll
  0001:0000a944       platform_switch_fullscreen 000000014000b944 f   Vipoc:Vipoc.dll
  0001:0000a94a       vp_lock_camera             000000014000b94a f   Vipoc:Vipoc.dll
- 0001:0000a950       vp_move_camera             000000014000b950 f   Vipoc:Vipoc.dll
- 0001:0000a956       vp_get_dtime               000000014000b956 f   Vipoc:Vipoc.dll
- 0001:0000a95c       vp_log                     000000014000b95c f   Vipoc:Vipoc.dll
- 0001:0000a962       vp_move_entity             000000014000b962 f   Vipoc:Vipoc.dll
- 0001:0000a968       vstd_strcat                000000014000b968 f   Vipoc:Vipoc.dll
- 0001:0000a96e       platform_get_sharable_extension 000000014000b96e f   Vipoc:Vipoc.dll
- 0001:0000a974       platform_copy_file         000000014000b974 f   Vipoc:Vipoc.dll
- 0001:0000a97a       platform_load_sharable     000000014000b97a f   Vipoc:Vipoc.dll
- 0001:0000a980       platform_get_function_from_sharable 000000014000b980 f   Vipoc:Vipoc.dll
- 0001:0000a986       vp_random_from_seed        000000014000b986 f   Vipoc:Vipoc.dll
- 0001:0000a98c       vp_create_particle         000000014000b98c f   Vipoc:Vipoc.dll
- 0001:0000a992       vp_init                    000000014000b992 f   Vipoc:Vipoc.dll
- 0001:0000a998       platform_get_absolute_path 000000014000b998 f   Vipoc:Vipoc.dll
- 0001:0000a99e       platform_allocate_memory_chunk 000000014000b99e f   Vipoc:Vipoc.dll
- 0001:0000a9a4       platform_read_entire_file  000000014000b9a4 f   Vipoc:Vipoc.dll
- 0001:0000a9aa       vp_parse_font_fnt          000000014000b9aa f   Vipoc:Vipoc.dll
- 0001:0000a9b0       vp_load_text_atlas         000000014000b9b0 f   Vipoc:Vipoc.dll
- 0001:0000a9b6       vp_load_simple_obj         000000014000b9b6 f   Vipoc:Vipoc.dll
- 0001:0000a9bc       vp_random_seed             000000014000b9bc f   Vipoc:Vipoc.dll
+ 0001:0000a950       vp_cast_ray                000000014000b950 f   Vipoc:Vipoc.dll
+ 0001:0000a956       vp_move_camera             000000014000b956 f   Vipoc:Vipoc.dll
+ 0001:0000a95c       vp_get_dtime               000000014000b95c f   Vipoc:Vipoc.dll
+ 0001:0000a962       vp_log                     000000014000b962 f   Vipoc:Vipoc.dll
+ 0001:0000a968       vp_move_entity             000000014000b968 f   Vipoc:Vipoc.dll
+ 0001:0000a96e       vstd_strcat                000000014000b96e f   Vipoc:Vipoc.dll
+ 0001:0000a974       platform_get_sharable_extension 000000014000b974 f   Vipoc:Vipoc.dll
+ 0001:0000a97a       platform_copy_file         000000014000b97a f   Vipoc:Vipoc.dll
+ 0001:0000a980       platform_load_sharable     000000014000b980 f   Vipoc:Vipoc.dll
+ 0001:0000a986       platform_get_function_from_sharable 000000014000b986 f   Vipoc:Vipoc.dll
+ 0001:0000a98c       vp_random_from_seed        000000014000b98c f   Vipoc:Vipoc.dll
+ 0001:0000a992       vp_create_particle         000000014000b992 f   Vipoc:Vipoc.dll
+ 0001:0000a998       vp_init                    000000014000b998 f   Vipoc:Vipoc.dll
+ 0001:0000a99e       platform_get_absolute_path 000000014000b99e f   Vipoc:Vipoc.dll
+ 0001:0000a9a4       platform_allocate_memory_chunk 000000014000b9a4 f   Vipoc:Vipoc.dll
+ 0001:0000a9aa       platform_read_entire_file  000000014000b9aa f   Vipoc:Vipoc.dll
+ 0001:0000a9b0       vp_parse_font_fnt          000000014000b9b0 f   Vipoc:Vipoc.dll
+ 0001:0000a9b6       vp_load_text_atlas         000000014000b9b6 f   Vipoc:Vipoc.dll
+ 0001:0000a9bc       vp_load_simple_obj         000000014000b9bc f   Vipoc:Vipoc.dll
  0001:0000a9c2       vp_create_entity           000000014000b9c2 f   Vipoc:Vipoc.dll
- 0001:0000a9c8       platform_get_ms_since_start 000000014000b9c8 f   Vipoc:Vipoc.dll
- 0001:0000a9ce       platform_get_frequency     000000014000b9ce f   Vipoc:Vipoc.dll
- 0001:0000a9d4       platform_get_perf_counter  000000014000b9d4 f   Vipoc:Vipoc.dll
- 0001:0000a9da       vp_handle_messages         000000014000b9da f   Vipoc:Vipoc.dll
- 0001:0000a9e0       vp_draw_rectangle          000000014000b9e0 f   Vipoc:Vipoc.dll
- 0001:0000a9e6       vp_draw_text               000000014000b9e6 f   Vipoc:Vipoc.dll
- 0001:0000a9ec       _vstd_sPrintf              000000014000b9ec f   Vipoc:Vipoc.dll
- 0001:0000a9f2       vp_present                 000000014000b9f2 f   Vipoc:Vipoc.dll
+ 0001:0000a9c8       platform_get_frequency     000000014000b9c8 f   Vipoc:Vipoc.dll
+ 0001:0000a9ce       platform_get_perf_counter  000000014000b9ce f   Vipoc:Vipoc.dll
+ 0001:0000a9d4       vp_handle_messages         000000014000b9d4 f   Vipoc:Vipoc.dll
+ 0001:0000a9da       vp_draw_rectangle          000000014000b9da f   Vipoc:Vipoc.dll
+ 0001:0000a9e0       vp_draw_text               000000014000b9e0 f   Vipoc:Vipoc.dll
+ 0001:0000a9e6       _vstd_sPrintf              000000014000b9e6 f   Vipoc:Vipoc.dll
+ 0001:0000a9ec       vp_present                 000000014000b9ec f   Vipoc:Vipoc.dll
  0001:0000aa10       _alloca_probe              000000014000ba10 f   libcmt:chkstk.obj
  0001:0000aa10       __chkstk                   000000014000ba10 f   libcmt:chkstk.obj
  0001:0000ad84       ?configure_argv@__scrt_narrow_argv_policy@@SAHXZ 000000014000bd84 f i libcmt:exe_main.obj
@@ -195,8 +194,8 @@
  0001:0000b780       __scrt_initialize_winrt    000000014000c780 f   libcmt:utility_desktop.obj
  0001:0000b784       __scrt_is_managed_app      000000014000c784 f   libcmt:utility_desktop.obj
  0001:0000b7ec       __scrt_set_unhandled_exception_filter 000000014000c7ec f   libcmt:utility_desktop.obj
- 0001:0000b800       __scrt_exe_initialize_mta  000000014000c800 f   libcmt:utility_desktop.obj
  0001:0000b800       __scrt_stub_for_initialize_mta 000000014000c800 f   libcmt:utility_desktop.obj
+ 0001:0000b800       __scrt_exe_initialize_mta  000000014000c800 f   libcmt:utility_desktop.obj
  0001:0000b804       __scrt_unhandled_exception_filter 000000014000c804 f   libcmt:utility_desktop.obj
  0001:0000b878       _RTC_Initialize            000000014000c878 f   libcmt:initsect.obj
  0001:0000b8c4       _RTC_Terminate             000000014000c8c4 f   libcmt:initsect.obj
@@ -2559,8 +2558,8 @@
  0001:00068d00       _IsNonwritableInCurrentImage 0000000140069d00 f   libcmt:pesect.obj
  0001:00068d60       _ValidateImageBase         0000000140069d60 f   libcmt:pesect.obj
  0001:00068d98       ??1type_info@@UEAA@XZ      0000000140069d98 f   libcmt:std_type_info_static.obj
- 0001:00068da8       ??_Gtype_info@@UEAAPEAXI@Z 0000000140069da8 f i libcmt:std_type_info_static.obj
  0001:00068da8       ??_Etype_info@@UEAAPEAXI@Z 0000000140069da8 f i libcmt:std_type_info_static.obj
+ 0001:00068da8       ??_Gtype_info@@UEAAPEAXI@Z 0000000140069da8 f i libcmt:std_type_info_static.obj
  0001:00068de0       __GSHandlerCheck           0000000140069de0 f   libcmt:gshandler.obj
  0001:00068e04       __GSHandlerCheckCommon     0000000140069e04 f   libcmt:gshandler.obj
  0001:00068e90       __security_check_cookie    0000000140069e90 f   libcmt:amdsecgs.obj
@@ -2663,52 +2662,52 @@
  0002:00000bf0       __xp_z                     0000000140070bf0     libcmt:initializers.obj
  0002:00000d00       __xt_a                     0000000140070d00     libcmt:initializers.obj
  0002:00000e10       __xt_z                     0000000140070e10     libcmt:initializers.obj
- 0002:00000f20       __real@40b40000            0000000140070f20     main-1397b6.o
- 0002:00000f24       __real@4048f5c3            0000000140070f24     main-1397b6.o
- 0002:00000f28       __real@3fb9999a            0000000140070f28     main-1397b6.o
- 0002:00000f2c       __real@40b66666            0000000140070f2c     main-1397b6.o
- 0002:00000f30       __real@41480000            0000000140070f30     main-1397b6.o
- 0002:00000f34       __real@41740000            0000000140070f34     main-1397b6.o
- 0002:00000f38       __real@41200000            0000000140070f38     main-1397b6.o
- 0002:00000f3c       __real@40600000            0000000140070f3c     main-1397b6.o
- 0002:00000f40       __real@40800000            0000000140070f40     main-1397b6.o
- 0002:00000f44       __real@420c0000            0000000140070f44     main-1397b6.o
- 0002:00000f48       __real@42c80000            0000000140070f48     main-1397b6.o
- 0002:00000f4c       __real@3f800000            0000000140070f4c     main-1397b6.o
- 0002:00000f50       __real@3f666666            0000000140070f50     main-1397b6.o
- 0002:00000f54       __real@461c4000            0000000140070f54     main-1397b6.o
- 0002:00000f58       __real@43160000            0000000140070f58     main-1397b6.o
- 0002:00000f5c       __real@3ee66666            0000000140070f5c     main-1397b6.o
- 0002:00000f60       __real@3e4ccccd            0000000140070f60     main-1397b6.o
- 0002:00000f64       __real@3f19999a            0000000140070f64     main-1397b6.o
- 0002:00000f68       __real@3ecccccd            0000000140070f68     main-1397b6.o
- 0002:00000f6c       __real@3f333333            0000000140070f6c     main-1397b6.o
- 0002:00000f70       __real@3e800000            0000000140070f70     main-1397b6.o
- 0002:00000f74       __real@3dcccccd            0000000140070f74     main-1397b6.o
- 0002:00000f78       __real@40accccd            0000000140070f78     main-1397b6.o
- 0002:00000f7c       __real@40000000            0000000140070f7c     main-1397b6.o
- 0002:00000f80       ??_C@_02PCIJFNDE@?$AN?6?$AA@ 0000000140070f80     main-1397b6.o
- 0002:00000f83       ??_C@_05HKMEIJFJ@?$BL?$FL36m?$AA@ 0000000140070f83     main-1397b6.o
- 0002:00000f8a       ??_C@_0M@KMFEKMKL@Command?3?5?$CFs?$AA@ 0000000140070f8a     main-1397b6.o
- 0002:00000f98       ??_C@_0L@CABILCFI@move_piece?$AA@ 0000000140070f98     main-1397b6.o
- 0002:00000fa5       ??_C@_0P@JCAEMPBF@bin?2hot_reload?$AA@ 0000000140070fa5     main-1397b6.o
- 0002:00000fb7       ??_C@_0BE@FABCHMHP@bin?2hot_reload_temp?$AA@ 0000000140070fb7     main-1397b6.o
- 0002:00000fcf       ??_C@_05HIICDHAA@?$BL?$FL35m?$AA@ 0000000140070fcf     main-1397b6.o
- 0002:00000fd6       ??_C@_0BJ@GPBLINBP@Failed?5to?5copy?5sharable?$CB?$AA@ 0000000140070fd6     main-1397b6.o
- 0002:00000ff4       ??_C@_0BI@EDNIHCCB@Failed?5to?5load?5sharable?$AA@ 0000000140070ff4     main-1397b6.o
- 0002:00001010       ??_C@_0BE@GDAMMNDF@GameUpdateAndRender?$AA@ 0000000140071010     main-1397b6.o
- 0002:00001028       ??_C@_0CM@JIKKPFCG@Failed?5to?5get?5GameUpdateAndRende@ 0000000140071028     main-1397b6.o
- 0002:000011a6       ??_C@_09DIHKONFH@test?5game?$AA@ 00000001400711a6     main-1397b6.o
- 0002:000011b2       ??_C@_0BE@HJJOJPOK@assets?1consolas?4fnt?$AA@ 00000001400711b2     main-1397b6.o
- 0002:000011ca       ??_C@_0BE@JANGHDOA@assets?1consolas?4bmp?$AA@ 00000001400711ca     main-1397b6.o
- 0002:000011e2       ??_C@_0BA@OEPPDKHN@assets?1cube?4obj?$AA@ 00000001400711e2     main-1397b6.o
- 0002:000011f5       ??_C@_0BA@FEJDLKBB@assets?1Pawn?4obj?$AA@ 00000001400711f5     main-1397b6.o
- 0002:00001208       ??_C@_0BA@GLBDMDLP@assets?1Rook?4obj?$AA@ 0000000140071208     main-1397b6.o
- 0002:0000121b       ??_C@_0BC@EPKKNMNJ@assets?1Knight?4obj?$AA@ 000000014007121b     main-1397b6.o
- 0002:00001230       ??_C@_0BC@GIMDFPPO@assets?1Bishop?4obj?$AA@ 0000000140071230     main-1397b6.o
- 0002:00001245       ??_C@_0BA@HMKKPFNN@assets?1King?4obj?$AA@ 0000000140071245     main-1397b6.o
- 0002:00001258       ??_C@_0BB@EBDDNIHK@assets?1Queen?4obj?$AA@ 0000000140071258     main-1397b6.o
- 0002:0000126c       ??_C@_0N@EDMIAMNO@?$CFdms?5FPS?3?5?$CFd?$AA@ 000000014007126c     main-1397b6.o
+ 0002:00000f20       __real@40b40000            0000000140070f20     main-0692f9.o
+ 0002:00000f24       __real@4048f5c3            0000000140070f24     main-0692f9.o
+ 0002:00000f28       __real@3fb9999a            0000000140070f28     main-0692f9.o
+ 0002:00000f2c       __real@40b66666            0000000140070f2c     main-0692f9.o
+ 0002:00000f30       __real@41480000            0000000140070f30     main-0692f9.o
+ 0002:00000f34       __real@41740000            0000000140070f34     main-0692f9.o
+ 0002:00000f38       __real@41200000            0000000140070f38     main-0692f9.o
+ 0002:00000f3c       __real@40600000            0000000140070f3c     main-0692f9.o
+ 0002:00000f40       __real@40800000            0000000140070f40     main-0692f9.o
+ 0002:00000f44       __real@420c0000            0000000140070f44     main-0692f9.o
+ 0002:00000f48       __real@42c80000            0000000140070f48     main-0692f9.o
+ 0002:00000f4c       __real@3f800000            0000000140070f4c     main-0692f9.o
+ 0002:00000f50       __real@3f666666            0000000140070f50     main-0692f9.o
+ 0002:00000f54       __real@461c4000            0000000140070f54     main-0692f9.o
+ 0002:00000f58       __real@43160000            0000000140070f58     main-0692f9.o
+ 0002:00000f5c       __real@3ee66666            0000000140070f5c     main-0692f9.o
+ 0002:00000f60       __real@3e4ccccd            0000000140070f60     main-0692f9.o
+ 0002:00000f64       __real@3f19999a            0000000140070f64     main-0692f9.o
+ 0002:00000f68       __real@3ecccccd            0000000140070f68     main-0692f9.o
+ 0002:00000f6c       __real@3f333333            0000000140070f6c     main-0692f9.o
+ 0002:00000f70       __real@3e800000            0000000140070f70     main-0692f9.o
+ 0002:00000f74       __real@3dcccccd            0000000140070f74     main-0692f9.o
+ 0002:00000f78       __real@40accccd            0000000140070f78     main-0692f9.o
+ 0002:00000f7c       __real@40000000            0000000140070f7c     main-0692f9.o
+ 0002:00000f80       ??_C@_02PCIJFNDE@?$AN?6?$AA@ 0000000140070f80     main-0692f9.o
+ 0002:00000f83       ??_C@_05HKMEIJFJ@?$BL?$FL36m?$AA@ 0000000140070f83     main-0692f9.o
+ 0002:00000f8a       ??_C@_0M@KMFEKMKL@Command?3?5?$CFs?$AA@ 0000000140070f8a     main-0692f9.o
+ 0002:00000f98       ??_C@_0L@CABILCFI@move_piece?$AA@ 0000000140070f98     main-0692f9.o
+ 0002:00000fa5       ??_C@_0P@JCAEMPBF@bin?2hot_reload?$AA@ 0000000140070fa5     main-0692f9.o
+ 0002:00000fb7       ??_C@_0BE@FABCHMHP@bin?2hot_reload_temp?$AA@ 0000000140070fb7     main-0692f9.o
+ 0002:00000fcf       ??_C@_05HIICDHAA@?$BL?$FL35m?$AA@ 0000000140070fcf     main-0692f9.o
+ 0002:00000fd6       ??_C@_0BJ@GPBLINBP@Failed?5to?5copy?5sharable?$CB?$AA@ 0000000140070fd6     main-0692f9.o
+ 0002:00000ff4       ??_C@_0BI@EDNIHCCB@Failed?5to?5load?5sharable?$AA@ 0000000140070ff4     main-0692f9.o
+ 0002:00001010       ??_C@_0BE@GDAMMNDF@GameUpdateAndRender?$AA@ 0000000140071010     main-0692f9.o
+ 0002:00001028       ??_C@_0CM@JIKKPFCG@Failed?5to?5get?5GameUpdateAndRende@ 0000000140071028     main-0692f9.o
+ 0002:000011a6       ??_C@_09DIHKONFH@test?5game?$AA@ 00000001400711a6     main-0692f9.o
+ 0002:000011b2       ??_C@_0BE@HJJOJPOK@assets?1consolas?4fnt?$AA@ 00000001400711b2     main-0692f9.o
+ 0002:000011ca       ??_C@_0BE@JANGHDOA@assets?1consolas?4bmp?$AA@ 00000001400711ca     main-0692f9.o
+ 0002:000011e2       ??_C@_0BA@OEPPDKHN@assets?1cube?4obj?$AA@ 00000001400711e2     main-0692f9.o
+ 0002:000011f5       ??_C@_0BA@FEJDLKBB@assets?1Pawn?4obj?$AA@ 00000001400711f5     main-0692f9.o
+ 0002:00001208       ??_C@_0BA@GLBDMDLP@assets?1Rook?4obj?$AA@ 0000000140071208     main-0692f9.o
+ 0002:0000121b       ??_C@_0BC@EPKKNMNJ@assets?1Knight?4obj?$AA@ 000000014007121b     main-0692f9.o
+ 0002:00001230       ??_C@_0BC@GIMDFPPO@assets?1Bishop?4obj?$AA@ 0000000140071230     main-0692f9.o
+ 0002:00001245       ??_C@_0BA@HMKKPFNN@assets?1King?4obj?$AA@ 0000000140071245     main-0692f9.o
+ 0002:00001258       ??_C@_0BB@EBDDNIHK@assets?1Queen?4obj?$AA@ 0000000140071258     main-0692f9.o
+ 0002:0000126c       ??_C@_0N@EDMIAMNO@?$CFdms?5FPS?3?5?$CFd?$AA@ 000000014007126c     main-0692f9.o
  0002:00001280       __xmm@ffffffffffffffffffffffffffffffff 0000000140071280     libcmt:utility.obj
  0002:00001298       _pDestructExceptionObject  0000000140071298     libvcruntime:ehhelpers.obj
  0002:00001b30       ??_C@_08EHJDFFNH@__based?$CI@ 0000000140071b30     libvcruntime:undname.obj
@@ -3825,54 +3824,54 @@
  0005:00000108       __imp_GetACP               0000000140090108     kernel32:KERNEL32.dll
  0005:00000110       __imp_IsValidCodePage      0000000140090110     kernel32:KERNEL32.dll
  0005:00000118       __imp_FindNextFileW        0000000140090118     kernel32:KERNEL32.dll
- 0005:00000120       __imp_FindFirstFileExW     0000000140090120     kernel32:KERNEL32.dll
- 0005:00000128       __imp_QueryPerformanceCounter 0000000140090128     kernel32:KERNEL32.dll
- 0005:00000130       __imp_GetCurrentProcessId  0000000140090130     kernel32:KERNEL32.dll
- 0005:00000138       __imp_GetCurrentThreadId   0000000140090138     kernel32:KERNEL32.dll
- 0005:00000140       __imp_GetSystemTimeAsFileTime 0000000140090140     kernel32:KERNEL32.dll
- 0005:00000148       __imp_InitializeSListHead  0000000140090148     kernel32:KERNEL32.dll
- 0005:00000150       __imp_RtlCaptureContext    0000000140090150     kernel32:KERNEL32.dll
- 0005:00000158       __imp_RtlLookupFunctionEntry 0000000140090158     kernel32:KERNEL32.dll
- 0005:00000160       __imp_RtlVirtualUnwind     0000000140090160     kernel32:KERNEL32.dll
- 0005:00000168       __imp_IsDebuggerPresent    0000000140090168     kernel32:KERNEL32.dll
- 0005:00000170       __imp_UnhandledExceptionFilter 0000000140090170     kernel32:KERNEL32.dll
- 0005:00000178       __imp_SetUnhandledExceptionFilter 0000000140090178     kernel32:KERNEL32.dll
- 0005:00000180       __imp_GetStartupInfoW      0000000140090180     kernel32:KERNEL32.dll
- 0005:00000188       __imp_IsProcessorFeaturePresent 0000000140090188     kernel32:KERNEL32.dll
- 0005:00000190       __imp_GetModuleHandleW     0000000140090190     kernel32:KERNEL32.dll
- 0005:00000198       __imp_FindClose            0000000140090198     kernel32:KERNEL32.dll
- 0005:000001a0       __imp_RtlUnwindEx          00000001400901a0     kernel32:KERNEL32.dll
- 0005:000001a8       __imp_InterlockedPushEntrySList 00000001400901a8     kernel32:KERNEL32.dll
- 0005:000001b0       __imp_InterlockedFlushSList 00000001400901b0     kernel32:KERNEL32.dll
- 0005:000001b8       __imp_GetLastError         00000001400901b8     kernel32:KERNEL32.dll
- 0005:000001c0       __imp_SetLastError         00000001400901c0     kernel32:KERNEL32.dll
- 0005:000001c8       __imp_EnterCriticalSection 00000001400901c8     kernel32:KERNEL32.dll
- 0005:000001d0       __imp_LeaveCriticalSection 00000001400901d0     kernel32:KERNEL32.dll
- 0005:000001d8       __imp_DeleteCriticalSection 00000001400901d8     kernel32:KERNEL32.dll
- 0005:000001e0       __imp_InitializeCriticalSectionAndSpinCount 00000001400901e0     kernel32:KERNEL32.dll
- 0005:000001e8       __imp_RtlUnwind            00000001400901e8     kernel32:KERNEL32.dll
- 0005:000001f0       __imp_TlsGetValue          00000001400901f0     kernel32:KERNEL32.dll
- 0005:000001f8       __imp_TlsSetValue          00000001400901f8     kernel32:KERNEL32.dll
- 0005:00000200       __imp_TlsFree              0000000140090200     kernel32:KERNEL32.dll
- 0005:00000208       __imp_FreeLibrary          0000000140090208     kernel32:KERNEL32.dll
- 0005:00000210       __imp_GetProcAddress       0000000140090210     kernel32:KERNEL32.dll
- 0005:00000218       __imp_LoadLibraryExW       0000000140090218     kernel32:KERNEL32.dll
- 0005:00000220       __imp_EncodePointer        0000000140090220     kernel32:KERNEL32.dll
- 0005:00000228       __imp_RaiseException       0000000140090228     kernel32:KERNEL32.dll
- 0005:00000230       __imp_RtlPcToFileHeader    0000000140090230     kernel32:KERNEL32.dll
- 0005:00000238       __imp_GetStdHandle         0000000140090238     kernel32:KERNEL32.dll
- 0005:00000240       __imp_WriteFile            0000000140090240     kernel32:KERNEL32.dll
- 0005:00000248       __imp_GetModuleFileNameW   0000000140090248     kernel32:KERNEL32.dll
- 0005:00000250       __imp_GetCurrentProcess    0000000140090250     kernel32:KERNEL32.dll
- 0005:00000258       __imp_ExitProcess          0000000140090258     kernel32:KERNEL32.dll
- 0005:00000260       __imp_TerminateProcess     0000000140090260     kernel32:KERNEL32.dll
- 0005:00000268       __imp_GetModuleHandleExW   0000000140090268     kernel32:KERNEL32.dll
- 0005:00000270       __imp_GetCommandLineA      0000000140090270     kernel32:KERNEL32.dll
- 0005:00000278       __imp_GetCommandLineW      0000000140090278     kernel32:KERNEL32.dll
- 0005:00000280       __imp_GetCurrentThread     0000000140090280     kernel32:KERNEL32.dll
- 0005:00000288       __imp_OutputDebugStringW   0000000140090288     kernel32:KERNEL32.dll
- 0005:00000290       __imp_HeapAlloc            0000000140090290     kernel32:KERNEL32.dll
- 0005:00000298       __imp_HeapFree             0000000140090298     kernel32:KERNEL32.dll
+ 0005:00000120       __imp_QueryPerformanceCounter 0000000140090120     kernel32:KERNEL32.dll
+ 0005:00000128       __imp_GetCurrentProcessId  0000000140090128     kernel32:KERNEL32.dll
+ 0005:00000130       __imp_GetCurrentThreadId   0000000140090130     kernel32:KERNEL32.dll
+ 0005:00000138       __imp_GetSystemTimeAsFileTime 0000000140090138     kernel32:KERNEL32.dll
+ 0005:00000140       __imp_InitializeSListHead  0000000140090140     kernel32:KERNEL32.dll
+ 0005:00000148       __imp_RtlCaptureContext    0000000140090148     kernel32:KERNEL32.dll
+ 0005:00000150       __imp_RtlLookupFunctionEntry 0000000140090150     kernel32:KERNEL32.dll
+ 0005:00000158       __imp_RtlVirtualUnwind     0000000140090158     kernel32:KERNEL32.dll
+ 0005:00000160       __imp_IsDebuggerPresent    0000000140090160     kernel32:KERNEL32.dll
+ 0005:00000168       __imp_UnhandledExceptionFilter 0000000140090168     kernel32:KERNEL32.dll
+ 0005:00000170       __imp_SetUnhandledExceptionFilter 0000000140090170     kernel32:KERNEL32.dll
+ 0005:00000178       __imp_GetStartupInfoW      0000000140090178     kernel32:KERNEL32.dll
+ 0005:00000180       __imp_IsProcessorFeaturePresent 0000000140090180     kernel32:KERNEL32.dll
+ 0005:00000188       __imp_GetModuleHandleW     0000000140090188     kernel32:KERNEL32.dll
+ 0005:00000190       __imp_FindFirstFileExW     0000000140090190     kernel32:KERNEL32.dll
+ 0005:00000198       __imp_RtlUnwindEx          0000000140090198     kernel32:KERNEL32.dll
+ 0005:000001a0       __imp_InterlockedPushEntrySList 00000001400901a0     kernel32:KERNEL32.dll
+ 0005:000001a8       __imp_InterlockedFlushSList 00000001400901a8     kernel32:KERNEL32.dll
+ 0005:000001b0       __imp_GetLastError         00000001400901b0     kernel32:KERNEL32.dll
+ 0005:000001b8       __imp_SetLastError         00000001400901b8     kernel32:KERNEL32.dll
+ 0005:000001c0       __imp_EnterCriticalSection 00000001400901c0     kernel32:KERNEL32.dll
+ 0005:000001c8       __imp_LeaveCriticalSection 00000001400901c8     kernel32:KERNEL32.dll
+ 0005:000001d0       __imp_DeleteCriticalSection 00000001400901d0     kernel32:KERNEL32.dll
+ 0005:000001d8       __imp_InitializeCriticalSectionAndSpinCount 00000001400901d8     kernel32:KERNEL32.dll
+ 0005:000001e0       __imp_RtlUnwind            00000001400901e0     kernel32:KERNEL32.dll
+ 0005:000001e8       __imp_TlsGetValue          00000001400901e8     kernel32:KERNEL32.dll
+ 0005:000001f0       __imp_TlsSetValue          00000001400901f0     kernel32:KERNEL32.dll
+ 0005:000001f8       __imp_TlsFree              00000001400901f8     kernel32:KERNEL32.dll
+ 0005:00000200       __imp_FreeLibrary          0000000140090200     kernel32:KERNEL32.dll
+ 0005:00000208       __imp_GetProcAddress       0000000140090208     kernel32:KERNEL32.dll
+ 0005:00000210       __imp_LoadLibraryExW       0000000140090210     kernel32:KERNEL32.dll
+ 0005:00000218       __imp_EncodePointer        0000000140090218     kernel32:KERNEL32.dll
+ 0005:00000220       __imp_RaiseException       0000000140090220     kernel32:KERNEL32.dll
+ 0005:00000228       __imp_RtlPcToFileHeader    0000000140090228     kernel32:KERNEL32.dll
+ 0005:00000230       __imp_GetStdHandle         0000000140090230     kernel32:KERNEL32.dll
+ 0005:00000238       __imp_WriteFile            0000000140090238     kernel32:KERNEL32.dll
+ 0005:00000240       __imp_GetModuleFileNameW   0000000140090240     kernel32:KERNEL32.dll
+ 0005:00000248       __imp_GetCurrentProcess    0000000140090248     kernel32:KERNEL32.dll
+ 0005:00000250       __imp_ExitProcess          0000000140090250     kernel32:KERNEL32.dll
+ 0005:00000258       __imp_TerminateProcess     0000000140090258     kernel32:KERNEL32.dll
+ 0005:00000260       __imp_GetModuleHandleExW   0000000140090260     kernel32:KERNEL32.dll
+ 0005:00000268       __imp_GetCommandLineA      0000000140090268     kernel32:KERNEL32.dll
+ 0005:00000270       __imp_GetCommandLineW      0000000140090270     kernel32:KERNEL32.dll
+ 0005:00000278       __imp_GetCurrentThread     0000000140090278     kernel32:KERNEL32.dll
+ 0005:00000280       __imp_OutputDebugStringW   0000000140090280     kernel32:KERNEL32.dll
+ 0005:00000288       __imp_HeapAlloc            0000000140090288     kernel32:KERNEL32.dll
+ 0005:00000290       __imp_HeapFree             0000000140090290     kernel32:KERNEL32.dll
+ 0005:00000298       __imp_FindClose            0000000140090298     kernel32:KERNEL32.dll
  0005:000002a0       \177KERNEL32_NULL_THUNK_DATA 00000001400902a0     kernel32:KERNEL32.dll
  0005:00000378       __imp_vp_is_keydown        0000000140090378     Vipoc:Vipoc.dll
  0005:00000380       __imp_vp_present           0000000140090380     Vipoc:Vipoc.dll
@@ -3882,38 +3881,37 @@
  0005:000003a0       __imp_vp_handle_messages   00000001400903a0     Vipoc:Vipoc.dll
  0005:000003a8       __imp_platform_get_perf_counter 00000001400903a8     Vipoc:Vipoc.dll
  0005:000003b0       __imp_platform_get_frequency 00000001400903b0     Vipoc:Vipoc.dll
- 0005:000003b8       __imp_platform_get_ms_since_start 00000001400903b8     Vipoc:Vipoc.dll
- 0005:000003c0       __imp_vp_create_entity     00000001400903c0     Vipoc:Vipoc.dll
- 0005:000003c8       __imp_vp_random_seed       00000001400903c8     Vipoc:Vipoc.dll
- 0005:000003d0       __imp_vp_load_simple_obj   00000001400903d0     Vipoc:Vipoc.dll
- 0005:000003d8       __imp_vp_load_text_atlas   00000001400903d8     Vipoc:Vipoc.dll
- 0005:000003e0       __imp_vp_parse_font_fnt    00000001400903e0     Vipoc:Vipoc.dll
- 0005:000003e8       __imp_platform_read_entire_file 00000001400903e8     Vipoc:Vipoc.dll
- 0005:000003f0       __imp_platform_allocate_memory_chunk 00000001400903f0     Vipoc:Vipoc.dll
- 0005:000003f8       __imp_platform_get_absolute_path 00000001400903f8     Vipoc:Vipoc.dll
- 0005:00000400       __imp_vp_init              0000000140090400     Vipoc:Vipoc.dll
- 0005:00000408       __imp_vp_create_particle   0000000140090408     Vipoc:Vipoc.dll
- 0005:00000410       __imp_vp_random_from_seed  0000000140090410     Vipoc:Vipoc.dll
- 0005:00000418       __imp_platform_get_function_from_sharable 0000000140090418     Vipoc:Vipoc.dll
- 0005:00000420       __imp_platform_load_sharable 0000000140090420     Vipoc:Vipoc.dll
- 0005:00000428       __imp_platform_copy_file   0000000140090428     Vipoc:Vipoc.dll
- 0005:00000430       __imp_platform_get_sharable_extension 0000000140090430     Vipoc:Vipoc.dll
- 0005:00000438       __imp_vstd_strcat          0000000140090438     Vipoc:Vipoc.dll
- 0005:00000440       __imp_vp_move_entity       0000000140090440     Vipoc:Vipoc.dll
- 0005:00000448       __imp_vp_log               0000000140090448     Vipoc:Vipoc.dll
- 0005:00000450       __imp_vp_get_dtime         0000000140090450     Vipoc:Vipoc.dll
- 0005:00000458       __imp_vp_move_camera       0000000140090458     Vipoc:Vipoc.dll
- 0005:00000460       __imp_vp_lock_camera       0000000140090460     Vipoc:Vipoc.dll
- 0005:00000468       __imp_platform_switch_fullscreen 0000000140090468     Vipoc:Vipoc.dll
- 0005:00000470       __imp_vp_toggle_particle_update 0000000140090470     Vipoc:Vipoc.dll
- 0005:00000478       __imp_platform_toggle_vsync 0000000140090478     Vipoc:Vipoc.dll
- 0005:00000480       __imp_vp_toggle_polygons   0000000140090480     Vipoc:Vipoc.dll
- 0005:00000488       __imp_vp_unlock_camera     0000000140090488     Vipoc:Vipoc.dll
- 0005:00000490       __imp_platform_key_to_char 0000000140090490     Vipoc:Vipoc.dll
- 0005:00000498       \177Vipoc_NULL_THUNK_DATA  0000000140090498     Vipoc:Vipoc.dll
- 0005:00000528       __IMPORT_DESCRIPTOR_Vipoc  0000000140090528     Vipoc:Vipoc.dll
- 0005:0000053c       __IMPORT_DESCRIPTOR_KERNEL32 000000014009053c     kernel32:KERNEL32.dll
- 0005:00000550       __NULL_IMPORT_DESCRIPTOR   0000000140090550     Vipoc:Vipoc.dll
+ 0005:000003b8       __imp_vp_create_entity     00000001400903b8     Vipoc:Vipoc.dll
+ 0005:000003c0       __imp_vp_load_simple_obj   00000001400903c0     Vipoc:Vipoc.dll
+ 0005:000003c8       __imp_vp_load_text_atlas   00000001400903c8     Vipoc:Vipoc.dll
+ 0005:000003d0       __imp_vp_parse_font_fnt    00000001400903d0     Vipoc:Vipoc.dll
+ 0005:000003d8       __imp_platform_read_entire_file 00000001400903d8     Vipoc:Vipoc.dll
+ 0005:000003e0       __imp_platform_allocate_memory_chunk 00000001400903e0     Vipoc:Vipoc.dll
+ 0005:000003e8       __imp_platform_get_absolute_path 00000001400903e8     Vipoc:Vipoc.dll
+ 0005:000003f0       __imp_vp_init              00000001400903f0     Vipoc:Vipoc.dll
+ 0005:000003f8       __imp_vp_create_particle   00000001400903f8     Vipoc:Vipoc.dll
+ 0005:00000400       __imp_vp_random_from_seed  0000000140090400     Vipoc:Vipoc.dll
+ 0005:00000408       __imp_platform_get_function_from_sharable 0000000140090408     Vipoc:Vipoc.dll
+ 0005:00000410       __imp_platform_load_sharable 0000000140090410     Vipoc:Vipoc.dll
+ 0005:00000418       __imp_platform_copy_file   0000000140090418     Vipoc:Vipoc.dll
+ 0005:00000420       __imp_platform_get_sharable_extension 0000000140090420     Vipoc:Vipoc.dll
+ 0005:00000428       __imp_vstd_strcat          0000000140090428     Vipoc:Vipoc.dll
+ 0005:00000430       __imp_vp_move_entity       0000000140090430     Vipoc:Vipoc.dll
+ 0005:00000438       __imp_vp_log               0000000140090438     Vipoc:Vipoc.dll
+ 0005:00000440       __imp_vp_get_dtime         0000000140090440     Vipoc:Vipoc.dll
+ 0005:00000448       __imp_vp_move_camera       0000000140090448     Vipoc:Vipoc.dll
+ 0005:00000450       __imp_vp_cast_ray          0000000140090450     Vipoc:Vipoc.dll
+ 0005:00000458       __imp_vp_lock_camera       0000000140090458     Vipoc:Vipoc.dll
+ 0005:00000460       __imp_platform_switch_fullscreen 0000000140090460     Vipoc:Vipoc.dll
+ 0005:00000468       __imp_vp_toggle_particle_update 0000000140090468     Vipoc:Vipoc.dll
+ 0005:00000470       __imp_platform_toggle_vsync 0000000140090470     Vipoc:Vipoc.dll
+ 0005:00000478       __imp_vp_toggle_polygons   0000000140090478     Vipoc:Vipoc.dll
+ 0005:00000480       __imp_vp_unlock_camera     0000000140090480     Vipoc:Vipoc.dll
+ 0005:00000488       __imp_platform_key_to_char 0000000140090488     Vipoc:Vipoc.dll
+ 0005:00000490       \177Vipoc_NULL_THUNK_DATA  0000000140090490     Vipoc:Vipoc.dll
+ 0005:00000520       __IMPORT_DESCRIPTOR_Vipoc  0000000140090520     Vipoc:Vipoc.dll
+ 0005:00000534       __IMPORT_DESCRIPTOR_KERNEL32 0000000140090534     kernel32:KERNEL32.dll
+ 0005:00000548       __NULL_IMPORT_DESCRIPTOR   0000000140090548     Vipoc:Vipoc.dll
  0006:00000000       __guard_check_icall_fptr   0000000140092000     libcmt:guard_support.obj
  0006:00000010       __guard_xfg_check_icall_fptr 0000000140092010     libcmt:guard_support.obj
  0006:00000020       __guard_dispatch_icall_fptr 0000000140092020     libcmt:guard_support.obj
@@ -3925,7 +3923,6 @@
 
  Static symbols
 
- 0000:fff6b000       .debug$S                   0000000140000000     Vipoc:Vipoc.dll
  0000:fff6b000       .debug$S                   0000000140000000     Vipoc:Vipoc.dll
  0000:fff6b000       .debug$S                   0000000140000000     Vipoc:Vipoc.dll
  0000:fff6b000       .debug$S                   0000000140000000     Vipoc:Vipoc.dll
@@ -6664,11 +6661,11 @@
  0003:00000c60       ?__dcrt_lowio_console_output_handle@@3PEAXEA 0000000140086c60     libucrt:initcon.obj
  0003:00000c69       ?dazSupported@?1??common_control87@@9@9 0000000140086c69     libucrt:ieee.obj
  0003:00000c70       ?dazSupported@?1??_ctrlfp@@9@9 0000000140086c70     libucrt:fpctrl.obj
- 0003:00001170       IsCameraLocked             0000000140087170     main-1397b6.o
- 0003:00001174       VSyncToggle                0000000140087174     main-1397b6.o
- 0003:00001178       Console                    0000000140087178     main-1397b6.o
- 0003:00001588       Config                     0000000140087588     main-1397b6.o
- 0003:000015c0       Board                      00000001400875c0     main-1397b6.o
+ 0003:00001170       IsCameraLocked             0000000140087170     main-0692f9.o
+ 0003:00001174       VSyncToggle                0000000140087174     main-0692f9.o
+ 0003:00001178       Console                    0000000140087178     main-0692f9.o
+ 0003:00001588       Config                     0000000140087588     main-0692f9.o
+ 0003:000015c0       Board                      00000001400875c0     main-0692f9.o
  0003:000017e0       ?is_initialized_as_dll@@3_NA 00000001400877e0     libcmt:utility.obj
  0003:000017e1       ?module_local_atexit_table_initialized@@3_NA 00000001400877e1     libcmt:utility.obj
  0003:000017e8       ?module_local_atexit_table@@3U_onexit_table_t@@A 00000001400877e8     libcmt:utility.obj
@@ -6713,8 +6710,8 @@
  0003:00003128       ?internal_pst@?1??__mbrtoc32_utf8@__crt_mbstring@@YA_KPEA_UPEBD_KPEAU_Mbstatet@@@Z@4U3@A 0000000140089128     libucrt:mbrtoc32.obj
  0003:00003140       GS_ExceptionRecord         0000000140089140     libcmt:gs_report.obj
  0003:000031e0       GS_ContextRecord           00000001400891e0     libcmt:gs_report.obj
- 0005:00000dae       .idata$6                   0000000140090dae     Vipoc:Vipoc.dll
- 0005:00000f00       .idata$6                   0000000140090f00     kernel32:KERNEL32.dll
+ 0005:00000d7c       .idata$6                   0000000140090d7c     Vipoc:Vipoc.dll
+ 0005:00000ece       .idata$6                   0000000140090ece     kernel32:KERNEL32.dll
  0007:00000000       MsetTab                    0000000140093000     libvcruntime:memset.obj
  0007:00000060       MoveSmall                  0000000140093060     libvcruntime:memcpy.obj
  0007:000000a0       MoveSmallYmm               00000001400930a0     libvcruntime:memcpy.obj
