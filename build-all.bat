@@ -13,4 +13,6 @@ CALL build.bat %Type%
 POPD
 IF %ERRORLEVEL% NEQ 0 (echo Error:%ERRORLEVEL%)
 
+ECHO Done!
+
 :ERROR

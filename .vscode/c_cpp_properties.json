@@ -26,12 +26,15 @@
                 "${default}",
                 "${workspaceFolder}",
                 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.19041.0\\um\\",
-                "${workspaceFolder}/engine/src/**"
+                "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.19041.0\\winrt\\wrl",
+                "${workspaceFolder}/engine/src/**",
+                "${workspaceFolder}/game/src"
             ],
             "defines": [
                 "VIPOC_DEBUG",
                 "VIPOC_EXPORT",
                 "VIPOC_WIN32",
+                "RENDERER_GL",
                 "__AVX__",
                 "__SSE4_2__",
                 "RLD_EXPORTS"

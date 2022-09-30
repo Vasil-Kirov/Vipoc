@@ -1,45 +1,43 @@
 #ifdef __cplusplus
-	extern "C"{
+extern "C"
+{
 #endif
 
 #pragma once
 
 #include "include/defines.h"
 
-typedef struct vp_memory
-{
-	void *ptr;
-	uint64 size;
-} vp_memory;
+	enum MEMORY_ARENAS
+	{
+		PERM_MEM,
+		TEMP_MEM,
+		ASSET_MEM,
+		ARENAS_COUNT
+	};
 
-typedef struct vp_arena
-{
-	bool32 isInitialized;
-	void *start;
-	void *end;
-} vp_arena;
+	typedef struct vp_arena
+	{
+		bool32 isInitialized;
+		void *start;
+		void *end;
+	} vp_arena;
 
-vp_arena *
-memory_init(uint64 size);
+	void
+	memory_init(uint64 size);
 
-vp_memory
-vp_arena_allocate(uint64 size);
+	void *
+	vp_allocate(uint64 size, unsigned int index);
 
-vp_memory
-vp_allocate_temp(uint64 size);
+	void
+	vp_free_temp_memory();
 
-void
-vp_free_temp_memory();
+	void
+	vp_free_asset_memory();
 
-void
-vp_arena_free_to_chunk(vp_memory mem);
-
-vp_memory
-vp_allocate_asset(uint64 size);
-
-void
-vp_free_asset_memory();
+#define vp_allocate_temp(size) vp_allocate(size, TEMP_MEM)
+#define vp_allocate_perm(size) vp_allocate(size, PERM_MEM)
+#define vp_allocate_asset(size) vp_allocate(size, ASSET_MEM)
 
 #ifdef __cplusplus
-	}
+}
 #endif

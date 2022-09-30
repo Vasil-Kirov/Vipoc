@@ -22,6 +22,14 @@
         "unistd.h": "c",
         "mman.h": "c",
         "time.h": "c",
-        "errno.h": "c"
-    }
+        "errno.h": "c",
+        "*.rh": "cpp"
+    },
+    "C_Cpp.vcFormat.newLine.beforeOpenBrace.block": "ignore",
+    "C_Cpp.vcFormat.newLine.beforeOpenBrace.function": "newLine",
+    "C_Cpp.vcFormat.newLine.beforeOpenBrace.lambda": "newLine",
+    "C_Cpp.vcFormat.newLine.beforeOpenBrace.namespace": "newLine",
+    "C_Cpp.vcFormat.newLine.beforeOpenBrace.type": "newLine",
+    "C_Cpp.vcFormat.wrap.preserveBlocks": "oneLiners",
+    "C_Cpp.vcFormat.space.withinInitializerListBraces": true
 }

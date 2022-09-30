@@ -1,15 +1,13 @@
 #include "application.h"
 
-
 #include "platform/platform.h"
-// renderer.h loads vp_memory.h, platform.h and defines.h 
+// renderer.h loads vp_memory.h, platform.h and defines.h
 #include "renderer/renderer.h"
 #include "log.h"
 #include "renderer/particle.h"
 #include "entity.h"
 
 internal bool32 is_particle_update_off;
-
 
 typedef struct app_state
 {
@@ -21,39 +19,41 @@ typedef struct app_state
 	int height;
 } app_state;
 
-
-internal vp_arena *memory_arena;
 internal app_state app;
 internal bool32 initialized = FALSE;
 
 // NOTE: this might be better as a pointer
 void application_create(vp_game *game)
 {
-	if(initialized) 
+	if (initialized)
 	{
-		// TODO: Error 
+		// TODO: Error
 	}
 	initialized = TRUE;
-	
-	// very random amount of memory
-	memory_arena = memory_init(MB(10));
+
+	memory_init(MB(10));
 	app.game = game;
 	app.is_running = true;
 	app.is_suspended = false;
 	app.width = app.game->config.w;
 	app.height = app.game->config.h;
-	if(!platform_init(app.game->config, &(app.pstate) ))
+
+	VP_INFO("Initializing platform layer...");
+	if (!platform_init(app.game->config, &(app.pstate)))
 	{
 		// TODO: Fatal Error
 	}
-	RendererInit();
+	VP_INFO("Initializing renderer...");
+	renderer_init();
+	VP_INFO("Initializing particle system...");
 	particles_init();
-	
+
 	app.game->vp_on_resize(app.game, app.width, app.height);
+	//	platform_create_thread(infinitely_calculate_entity_distance_to_camera, vp_nullptr);
+	VP_INFO("Everything has been initialized!");
 }
 
-void
-vp_toggle_particle_update()
+void vp_toggle_particle_update()
 {
 	is_particle_update_off = !is_particle_update_off;
 }
@@ -68,12 +68,12 @@ bool32
 vp_handle_messages()
 {
 	vp_clear_screen();
-	if(!platform_handle_message()) return FALSE;
+	if (!platform_handle_message())
+		return FALSE;
 	return TRUE;
 }
 
-void
-vp_present()
+void vp_present()
 {
 #if 0
 	vp_start_debug_timer("Particles", STRHASH("Particles"));
@@ -89,14 +89,14 @@ vp_present()
 	platform_wait_for_thread(particle_draw);
 	platform_wait_for_thread(particle_update);
 	platform_wait_for_thread(particle_rewrite);
-	
+
 #endif
 	update_entities();
 	vp_draw_diagrams();
 	render_update();
-	
+
 	//	renderer_buffer_reset();
-	
+
 	vp_free_temp_memory();
 	vp_reset_debug_timers();
 }
@@ -106,20 +106,15 @@ vp_random_seed()
 {
 	uint64 seed = 0;
 	__asm__(
-			"RDRAND %0;"
-			:"=r"(seed)
-			);
-	
+		"RDRAND %0;"
+		: "=r"(seed));
+
 	return seed;
 }
-
 
 uint64
 vp_random_from_seed(uint64 *seed)
 {
-	*seed = *seed * 1103515245 + 12345; 
-    return (*seed % ((unsigned int)VP_RAND_MAX + 1)); 
+	*seed = *seed * 1103515245 + 12345;
+	return (*seed % ((unsigned int)VP_RAND_MAX + 1));
 }
-
-
-

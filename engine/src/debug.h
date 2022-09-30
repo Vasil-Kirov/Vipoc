@@ -2,8 +2,8 @@
 #include <include/defines.h>
 
 // NOTE(Vasko): FUNNCTION NAMES CANNOT BE LONGER THAN 33 CHARACTERS
-#define START_DTIMER() 	vp_start_debug_timer(__func__, STRHASH(__FUNCTION__))
-#define STOP_DTIMER()	vp_stop_debug_timer(STRHASH(__FUNCTION__))
+#define START_DTIMER() vp_start_debug_timer(__func__, STRHASH(__FUNCTION__))
+#define STOP_DTIMER() vp_stop_debug_timer(STRHASH(__FUNCTION__))
 
 #define MAX_TIMERS 256
 
@@ -13,11 +13,9 @@ vp_start_debug_timer(const char *name, u32 id);
 VP_API void
 vp_stop_debug_timer(u32 id);
 
-void
-vp_draw_diagrams();
+void vp_draw_diagrams();
 
-void
-vp_reset_debug_timers();
+void vp_reset_debug_timers();
 
 /**
  * Implement compile-time string hashing on string literals.
@@ -35,10 +33,10 @@ vp_reset_debug_timers();
 
 #if 0
 // correct but causes insane expansion
-#  define _SH(e, c) (((e) << 5) + (e) + (unsigned char)(c))
+#define _SH(e, c) (((e) << 5) + (e) + (unsigned char)(c))
 #elif defined(__GNUC__) || defined(__clang__)
 // Use statement-expression extension
-#  define _SH(e, c) ({ unsigned int _e = (unsigned int)(e); (_e << 5) + _e + (unsigned char)c; })
+#define _SH(e, c) ({ unsigned int _e = (unsigned int)(e); (_e << 5) + _e + (unsigned char)c; })
 #else
 // use an inline function, the compiler will be able to optimize this out.
 static inline unsigned int _SH(unsigned int e, unsigned char c)
@@ -82,42 +80,39 @@ static inline unsigned int _SH(unsigned int e, unsigned char c)
 #define _SH_32(a) _SH(_SH_31(a), (a)[31])
 
 // initial check prevents too-large strings from compiling
-#define STRHASH(a) ( \
-    (void)(sizeof(int[(sizeof(a) > 33 ? -1 : 1)])), \
-    (sizeof(a) == 1) ? SEED : \
-    (sizeof(a) == 2) ? _SH_1(a) : \
-    (sizeof(a) == 3) ? _SH_2(a) : \
-    (sizeof(a) == 4) ? _SH_3(a) : \
-    (sizeof(a) == 4) ? _SH_3(a) : \
-    (sizeof(a) == 5) ? _SH_4(a) : \
-    (sizeof(a) == 6) ? _SH_5(a) : \
-    (sizeof(a) == 7) ? _SH_6(a) : \
-    (sizeof(a) == 8) ? _SH_7(a) : \
-    (sizeof(a) == 9) ? _SH_8(a) : \
-    (sizeof(a) == 10) ? _SH_9(a) : \
-    (sizeof(a) == 11) ? _SH_10(a) : \
-    (sizeof(a) == 12) ? _SH_11(a) : \
-    (sizeof(a) == 13) ? _SH_12(a) : \
-    (sizeof(a) == 14) ? _SH_13(a) : \
-    (sizeof(a) == 15) ? _SH_14(a) : \
-    (sizeof(a) == 16) ? _SH_15(a) : \
-    (sizeof(a) == 17) ? _SH_16(a) : \
-    (sizeof(a) == 18) ? _SH_17(a) : \
-    (sizeof(a) == 19) ? _SH_18(a) : \
-    (sizeof(a) == 20) ? _SH_19(a) : \
-    (sizeof(a) == 21) ? _SH_20(a) : \
-    (sizeof(a) == 22) ? _SH_21(a) : \
-    (sizeof(a) == 23) ? _SH_22(a) : \
-    (sizeof(a) == 24) ? _SH_23(a) : \
-    (sizeof(a) == 25) ? _SH_24(a) : \
-    (sizeof(a) == 26) ? _SH_25(a) : \
-    (sizeof(a) == 27) ? _SH_26(a) : \
-    (sizeof(a) == 28) ? _SH_27(a) : \
-    (sizeof(a) == 29) ? _SH_28(a) : \
-    (sizeof(a) == 30) ? _SH_29(a) : \
-    (sizeof(a) == 31) ? _SH_30(a) : \
-    (sizeof(a) == 32) ? _SH_31(a) : \
-    (sizeof(a) == 33) ? _SH_32(a) : \
-    0)
-
-
+#define STRHASH(a) (                                       \
+    (void)(sizeof(int[(sizeof(a) > 33 ? -1 : 1)])),        \
+    (sizeof(a) == 1) ? SEED : (sizeof(a) == 2) ? _SH_1(a)  \
+                          : (sizeof(a) == 3)   ? _SH_2(a)  \
+                          : (sizeof(a) == 4)   ? _SH_3(a)  \
+                          : (sizeof(a) == 4)   ? _SH_3(a)  \
+                          : (sizeof(a) == 5)   ? _SH_4(a)  \
+                          : (sizeof(a) == 6)   ? _SH_5(a)  \
+                          : (sizeof(a) == 7)   ? _SH_6(a)  \
+                          : (sizeof(a) == 8)   ? _SH_7(a)  \
+                          : (sizeof(a) == 9)   ? _SH_8(a)  \
+                          : (sizeof(a) == 10)  ? _SH_9(a)  \
+                          : (sizeof(a) == 11)  ? _SH_10(a) \
+                          : (sizeof(a) == 12)  ? _SH_11(a) \
+                          : (sizeof(a) == 13)  ? _SH_12(a) \
+                          : (sizeof(a) == 14)  ? _SH_13(a) \
+                          : (sizeof(a) == 15)  ? _SH_14(a) \
+                          : (sizeof(a) == 16)  ? _SH_15(a) \
+                          : (sizeof(a) == 17)  ? _SH_16(a) \
+                          : (sizeof(a) == 18)  ? _SH_17(a) \
+                          : (sizeof(a) == 19)  ? _SH_18(a) \
+                          : (sizeof(a) == 20)  ? _SH_19(a) \
+                          : (sizeof(a) == 21)  ? _SH_20(a) \
+                          : (sizeof(a) == 22)  ? _SH_21(a) \
+                          : (sizeof(a) == 23)  ? _SH_22(a) \
+                          : (sizeof(a) == 24)  ? _SH_23(a) \
+                          : (sizeof(a) == 25)  ? _SH_24(a) \
+                          : (sizeof(a) == 26)  ? _SH_25(a) \
+                          : (sizeof(a) == 27)  ? _SH_26(a) \
+                          : (sizeof(a) == 28)  ? _SH_27(a) \
+                          : (sizeof(a) == 29)  ? _SH_28(a) \
+                          : (sizeof(a) == 30)  ? _SH_29(a) \
+                          : (sizeof(a) == 31)  ? _SH_30(a) \
+                          : (sizeof(a) == 32)  ? _SH_31(a) \
+                          : (sizeof(a) == 33)  ? _SH_32(a) \
+                                               : 0)

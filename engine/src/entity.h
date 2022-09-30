@@ -21,6 +21,8 @@ typedef struct
 	entity_update update;
 	v3 position;
 	m3 hitbox;
+	f32 rough_distance_to_camera;
+	b32 is_valid;
 } vp_entity;
 
 
@@ -38,5 +40,8 @@ check_if_ray_collides_with_entity(v3 point, v3 dir);
 
 void
 update_entities();
+
+void
+infinitely_calculate_entity_distance_to_camera();
 
 #endif //ENTITY_H

@@ -9,6 +9,7 @@ IF [%1] == [] (
     ECHO -------- RELEASE --------
     SET CompilerFlags=-O3 -Wvarargs -Wall -Werror
 ) ELSE IF [%1] == [debug] (
+    ECHO -------- DEBUG --------
     SET CompilerFlags=--debug -O0 -Wvarargs -Wall -DVIPOC_DEBUG
 ) ELSE (
     ECHO ERROR: unknown build type '%1'

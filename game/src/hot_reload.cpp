@@ -1,5 +1,5 @@
 #include "hot_reload.h"
-
+#include <Windows.h>
 
 global_var rectangle Atlas;
 global_var vp_game VPGame;
@@ -9,7 +9,7 @@ global_var int32 OffsetY;
 float NormalizeCoordinate(float X, float MaxX, float MinX, int From, int To)
 {
 	float Result;
-	Result = ((To-From)*( (X-MinX)/(MaxX-MinX) ))+From;
+	Result = ((To - From) * ((X - MinX) / (MaxX - MinX))) + From;
 	return Result;
 }
 
@@ -38,12 +38,11 @@ CalculateRenderTarget(atlas_member Member, float X, float Y, float Width, float 
 {
 	vp_2d_render_target Result = {};
 	Result.layer_id = LayerID;
-	Result.world_position = (m2){X, Y, X+Width, Y+Height};
-//	Result.world_position = CalculateWorldPos(X-OffsetX, Y-OffsetY, Width, Height);
+	Result.world_position = (m2){X, Y, X + Width, Y + Height};
+	//	Result.world_position = CalculateWorldPos(X-OffsetX, Y-OffsetY, Width, Height);
 	Result.texture_position = CalculateAtlasPos(Member);
 	return Result;
 }
-
 
 extern "C" __declspec(dllexport) GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 {
